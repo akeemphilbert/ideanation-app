@@ -103,6 +103,12 @@
               <span class="stat-item">
                 {{ entitiesStore.features.length }} Features
               </span>
+              <span class="stat-item">
+                {{ entitiesStore.products.length }} Products
+              </span>
+              <span class="stat-item">
+                {{ entitiesStore.relationships.length }} Links
+              </span>
             </div>
             <button class="btn-sketch" @click="addNewComponent">
               Add Component
@@ -114,7 +120,21 @@
         </div>
         
         <div class="graph-container" ref="graphContainer">
+          <div v-if="graphNodes.length === 0" class="empty-graph">
+            <div class="empty-message">
+              <h3 class="handwritten">Start Building Your Idea!</h3>
+              <p>Create your first entity by typing something like:</p>
+              <div class="example-commands">
+                <code>problem: users can't find reliable pet sitters</code>
+                <code>customer: busy pet owners in urban areas</code>
+                <code>feature: real-time pet monitoring</code>
+              </div>
+              <p>Your entities will appear here as an interactive graph!</p>
+            </div>
+          </div>
+          
           <GraphVisualization
+            v-else
             :nodes="graphNodes"
             :edges="graphEdges"
             @node-click="handleNodeClick"
@@ -137,7 +157,6 @@
 <script setup lang="ts">
 import { useEntityParser } from '~/composables/useEntityParser'
 
-const ideaStore = useIdeaStore()
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
 const graphContainer = ref<HTMLElement>()
@@ -180,7 +199,7 @@ const graphNodes = computed(() => {
       id: customer.id,
       title: customer.title || customer.fullName,
       type: 'customer',
-      description: customer.description
+      description: customer.title || `${customer.role} at ${customer.organization}`.trim()
     })
   })
   
@@ -194,7 +213,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add other entities...
+  // Add products
   entitiesStore.products.forEach(product => {
     nodes.push({
       id: product.id,
@@ -204,6 +223,7 @@ const graphNodes = computed(() => {
     })
   })
   
+  // Add jobs
   entitiesStore.jobs.forEach(job => {
     nodes.push({
       id: job.id,
@@ -213,6 +233,7 @@ const graphNodes = computed(() => {
     })
   })
   
+  // Add pains
   entitiesStore.pains.forEach(pain => {
     nodes.push({
       id: pain.id,
@@ -222,12 +243,23 @@ const graphNodes = computed(() => {
     })
   })
   
+  // Add gains
   entitiesStore.gains.forEach(gain => {
     nodes.push({
       id: gain.id,
       title: gain.title,
       type: 'gain',
       description: gain.description
+    })
+  })
+  
+  // Add ideas
+  entitiesStore.ideas.forEach(idea => {
+    nodes.push({
+      id: idea.id,
+      title: idea.title,
+      type: 'solution',
+      description: idea.description
     })
   })
   
@@ -250,7 +282,7 @@ onMounted(() => {
 })
 
 const initializeSampleData = () => {
-  // Create sample entities
+  // Create sample entities to show the graph working
   const problem = entitiesStore.createProblem({
     title: 'Pet owners need reliable pet care when traveling',
     description: 'Many pet owners struggle to find trustworthy, convenient pet care options when they travel'
@@ -268,6 +300,11 @@ const initializeSampleData = () => {
   const feature = entitiesStore.createFeature({
     title: 'Pet Sitter Matching',
     description: 'Algorithm to match pet owners with qualified pet sitters in their area'
+  })
+  
+  const product = entitiesStore.createProduct({
+    title: 'PetCare Connect App',
+    description: 'Mobile app connecting pet owners with trusted pet sitters'
   })
   
   // Create sample idea and set as current
@@ -290,6 +327,18 @@ const initializeSampleData = () => {
     targetId: idea.id,
     relationshipType: 'belongs'
   })
+  
+  entitiesStore.createRelationship({
+    sourceId: feature.id,
+    targetId: product.id,
+    relationshipType: 'belongs'
+  })
+  
+  entitiesStore.createRelationship({
+    sourceId: idea.id,
+    targetId: product.id,
+    relationshipType: 'mvp'
+  })
 }
 
 const addNewComponent = () => {
@@ -298,8 +347,44 @@ const addNewComponent = () => {
 }
 
 const handleNodeClick = (node: any) => {
-  selectedComponent.value = node
-  showComponentModal.value = true
+  // Find the actual entity from the store
+  let entity = null
+  
+  switch (node.type) {
+    case 'problem':
+      entity = entitiesStore.problems.find(p => p.id === node.id)
+      break
+    case 'customer':
+      entity = entitiesStore.customers.find(c => c.id === node.id)
+      break
+    case 'feature':
+      entity = entitiesStore.features.find(f => f.id === node.id)
+      break
+    case 'solution':
+      entity = entitiesStore.products.find(p => p.id === node.id) || 
+               entitiesStore.ideas.find(i => i.id === node.id)
+      break
+    case 'job':
+      entity = entitiesStore.jobs.find(j => j.id === node.id)
+      break
+    case 'pain':
+      entity = entitiesStore.pains.find(p => p.id === node.id)
+      break
+    case 'gain':
+      entity = entitiesStore.gains.find(g => g.id === node.id)
+      break
+  }
+  
+  if (entity) {
+    selectedComponent.value = {
+      id: entity.id,
+      type: node.type,
+      title: entity.title,
+      description: entity.description,
+      tags: []
+    }
+    showComponentModal.value = true
+  }
 }
 
 const handleNodeHover = (node: any) => {
@@ -307,11 +392,59 @@ const handleNodeHover = (node: any) => {
 }
 
 const handleComponentSave = (component: any) => {
-  if (component.id) {
-    ideaStore.updateComponent(component)
-  } else {
-    ideaStore.addComponent(component)
+  // Update the entity in the appropriate store
+  switch (component.type) {
+    case 'problem':
+      if (component.id) {
+        entitiesStore.updateProblem(component.id, component)
+      } else {
+        entitiesStore.createProblem(component)
+      }
+      break
+    case 'customer':
+      if (component.id) {
+        entitiesStore.updateCustomer(component.id, component)
+      } else {
+        entitiesStore.createCustomer(component)
+      }
+      break
+    case 'feature':
+      if (component.id) {
+        entitiesStore.updateFeature(component.id, component)
+      } else {
+        entitiesStore.createFeature(component)
+      }
+      break
+    case 'solution':
+      if (component.id) {
+        entitiesStore.updateProduct(component.id, component)
+      } else {
+        entitiesStore.createProduct(component)
+      }
+      break
+    case 'job':
+      if (component.id) {
+        entitiesStore.updateJob(component.id, component)
+      } else {
+        entitiesStore.createJob(component)
+      }
+      break
+    case 'pain':
+      if (component.id) {
+        entitiesStore.updatePain(component.id, component)
+      } else {
+        entitiesStore.createPain(component)
+      }
+      break
+    case 'gain':
+      if (component.id) {
+        entitiesStore.updateGain(component.id, component)
+      } else {
+        entitiesStore.createGain(component)
+      }
+      break
   }
+  
   showComponentModal.value = false
 }
 
@@ -331,9 +464,18 @@ const handleChatMessage = async () => {
 
 const handleSuggestionApply = (suggestion: any) => {
   if (suggestion.type === 'component') {
-    ideaStore.addComponent(suggestion.data)
-  } else if (suggestion.type === 'relationship') {
-    ideaStore.addRelationship(suggestion.data)
+    // Add component to appropriate store
+    switch (suggestion.data.type) {
+      case 'problem':
+        entitiesStore.createProblem(suggestion.data)
+        break
+      case 'customer':
+        entitiesStore.createCustomer(suggestion.data)
+        break
+      case 'feature':
+        entitiesStore.createFeature(suggestion.data)
+        break
+    }
   }
   
   // Add confirmation message
@@ -368,7 +510,14 @@ const saveIdea = async () => {
     problems: entitiesStore.problems.length,
     customers: entitiesStore.customers.length,
     features: entitiesStore.features.length,
+    products: entitiesStore.products.length,
     relationships: entitiesStore.relationships.length
+  })
+  
+  // Show success message
+  chatStore.addMessage({
+    type: 'ai',
+    content: `Your idea has been saved! You have ${entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length} entities and ${entitiesStore.relationships.length} relationships.`
   })
 }
 
@@ -688,6 +837,50 @@ useHead({
   border-radius: 8px;
   transform: rotate(0.2deg);
   box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+}
+
+.empty-graph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+}
+
+.empty-message {
+  text-align: center;
+  color: var(--color-secondary);
+  max-width: 400px;
+}
+
+.empty-message h3 {
+  margin: 0 0 16px 0;
+  color: var(--color-primary);
+  font-size: 1.5rem;
+}
+
+.empty-message p {
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.example-commands {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.example-commands code {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: var(--font-handwritten);
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  display: block;
+  text-align: left;
 }
 
 /* Animations */
