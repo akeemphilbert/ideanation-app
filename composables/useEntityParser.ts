@@ -107,14 +107,20 @@ export const useEntityParser = () => {
     }
   }
 
-  // Auto-create relationships for new entities
-  const createAutoRelationships = (entity: any, entityType: EntityType): void => {
+  // Auto-create relationships for new entities with smart linking
+  const createAutoRelationships = (entity: any, entityType: EntityType, targetNodeId?: string): void => {
     const currentIdea = entitiesStore.currentIdea
     const currentUser = entitiesStore.currentUser
 
     if (!currentIdea || !currentUser) return
 
-    // Create relationships based on entity type and current context
+    // If a specific target node is provided, create relationship to it
+    if (targetNodeId) {
+      createRelationshipToTarget(entity, entityType, targetNodeId)
+      return
+    }
+
+    // Default relationships based on entity type and current context
     switch (entityType) {
       case 'problem':
         // Link problem to current idea
@@ -176,8 +182,91 @@ export const useEntityParser = () => {
     }
   }
 
-  // Main function to process entity text
-  const processEntityText = (text: string): { 
+  // Create relationship to a specific target node
+  const createRelationshipToTarget = (entity: any, entityType: EntityType, targetNodeId: string): void => {
+    // Find the target entity to determine its type
+    const targetEntity = findEntityById(targetNodeId)
+    if (!targetEntity) return
+
+    let relationshipType = 'related'
+    let sourceId = entity.id
+    let targetId = targetNodeId
+
+    // Define specific relationship patterns based on entity types
+    if (entityType === 'problem' && targetEntity.type === 'idea') {
+      relationshipType = 'belongs'
+    } else if (entityType === 'customer' && targetEntity.type === 'idea') {
+      relationshipType = 'belongs'
+    } else if (entityType === 'product' && targetEntity.type === 'idea') {
+      relationshipType = 'mvp'
+      sourceId = targetNodeId
+      targetId = entity.id
+    } else if (entityType === 'feature' && targetEntity.type === 'solution') {
+      relationshipType = 'belongs'
+    } else if (entityType === 'job' && targetEntity.type === 'customer') {
+      relationshipType = 'performs'
+      sourceId = targetNodeId
+      targetId = entity.id
+    } else if (entityType === 'pain' && targetEntity.type === 'customer') {
+      relationshipType = 'experiences'
+      sourceId = targetNodeId
+      targetId = entity.id
+    } else if (entityType === 'gain' && targetEntity.type === 'customer') {
+      relationshipType = 'desires'
+      sourceId = targetNodeId
+      targetId = entity.id
+    } else if (entityType === 'feature' && targetEntity.type === 'pain') {
+      relationshipType = 'relieves'
+    } else if (entityType === 'feature' && targetEntity.type === 'gain') {
+      relationshipType = 'creates'
+    }
+
+    entitiesStore.createRelationship({
+      sourceId,
+      targetId,
+      relationshipType
+    })
+  }
+
+  // Helper to find entity by ID across all collections
+  const findEntityById = (entityId: string): { type: string, entity: any } | null => {
+    // Check ideas
+    const idea = entitiesStore.ideas.find(i => i.id === entityId)
+    if (idea) return { type: 'idea', entity: idea }
+
+    // Check problems
+    const problem = entitiesStore.problems.find(p => p.id === entityId)
+    if (problem) return { type: 'problem', entity: problem }
+
+    // Check customers
+    const customer = entitiesStore.customers.find(c => c.id === entityId)
+    if (customer) return { type: 'customer', entity: customer }
+
+    // Check products
+    const product = entitiesStore.products.find(p => p.id === entityId)
+    if (product) return { type: 'solution', entity: product }
+
+    // Check features
+    const feature = entitiesStore.features.find(f => f.id === entityId)
+    if (feature) return { type: 'feature', entity: feature }
+
+    // Check jobs
+    const job = entitiesStore.jobs.find(j => j.id === entityId)
+    if (job) return { type: 'job', entity: job }
+
+    // Check pains
+    const pain = entitiesStore.pains.find(p => p.id === entityId)
+    if (pain) return { type: 'pain', entity: pain }
+
+    // Check gains
+    const gain = entitiesStore.gains.find(g => g.id === entityId)
+    if (gain) return { type: 'gain', entity: gain }
+
+    return null
+  }
+
+  // Main function to process entity text with target node support
+  const processEntityText = (text: string, targetNodeId?: string): { 
     entity: any | null, 
     parsed: ParsedEntity | null,
     wasCreated: boolean 
@@ -192,8 +281,8 @@ export const useEntityParser = () => {
       const entity = createEntityFromParsed(parsed)
       
       if (entity) {
-        // Create auto-relationships
-        createAutoRelationships(entity, parsed.type)
+        // Create auto-relationships with target node support
+        createAutoRelationships(entity, parsed.type, targetNodeId)
         
         return { entity, parsed, wasCreated: true }
       }
@@ -233,6 +322,8 @@ export const useEntityParser = () => {
     getAvailablePrefixes,
     getEntityHelp,
     looksLikeEntityCommand,
+    createAutoRelationships,
+    findEntityById,
     ENTITY_PREFIXES
   }
 }

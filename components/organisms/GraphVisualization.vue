@@ -35,10 +35,11 @@ interface Link {
 interface Props {
   nodes: Node[]
   edges: Array<{ source: string, target: string, relationship: string }>
+  selectedNodeId?: string | null
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits(['node-click', 'node-hover'])
+const emit = defineEmits(['node-click', 'node-hover', 'node-select'])
 
 const container = ref<HTMLElement>()
 const svgRef = ref<SVGElement>()
@@ -54,6 +55,10 @@ onMounted(() => {
 watch(() => [props.nodes, props.edges], () => {
   updateGraph()
 }, { deep: true })
+
+watch(() => props.selectedNodeId, () => {
+  updateNodeSelection()
+})
 
 const initializeGraph = () => {
   if (!svgRef.value || !container.value) return
@@ -139,7 +144,19 @@ const updateGraph = () => {
       .on('end', dragended)
     )
     .on('click', (event, d) => {
-      emit('node-click', d)
+      event.stopPropagation()
+      
+      // Toggle selection
+      if (props.selectedNodeId === d.id) {
+        emit('node-select', null)
+      } else {
+        emit('node-select', d.id)
+      }
+      
+      // Also emit the click event for editing
+      if (event.detail === 2) { // Double click for edit
+        emit('node-click', d)
+      }
     })
     .on('mouseenter', (event, d) => {
       emit('node-hover', d)
@@ -152,6 +169,15 @@ const updateGraph = () => {
     .attr('stroke', '#1a1a1a')
     .attr('stroke-width', 2)
     .attr('class', 'node-circle')
+
+  // Add selection ring
+  node.append('circle')
+    .attr('r', (d) => getNodeRadius(d) + 5)
+    .attr('fill', 'none')
+    .attr('stroke', '#4caf50')
+    .attr('stroke-width', 3)
+    .attr('class', 'selection-ring')
+    .style('opacity', 0)
 
   // Add icons to nodes
   node.append('text')
@@ -170,6 +196,14 @@ const updateGraph = () => {
     .attr('font-size', '12')
     .attr('fill', '#1a1a1a')
     .text((d) => d.title.length > 15 ? d.title.substring(0, 15) + '...' : d.title)
+
+  // Add click handler to svg background to clear selection
+  svg.on('click', () => {
+    emit('node-select', null)
+  })
+
+  // Update selection state
+  updateNodeSelection()
 
   // Drag functions
   function dragstarted(event: any, d: Node) {
@@ -200,6 +234,16 @@ const updateGraph = () => {
     node
       .attr('transform', (d) => `translate(${d.x},${d.y})`)
   })
+}
+
+const updateNodeSelection = () => {
+  if (!svg) return
+  
+  svg.selectAll('.selection-ring')
+    .style('opacity', (d: any) => d.id === props.selectedNodeId ? 1 : 0)
+    
+  svg.selectAll('.node-circle')
+    .attr('stroke-width', (d: any) => d.id === props.selectedNodeId ? 4 : 2)
 }
 
 const getNodeRadius = (node: Node): number => {
@@ -304,6 +348,11 @@ onUnmounted(() => {
 
 :deep(.node-circle) {
   transition: all 0.2s ease;
+}
+
+:deep(.selection-ring) {
+  transition: opacity 0.2s ease;
+  pointer-events: none;
 }
 
 :deep(.node-label) {

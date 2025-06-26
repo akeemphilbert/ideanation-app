@@ -34,7 +34,7 @@ export const useChatStore = defineStore('chat', () => {
     messages.value.push(newMessage)
   }
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string, selectedNodeId?: string) => {
     const entitiesStore = useEntitiesStore()
     const { processEntityText, looksLikeEntityCommand, getEntityHelp } = useEntityParser()
     
@@ -77,7 +77,7 @@ What would you like to add first?`,
     }
     
     // Check if this is an entity creation command
-    const entityResult = processEntityText(content)
+    const entityResult = processEntityText(content, selectedNodeId)
     
     if (entityResult.wasCreated && entityResult.entity && entityResult.parsed) {
       // Add user message with entity creation info
@@ -91,10 +91,19 @@ What would you like to add first?`,
         }
       })
 
+      // Generate relationship message based on selected node
+      let relationshipMessage = getRelationshipMessage(entityResult.parsed.type)
+      if (selectedNodeId) {
+        const targetEntity = entitiesStore.findEntityById?.(selectedNodeId)
+        if (targetEntity) {
+          relationshipMessage = `I've linked it to "${targetEntity.entity.title}".`
+        }
+      }
+
       // Add AI confirmation message
       addMessage({
         type: 'ai',
-        content: `Great! I've created a new ${entityResult.parsed.type} called "${entityResult.parsed.title}" and added it to your idea canvas. ${getRelationshipMessage(entityResult.parsed.type)}`
+        content: `Great! I've created a new ${entityResult.parsed.type} called "${entityResult.parsed.title}" and added it to your idea canvas. ${relationshipMessage}`
       })
 
       return
@@ -179,7 +188,9 @@ What would you like to add first?`,
     if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
       const { getEntityHelp } = useEntityParser()
       return {
-        content: `I can help you build your startup idea! ${getEntityHelp()}. You can also ask me about problems, customers, features, or how to connect different components.`
+        content: `I can help you build your startup idea! ${getEntityHelp()}. You can also ask me about problems, customers, features, or how to connect different components.
+
+**Tip:** Click on any node in the graph to select it, then create new entities that will automatically link to it!`
       }
     }
     
@@ -258,9 +269,15 @@ What would you like to add first?`,
       }
     }
     
+    if (lowerMessage.includes('connect') || lowerMessage.includes('relationship')) {
+      return {
+        content: "Great question! You can create relationships by selecting a node (click on it) and then creating a new entity. It will automatically link to the selected node. You can also double-click nodes to edit them and see their connections."
+      }
+    }
+    
     // Default response
     return {
-      content: "That's interesting! I can help you structure your idea by creating different components. Try typing things like 'problem: your problem', 'customer: your customer', or 'feature: your feature' to quickly add them to your canvas."
+      content: "That's interesting! I can help you structure your idea by creating different components. Try typing things like 'problem: your problem', 'customer: your customer', or 'feature: your feature' to quickly add them to your canvas.\n\n**Pro tip:** Select a node first by clicking on it, then create new entities to automatically link them!"
     }
   }
 

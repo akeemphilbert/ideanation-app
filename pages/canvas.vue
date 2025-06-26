@@ -96,6 +96,14 @@
             {{ entitiesStore.currentIdea?.title || 'Your Idea Canvas' }}
           </h2>
           <div class="graph-controls" v-if="entitiesStore.currentIdea">
+            <div class="selection-info" v-if="selectedNodeId">
+              <span class="selected-node">
+                Selected: {{ getSelectedNodeTitle() }}
+              </span>
+              <button class="btn-sketch btn-small" @click="clearSelection">
+                Clear
+              </button>
+            </div>
             <div class="entity-stats">
               <span class="stat-item">
                 {{ entitiesStore.problems.length }} Problems
@@ -153,8 +161,10 @@
             v-else
             :nodes="graphNodes"
             :edges="graphEdges"
+            :selectedNodeId="selectedNodeId"
             @node-click="handleNodeClick"
             @node-hover="handleNodeHover"
+            @node-select="handleNodeSelect"
           />
         </div>
       </div>
@@ -181,6 +191,7 @@ const messagesContainer = ref<HTMLElement>()
 
 const showComponentModal = ref(false)
 const selectedComponent = ref(null)
+const selectedNodeId = ref<string | null>(null)
 const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
@@ -300,7 +311,105 @@ const getInputPlaceholder = () => {
   if (!entitiesStore.currentIdea) {
     return "What's your startup idea called?"
   }
+  
+  if (selectedNodeId.value) {
+    const selectedNode = graphNodes.value.find(n => n.id === selectedNodeId.value)
+    if (selectedNode) {
+      return `Add entity linked to "${selectedNode.title}" (e.g., problem: your problem)`
+    }
+  }
+  
   return "Type 'problem: your problem' or ask me anything..."
+}
+
+const getSelectedNodeTitle = () => {
+  if (!selectedNodeId.value) return ''
+  const node = graphNodes.value.find(n => n.id === selectedNodeId.value)
+  return node ? node.title : ''
+}
+
+const clearSelection = () => {
+  selectedNodeId.value = null
+}
+
+const getTargetNodeForNewEntity = (): string | null => {
+  // 1. If a node is selected, use that
+  if (selectedNodeId.value) {
+    return selectedNodeId.value
+  }
+  
+  // 2. If only one node exists, use that
+  if (graphNodes.value.length === 1) {
+    return graphNodes.value[0].id
+  }
+  
+  // 3. Default to the first idea node
+  const ideaNode = graphNodes.value.find(n => n.type === 'idea')
+  return ideaNode ? ideaNode.id : null
+}
+
+const createRelationshipForNewEntity = (newEntityId: string, newEntityType: string) => {
+  const targetNodeId = getTargetNodeForNewEntity()
+  if (!targetNodeId) return
+  
+  const targetNode = graphNodes.value.find(n => n.id === targetNodeId)
+  if (!targetNode) return
+  
+  // Determine relationship type based on entity types
+  let relationshipType = 'belongs'
+  let sourceId = newEntityId
+  let targetId = targetNodeId
+  
+  // Define specific relationship patterns
+  if (newEntityType === 'problem' && targetNode.type === 'idea') {
+    relationshipType = 'belongs'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  } else if (newEntityType === 'customer' && targetNode.type === 'idea') {
+    relationshipType = 'belongs'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  } else if (newEntityType === 'product' && targetNode.type === 'idea') {
+    relationshipType = 'mvp'
+    sourceId = targetNodeId
+    targetId = newEntityId
+  } else if (newEntityType === 'feature' && targetNode.type === 'solution') {
+    relationshipType = 'belongs'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  } else if (newEntityType === 'job' && targetNode.type === 'customer') {
+    relationshipType = 'performs'
+    sourceId = targetNodeId
+    targetId = newEntityId
+  } else if (newEntityType === 'pain' && targetNode.type === 'customer') {
+    relationshipType = 'experiences'
+    sourceId = targetNodeId
+    targetId = newEntityId
+  } else if (newEntityType === 'gain' && targetNode.type === 'customer') {
+    relationshipType = 'desires'
+    sourceId = targetNodeId
+    targetId = newEntityId
+  } else if (newEntityType === 'feature' && targetNode.type === 'pain') {
+    relationshipType = 'relieves'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  } else if (newEntityType === 'feature' && targetNode.type === 'gain') {
+    relationshipType = 'creates'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  } else {
+    // Default relationship - just connect them
+    relationshipType = 'related'
+    sourceId = newEntityId
+    targetId = targetNodeId
+  }
+  
+  // Create the relationship
+  entitiesStore.createRelationship({
+    sourceId,
+    targetId,
+    relationshipType
+  })
 }
 
 const addNewComponent = () => {
@@ -351,70 +460,81 @@ const handleNodeClick = (node: any) => {
   }
 }
 
+const handleNodeSelect = (nodeId: string | null) => {
+  selectedNodeId.value = nodeId
+}
+
 const handleNodeHover = (node: any) => {
   console.log('Hovering node:', node)
 }
 
 const handleComponentSave = (component: any) => {
-  // Update the entity in the appropriate store
+  let newEntity = null
+  
+  // Update or create the entity in the appropriate store
   switch (component.type) {
     case 'idea':
       if (component.id) {
         entitiesStore.updateIdea(component.id, component)
       } else {
-        const idea = entitiesStore.createIdea(component)
-        entitiesStore.setCurrentIdea(idea)
+        newEntity = entitiesStore.createIdea(component)
+        entitiesStore.setCurrentIdea(newEntity)
       }
       break
     case 'problem':
       if (component.id) {
         entitiesStore.updateProblem(component.id, component)
       } else {
-        entitiesStore.createProblem(component)
+        newEntity = entitiesStore.createProblem(component)
       }
       break
     case 'customer':
       if (component.id) {
         entitiesStore.updateCustomer(component.id, component)
       } else {
-        entitiesStore.createCustomer(component)
+        newEntity = entitiesStore.createCustomer(component)
       }
       break
     case 'feature':
       if (component.id) {
         entitiesStore.updateFeature(component.id, component)
       } else {
-        entitiesStore.createFeature(component)
+        newEntity = entitiesStore.createFeature(component)
       }
       break
     case 'solution':
       if (component.id) {
         entitiesStore.updateProduct(component.id, component)
       } else {
-        entitiesStore.createProduct(component)
+        newEntity = entitiesStore.createProduct(component)
       }
       break
     case 'job':
       if (component.id) {
         entitiesStore.updateJob(component.id, component)
       } else {
-        entitiesStore.createJob(component)
+        newEntity = entitiesStore.createJob(component)
       }
       break
     case 'pain':
       if (component.id) {
         entitiesStore.updatePain(component.id, component)
       } else {
-        entitiesStore.createPain(component)
+        newEntity = entitiesStore.createPain(component)
       }
       break
     case 'gain':
       if (component.id) {
         entitiesStore.updateGain(component.id, component)
       } else {
-        entitiesStore.createGain(component)
+        newEntity = entitiesStore.createGain(component)
       }
       break
+  }
+  
+  // If this is a new entity, create relationship to selected/target node
+  if (newEntity) {
+    createRelationshipForNewEntity(newEntity.id, component.type)
   }
   
   showComponentModal.value = false
@@ -436,17 +556,24 @@ const handleChatMessage = async () => {
 
 const handleSuggestionApply = (suggestion: any) => {
   if (suggestion.type === 'component') {
+    let newEntity = null
+    
     // Add component to appropriate store
     switch (suggestion.data.type) {
       case 'problem':
-        entitiesStore.createProblem(suggestion.data)
+        newEntity = entitiesStore.createProblem(suggestion.data)
         break
       case 'customer':
-        entitiesStore.createCustomer(suggestion.data)
+        newEntity = entitiesStore.createCustomer(suggestion.data)
         break
       case 'feature':
-        entitiesStore.createFeature(suggestion.data)
+        newEntity = entitiesStore.createFeature(suggestion.data)
         break
+    }
+    
+    // Create relationship if new entity was created
+    if (newEntity) {
+      createRelationshipForNewEntity(newEntity.id, suggestion.data.type)
     }
   }
   
@@ -785,11 +912,30 @@ useHead({
   display: flex;
   align-items: center;
   gap: 15px;
+  flex-wrap: wrap;
+}
+
+.selection-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.selected-node {
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-family: var(--font-handwritten);
+  font-weight: 600;
 }
 
 .entity-stats {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .stat-item {
@@ -929,6 +1075,12 @@ useHead({
   .entity-stats {
     flex-direction: column;
     gap: 4px;
+  }
+  
+  .graph-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
 </style>
