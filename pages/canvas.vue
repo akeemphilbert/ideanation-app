@@ -156,6 +156,7 @@
 
 <script setup lang="ts">
 import { useEntityParser } from '~/composables/useEntityParser'
+import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
