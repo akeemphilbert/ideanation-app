@@ -14,16 +14,17 @@
         <div class="chat-messages" ref="messagesContainer">
           <div v-if="chatStore.messages.length === 0" class="chat-welcome">
             <div class="welcome-message">
-              <p class="handwritten">👋 Hi! I'm here to help you structure your startup idea.</p>
-              <p>Try creating entities by typing:</p>
-              <ul>
+              <p class="handwritten">👋 Hi! Let's start building your startup idea.</p>
+              <p v-if="!entitiesStore.currentIdea"><strong>First, what's your idea called?</strong></p>
+              <p v-else>Great! Now you can create entities by typing:</p>
+              <ul v-if="entitiesStore.currentIdea">
                 <li><strong>problem:</strong> your problem description</li>
                 <li><strong>customer:</strong> your customer description</li>
                 <li><strong>feature:</strong> your feature description</li>
                 <li><strong>pain:</strong> customer pain point</li>
                 <li><strong>gain:</strong> customer gain</li>
               </ul>
-              <p class="help-note">Or ask me questions about your idea!</p>
+              <p v-if="entitiesStore.currentIdea" class="help-note">Or ask me questions about your idea!</p>
             </div>
           </div>
           
@@ -49,7 +50,7 @@
             <input
               v-model="chatMessage"
               type="text"
-              placeholder="Type 'problem: your problem' or ask me anything..."
+              :placeholder="getInputPlaceholder()"
               class="message-input handwritten"
               :disabled="chatStore.isTyping"
               @focus="showQuickSuggestions = true"
@@ -64,7 +65,7 @@
             </button>
           </form>
           
-          <div class="quick-suggestions" v-if="showQuickSuggestions && !chatMessage.trim()">
+          <div class="quick-suggestions" v-if="showQuickSuggestions && !chatMessage.trim() && entitiesStore.currentIdea">
             <button
               v-for="suggestion in quickSuggestions"
               :key="suggestion"
@@ -91,8 +92,10 @@
       <!-- Main Graph Section on Right -->
       <div class="graph-section">
         <div class="graph-header">
-          <h2 class="handwritten">Your Idea Canvas</h2>
-          <div class="graph-controls">
+          <h2 class="handwritten">
+            {{ entitiesStore.currentIdea?.title || 'Your Idea Canvas' }}
+          </h2>
+          <div class="graph-controls" v-if="entitiesStore.currentIdea">
             <div class="entity-stats">
               <span class="stat-item">
                 {{ entitiesStore.problems.length }} Problems
@@ -120,9 +123,22 @@
         </div>
         
         <div class="graph-container" ref="graphContainer">
-          <div v-if="graphNodes.length === 0" class="empty-graph">
+          <div v-if="!entitiesStore.currentIdea" class="empty-graph">
             <div class="empty-message">
-              <h3 class="handwritten">Start Building Your Idea!</h3>
+              <h3 class="handwritten">Welcome to Ideanation!</h3>
+              <p>Let's start by giving your startup idea a name.</p>
+              <p>Just type it in the chat and I'll create your idea canvas!</p>
+              <div class="example-commands">
+                <div class="example-idea">💡 "PetCare Connect"</div>
+                <div class="example-idea">💡 "EcoCommute App"</div>
+                <div class="example-idea">💡 "Smart Garden Assistant"</div>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else-if="graphNodes.length === 0" class="empty-graph">
+            <div class="empty-message">
+              <h3 class="handwritten">Great! Now let's build "{{ entitiesStore.currentIdea.title }}"</h3>
               <p>Create your first entity by typing something like:</p>
               <div class="example-commands">
                 <code>problem: users can't find reliable pet sitters</code>
@@ -183,6 +199,16 @@ const quickSuggestions = [
 // Convert entities to graph format
 const graphNodes = computed(() => {
   const nodes: any[] = []
+  
+  // Add current idea as central node
+  if (entitiesStore.currentIdea) {
+    nodes.push({
+      id: entitiesStore.currentIdea.id,
+      title: entitiesStore.currentIdea.title,
+      type: 'idea',
+      description: entitiesStore.currentIdea.description
+    })
+  }
   
   // Add problems
   entitiesStore.problems.forEach(problem => {
@@ -254,16 +280,6 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add ideas
-  entitiesStore.ideas.forEach(idea => {
-    nodes.push({
-      id: idea.id,
-      title: idea.title,
-      type: 'solution',
-      description: idea.description
-    })
-  })
-  
   return nodes
 })
 
@@ -276,70 +292,15 @@ const graphEdges = computed(() => {
 })
 
 onMounted(() => {
-  // Initialize with sample data if empty
-  if (entitiesStore.problems.length === 0 && entitiesStore.customers.length === 0) {
-    initializeSampleData()
-  }
+  // Don't initialize sample data - start completely empty
+  // User must first provide idea name
 })
 
-const initializeSampleData = () => {
-  // Create sample entities to show the graph working
-  const problem = entitiesStore.createProblem({
-    title: 'Pet owners need reliable pet care when traveling',
-    description: 'Many pet owners struggle to find trustworthy, convenient pet care options when they travel'
-  })
-  
-  const customer = entitiesStore.createCustomer({
-    title: 'Frequent Business Travelers with Pets',
-    description: 'Professionals who travel regularly for work and own pets',
-    givenName: 'Sarah',
-    familyName: 'Johnson',
-    role: 'Sales Manager',
-    organization: 'Tech Corp'
-  })
-  
-  const feature = entitiesStore.createFeature({
-    title: 'Pet Sitter Matching',
-    description: 'Algorithm to match pet owners with qualified pet sitters in their area'
-  })
-  
-  const product = entitiesStore.createProduct({
-    title: 'PetCare Connect App',
-    description: 'Mobile app connecting pet owners with trusted pet sitters'
-  })
-  
-  // Create sample idea and set as current
-  const idea = entitiesStore.createIdea({
-    title: 'PetCare Connect',
-    description: 'Platform connecting pet owners with trusted pet sitters'
-  })
-  
-  entitiesStore.setCurrentIdea(idea)
-  
-  // Create relationships
-  entitiesStore.createRelationship({
-    sourceId: problem.id,
-    targetId: idea.id,
-    relationshipType: 'belongs'
-  })
-  
-  entitiesStore.createRelationship({
-    sourceId: customer.id,
-    targetId: idea.id,
-    relationshipType: 'belongs'
-  })
-  
-  entitiesStore.createRelationship({
-    sourceId: feature.id,
-    targetId: product.id,
-    relationshipType: 'belongs'
-  })
-  
-  entitiesStore.createRelationship({
-    sourceId: idea.id,
-    targetId: product.id,
-    relationshipType: 'mvp'
-  })
+const getInputPlaceholder = () => {
+  if (!entitiesStore.currentIdea) {
+    return "What's your startup idea called?"
+  }
+  return "Type 'problem: your problem' or ask me anything..."
 }
 
 const addNewComponent = () => {
@@ -352,6 +313,9 @@ const handleNodeClick = (node: any) => {
   let entity = null
   
   switch (node.type) {
+    case 'idea':
+      entity = entitiesStore.ideas.find(i => i.id === node.id)
+      break
     case 'problem':
       entity = entitiesStore.problems.find(p => p.id === node.id)
       break
@@ -362,8 +326,7 @@ const handleNodeClick = (node: any) => {
       entity = entitiesStore.features.find(f => f.id === node.id)
       break
     case 'solution':
-      entity = entitiesStore.products.find(p => p.id === node.id) || 
-               entitiesStore.ideas.find(i => i.id === node.id)
+      entity = entitiesStore.products.find(p => p.id === node.id)
       break
     case 'job':
       entity = entitiesStore.jobs.find(j => j.id === node.id)
@@ -395,6 +358,14 @@ const handleNodeHover = (node: any) => {
 const handleComponentSave = (component: any) => {
   // Update the entity in the appropriate store
   switch (component.type) {
+    case 'idea':
+      if (component.id) {
+        entitiesStore.updateIdea(component.id, component)
+      } else {
+        const idea = entitiesStore.createIdea(component)
+        entitiesStore.setCurrentIdea(idea)
+      }
+      break
     case 'problem':
       if (component.id) {
         entitiesStore.updateProblem(component.id, component)
@@ -508,6 +479,7 @@ const scrollToBottom = () => {
 const saveIdea = async () => {
   // In a real app, this would save to backend
   console.log('Saving idea with entities:', {
+    idea: entitiesStore.currentIdea?.title,
     problems: entitiesStore.problems.length,
     customers: entitiesStore.customers.length,
     features: entitiesStore.features.length,
@@ -518,7 +490,7 @@ const saveIdea = async () => {
   // Show success message
   chatStore.addMessage({
     type: 'ai',
-    content: `Your idea has been saved! You have ${entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length} entities and ${entitiesStore.relationships.length} relationships.`
+    content: `Your idea "${entitiesStore.currentIdea?.title}" has been saved! You have ${entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length} entities and ${entitiesStore.relationships.length} relationships.`
   })
 }
 
@@ -529,7 +501,9 @@ watch(() => chatStore.messages.length, () => {
 
 // Watch chat input for entity commands
 watch(chatMessage, (newValue) => {
-  showEntityHelp.value = looksLikeEntityCommand(newValue)
+  if (entitiesStore.currentIdea) {
+    showEntityHelp.value = looksLikeEntityCommand(newValue)
+  }
 })
 
 // SEO
@@ -882,6 +856,23 @@ useHead({
   color: var(--color-primary);
   display: block;
   text-align: left;
+}
+
+.example-idea {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: var(--font-handwritten);
+  font-size: 1rem;
+  color: var(--color-primary);
+  display: block;
+  text-align: center;
+  transform: rotate(0.2deg);
+}
+
+.example-idea:nth-child(even) {
+  transform: rotate(-0.2deg);
 }
 
 /* Animations */

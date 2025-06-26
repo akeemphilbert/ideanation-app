@@ -35,7 +35,46 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const sendMessage = async (content: string) => {
+    const entitiesStore = useEntitiesStore()
     const { processEntityText, looksLikeEntityCommand, getEntityHelp } = useEntityParser()
+    
+    // Check if we need to create an idea first
+    if (!entitiesStore.currentIdea) {
+      // This is the idea name
+      addMessage({
+        type: 'user',
+        content
+      })
+
+      // Create the idea
+      const idea = entitiesStore.createIdea({
+        title: content,
+        description: `Startup idea: ${content}`
+      })
+      
+      entitiesStore.setCurrentIdea(idea)
+
+      // Add AI response
+      addMessage({
+        type: 'ai',
+        content: `Perfect! I've created your idea "${content}". Now let's start building it out. You can create entities by typing things like:
+
+• problem: describe a problem your idea solves
+• customer: describe your target customers  
+• feature: describe a key feature
+• pain: describe customer pain points
+• gain: describe customer gains
+
+What would you like to add first?`,
+        entityCreated: {
+          type: 'idea',
+          title: content,
+          id: idea.id
+        }
+      })
+
+      return
+    }
     
     // Check if this is an entity creation command
     const entityResult = processEntityText(content)

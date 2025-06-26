@@ -205,6 +205,7 @@ const updateGraph = () => {
 const getNodeRadius = (node: Node): number => {
   const baseRadius = 25
   const typeMultipliers: Record<string, number> = {
+    idea: 1.5,      // Make idea nodes larger as they're central
     problem: 1.2,
     solution: 1.2,
     customer: 1.0,
@@ -218,6 +219,7 @@ const getNodeRadius = (node: Node): number => {
 
 const getNodeColor = (node: Node): string => {
   const colors: Record<string, string> = {
+    idea: '#fff3e0',      // Light orange for central idea
     problem: '#ffebee',
     customer: '#e3f2fd',
     job: '#fff3e0',
@@ -231,13 +233,14 @@ const getNodeColor = (node: Node): string => {
 
 const getNodeIcon = (type: string): string => {
   const icons: Record<string, string> = {
+    idea: '💡',
     problem: '⚠️',
     customer: '👤',
     job: '⚡',
     gain: '📈',
     pain: '😤',
     feature: '⚙️',
-    solution: '💡'
+    solution: '🏗️'
   }
   return icons[type] || '📝'
 }
