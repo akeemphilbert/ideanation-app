@@ -149,7 +149,16 @@
                 Add Component
               </button>
               <button class="btn-sketch" @click="saveIdea">
-                Save Idea
+                Export Canvas
+              </button>
+              <button class="btn-sketch" @click="exportAllEntities">
+                Export All Entities
+              </button>
+              <button class="btn-sketch" @click="saveToLocalStorage">
+                Save to Storage
+              </button>
+              <button class="btn-sketch" @click="loadFromLocalStorage">
+                Load from Storage
               </button>
             </div>
           </div>
@@ -218,6 +227,9 @@
 import { useEntityParser } from '~/composables/useEntityParser'
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
+import { ExportDataBuilder } from '~/services/export/ExportDataBuilder'
+import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormatter'
+import { ExportType } from '~/types/export'
 
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
@@ -226,7 +238,7 @@ const messagesContainer = ref<HTMLElement>()
 
 const showComponentModal = ref(false)
 const showLinkModal = ref(false)
-const selectedComponent = ref(null)
+const selectedComponent = ref<any>(null)
 const selectedNodeIds = ref<string[]>([])
 const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
@@ -490,11 +502,40 @@ const handleNodeClick = (node: any) => {
   }
   
   if (entity) {
+    let description = ''
+    
+    // Handle different entity types and their description properties
+    if (node.type === 'customer') {
+      const customer = entity as any
+      description = `${customer.role} at ${customer.organization}`
+    } else if (node.type === 'idea') {
+      const idea = entity as any
+      description = idea.description || ''
+    } else if (node.type === 'problem') {
+      const problem = entity as any
+      description = problem.description || ''
+    } else if (node.type === 'feature') {
+      const feature = entity as any
+      description = feature.description || ''
+    } else if (node.type === 'solution') {
+      const product = entity as any
+      description = product.description || ''
+    } else if (node.type === 'job') {
+      const job = entity as any
+      description = job.description || ''
+    } else if (node.type === 'pain') {
+      const pain = entity as any
+      description = pain.description || ''
+    } else if (node.type === 'gain') {
+      const gain = entity as any
+      description = gain.description || ''
+    }
+    
     selectedComponent.value = {
       id: entity.id,
       type: node.type,
       title: entity.title,
-      description: entity.description,
+      description: description,
       tags: []
     }
     showComponentModal.value = true
@@ -645,6 +686,25 @@ const handleChatMessage = async () => {
   showQuickSuggestions.value = false
   showEntityHelp.value = false
   
+  // Check if this is a load idea command
+  const loadMatch = message.match(/^load idea (\d+)$/i)
+  if (loadMatch) {
+    const ideaNumber = parseInt(loadMatch[1]) - 1
+    const savedIdeas = (window as any).savedIdeas
+    
+    if (savedIdeas && savedIdeas[ideaNumber]) {
+      await loadSpecificIdea(savedIdeas[ideaNumber].key)
+      return
+    } else {
+      chatStore.addMessage({
+        type: 'ai',
+        content: `❌ Idea number ${ideaNumber + 1} not found. Please use "Load from Storage" to see available ideas first.`
+      })
+      nextTick(() => scrollToBottom())
+      return
+    }
+  }
+  
   // Pass the selected node for context
   const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
   await chatStore.sendMessage(message, targetNodeId)
@@ -703,21 +763,337 @@ const scrollToBottom = () => {
 }
 
 const saveIdea = async () => {
-  // In a real app, this would save to backend
-  console.log('Saving idea with entities:', {
-    idea: entitiesStore.currentIdea?.title,
-    problems: entitiesStore.problems.length,
-    customers: entitiesStore.customers.length,
-    features: entitiesStore.features.length,
-    products: entitiesStore.products.length,
-    relationships: entitiesStore.relationships.length
-  })
+  try {
+    // Build the business model canvas export data
+    const exportBuilder = new ExportDataBuilder()
+    const exportData = await exportBuilder.buildExportData(ExportType.BUSINESS_MODEL_CANVAS)
+    
+    // Format as markdown
+    const markdownFormatter = new MarkdownFormatter()
+    const formattedContent = await markdownFormatter.format(exportData)
+    
+    // Create and download the file
+    const blob = new Blob([formattedContent.content as string], { 
+      type: formattedContent.mimeType 
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = formattedContent.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    // Show success message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `✅ Your business model canvas for "${entitiesStore.currentIdea?.title}" has been exported to markdown and downloaded! The file contains ${entitiesStore.problems.length} problems, ${entitiesStore.customers.length} customers, ${entitiesStore.features.length} features, and ${entitiesStore.relationships.length} relationships.`
+    })
+    
+    nextTick(() => scrollToBottom())
+    
+  } catch (error) {
+    console.error('Export failed:', error)
+    
+    // Show error message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `❌ Sorry, there was an error exporting your business model canvas. Please try again.`
+    })
+    
+    nextTick(() => scrollToBottom())
+  }
+}
+
+const exportAllEntities = async () => {
+  try {
+    // Build the all entities export data
+    const exportBuilder = new ExportDataBuilder()
+    const exportData = await exportBuilder.buildExportData(ExportType.ALL_ENTITIES)
+    
+    // Format as markdown
+    const markdownFormatter = new MarkdownFormatter()
+    const formattedContent = await markdownFormatter.format(exportData)
+    
+    // Create and download the file
+    const blob = new Blob([formattedContent.content as string], { 
+      type: formattedContent.mimeType 
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = formattedContent.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    // Show success message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `✅ All entities for "${entitiesStore.currentIdea?.title}" have been exported to markdown and downloaded! The file contains all ${entitiesStore.ideas.length + entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length + entitiesStore.jobs.length + entitiesStore.pains.length + entitiesStore.gains.length} entities and ${entitiesStore.relationships.length} relationships.`
+    })
+    
+    nextTick(() => scrollToBottom())
+    
+  } catch (error) {
+    console.error('Export failed:', error)
+    
+    // Show error message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `❌ Sorry, there was an error exporting all entities. Please try again.`
+    })
+    
+    nextTick(() => scrollToBottom())
+  }
+}
+
+const saveToLocalStorage = async () => {
+  try {
+    // Build the all entities export data
+    const exportBuilder = new ExportDataBuilder()
+    const exportData = await exportBuilder.buildExportData(ExportType.ALL_ENTITIES)
+    
+    // Format as JSON
+    const jsonFormatter = new JSONFormatter()
+    const formattedContent = await jsonFormatter.format(exportData)
+    
+    // Save to local storage
+    const storageKey = `ideanation_idea_${entitiesStore.currentIdea?.id || 'default'}`
+    const jsonData = formattedContent.content as string
+    
+    // Store the JSON data
+    localStorage.setItem(storageKey, jsonData)
+    
+    // Also store a metadata entry for easy retrieval
+    const metadata = {
+      id: entitiesStore.currentIdea?.id,
+      title: entitiesStore.currentIdea?.title,
+      savedAt: new Date().toISOString(),
+      entityCount: entitiesStore.ideas.length + entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length + entitiesStore.jobs.length + entitiesStore.pains.length + entitiesStore.gains.length,
+      relationshipCount: entitiesStore.relationships.length
+    }
+    
+    localStorage.setItem(`${storageKey}_metadata`, JSON.stringify(metadata))
+    
+    // Show success message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `💾 Your idea "${entitiesStore.currentIdea?.title}" has been saved to local storage! The save includes ${metadata.entityCount} entities and ${metadata.relationshipCount} relationships. You can retrieve it later using the storage key: "${storageKey}"`
+    })
+    
+    nextTick(() => scrollToBottom())
+    
+  } catch (error) {
+    console.error('Save to local storage failed:', error)
+    
+    // Show error message
+    chatStore.addMessage({
+      type: 'ai',
+      content: `❌ Sorry, there was an error saving to local storage. Please try again.`
+    })
+    
+    nextTick(() => scrollToBottom())
+  }
+}
+
+const loadFromLocalStorage = async () => {
+  try {
+    // Find saved ideas in local storage
+    const savedIdeas: Array<{key: string, metadata: any}> = []
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('ideanation_idea_') && key.endsWith('_metadata')) {
+        const metadataStr = localStorage.getItem(key)
+        if (metadataStr) {
+          try {
+            const metadata = JSON.parse(metadataStr)
+            const dataKey = key.replace('_metadata', '')
+            savedIdeas.push({ key: dataKey, metadata })
+          } catch (e) {
+            console.warn('Invalid metadata for key:', key)
+          }
+        }
+      }
+    }
+    
+    if (savedIdeas.length === 0) {
+      chatStore.addMessage({
+        type: 'ai',
+        content: `📭 No saved ideas found in local storage. Save an idea first using the "Save to Storage" button.`
+      })
+      return
+    }
+    
+    // If there's only one saved idea, load it directly
+    if (savedIdeas.length === 1) {
+      await loadSpecificIdea(savedIdeas[0].key)
+      return
+    }
+    
+    // If multiple saved ideas, show a selection message
+    const ideaList = savedIdeas.map((idea, index) => 
+      `${index + 1}. "${idea.metadata.title}" (${idea.metadata.entityCount} entities, saved ${new Date(idea.metadata.savedAt).toLocaleDateString()})`
+    ).join('\n')
+    
+    chatStore.addMessage({
+      type: 'ai',
+      content: `📚 Found ${savedIdeas.length} saved ideas:\n\n${ideaList}\n\nTo load a specific idea, type "load idea [number]" (e.g., "load idea 1")`
+    })
+    
+    // Store the saved ideas for reference
+    ;(window as any).savedIdeas = savedIdeas
+    
+  } catch (error) {
+    console.error('Load from local storage failed:', error)
+    
+    chatStore.addMessage({
+      type: 'ai',
+      content: `❌ Sorry, there was an error loading from local storage. Please try again.`
+    })
+  }
   
-  // Show success message
-  chatStore.addMessage({
-    type: 'ai',
-    content: `Your idea "${entitiesStore.currentIdea?.title}" has been saved! You have ${entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length} entities and ${entitiesStore.relationships.length} relationships.`
-  })
+  nextTick(() => scrollToBottom())
+}
+
+const loadSpecificIdea = async (storageKey: string) => {
+  try {
+    const jsonData = localStorage.getItem(storageKey)
+    if (!jsonData) {
+      throw new Error('No data found for this key')
+    }
+    
+    const exportData = JSON.parse(jsonData)
+    
+    // Clear current entities
+    entitiesStore.ideas = []
+    entitiesStore.problems = []
+    entitiesStore.customers = []
+    entitiesStore.products = []
+    entitiesStore.features = []
+    entitiesStore.jobs = []
+    entitiesStore.pains = []
+    entitiesStore.gains = []
+    entitiesStore.relationships = []
+    
+    // Load ideas
+    if (exportData.content.ideas) {
+      exportData.content.ideas.forEach((idea: any) => {
+        const newIdea = entitiesStore.createIdea({
+          title: idea.title,
+          description: idea.description,
+          identifier: idea.identifier
+        })
+        // Set as current idea
+        entitiesStore.setCurrentIdea(newIdea)
+      })
+    }
+    
+    // Load problems
+    if (exportData.content.problems) {
+      exportData.content.problems.forEach((problem: any) => {
+        entitiesStore.createProblem({
+          title: problem.title,
+          description: problem.description
+        })
+      })
+    }
+    
+    // Load customers
+    if (exportData.content.customers) {
+      exportData.content.customers.forEach((customer: any) => {
+        entitiesStore.createCustomer({
+          title: customer.title,
+          givenName: customer.givenName,
+          familyName: customer.familyName,
+          role: customer.role,
+          organization: customer.organization
+        })
+      })
+    }
+    
+    // Load products
+    if (exportData.content.products) {
+      exportData.content.products.forEach((product: any) => {
+        entitiesStore.createProduct({
+          title: product.title,
+          description: product.description
+        })
+      })
+    }
+    
+    // Load features
+    if (exportData.content.features) {
+      exportData.content.features.forEach((feature: any) => {
+        entitiesStore.createFeature({
+          title: feature.title,
+          description: feature.description,
+          type: feature.type,
+          status: feature.status
+        })
+      })
+    }
+    
+    // Load jobs
+    if (exportData.content.jobs) {
+      exportData.content.jobs.forEach((job: any) => {
+        entitiesStore.createJob({
+          title: job.title,
+          description: job.description
+        })
+      })
+    }
+    
+    // Load pains
+    if (exportData.content.pains) {
+      exportData.content.pains.forEach((pain: any) => {
+        entitiesStore.createPain({
+          title: pain.title,
+          description: pain.description
+        })
+      })
+    }
+    
+    // Load gains
+    if (exportData.content.gains) {
+      exportData.content.gains.forEach((gain: any) => {
+        entitiesStore.createGain({
+          title: gain.title,
+          description: gain.description
+        })
+      })
+    }
+    
+    // Load relationships
+    if (exportData.content.relationships) {
+      exportData.content.relationships.forEach((relationship: any) => {
+        entitiesStore.createRelationship({
+          sourceId: relationship.sourceId,
+          targetId: relationship.targetId,
+          relationshipType: relationship.relationshipType
+        })
+      })
+    }
+    
+    const metadata = exportData.content.statistics
+    chatStore.addMessage({
+      type: 'ai',
+      content: `✅ Successfully loaded "${exportData.title}" from local storage! Loaded ${metadata.totalIdeas + metadata.totalProblems + metadata.totalCustomers + metadata.totalProducts + metadata.totalFeatures + metadata.totalJobs + metadata.totalPains + metadata.totalGains} entities and ${metadata.totalRelationships} relationships.`
+    })
+    
+  } catch (error) {
+    console.error('Load specific idea failed:', error)
+    
+    chatStore.addMessage({
+      type: 'ai',
+      content: `❌ Sorry, there was an error loading the idea. Please try again.`
+    })
+  }
+  
+  nextTick(() => scrollToBottom())
 }
 
 // Watch for new messages and scroll to bottom
