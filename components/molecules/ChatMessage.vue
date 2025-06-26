@@ -9,6 +9,15 @@
         {{ message.content }}
       </div>
       
+      <!-- Entity Creation Indicator -->
+      <div v-if="message.entityCreated" class="entity-created">
+        <div class="entity-badge">
+          <span class="entity-icon">{{ getEntityIcon(message.entityCreated.type) }}</span>
+          <span class="entity-title">{{ message.entityCreated.title }}</span>
+          <span class="entity-type">{{ formatEntityType(message.entityCreated.type) }}</span>
+        </div>
+      </div>
+      
       <div v-if="message.suggestions && message.suggestions.length" class="chat-message__suggestions">
         <h5>Suggestions:</h5>
         <div class="suggestions-list">
@@ -36,6 +45,11 @@ interface ChatMessage {
   type: 'user' | 'ai'
   content: string
   timestamp: Date
+  entityCreated?: {
+    type: string
+    title: string
+    id: string
+  }
   suggestions?: Array<{
     id: string
     title: string
@@ -56,6 +70,38 @@ const formatTime = (date: Date): string => {
     hour: '2-digit', 
     minute: '2-digit' 
   })
+}
+
+const getEntityIcon = (entityType: string): string => {
+  const icons: Record<string, string> = {
+    problem: '⚠️',
+    customer: '👤',
+    idea: '💡',
+    product: '📦',
+    feature: '⚙️',
+    job: '⚡',
+    pain: '😤',
+    gain: '📈',
+    customerJourney: '🗺️',
+    customerJourneyStep: '👣'
+  }
+  return icons[entityType] || '📝'
+}
+
+const formatEntityType = (entityType: string): string => {
+  const typeNames: Record<string, string> = {
+    problem: 'Problem',
+    customer: 'Customer',
+    idea: 'Idea',
+    product: 'Product',
+    feature: 'Feature',
+    job: 'Job',
+    pain: 'Pain',
+    gain: 'Gain',
+    customerJourney: 'Customer Journey',
+    customerJourneyStep: 'Journey Step'
+  }
+  return typeNames[entityType] || entityType
 }
 </script>
 
@@ -127,6 +173,42 @@ const formatTime = (date: Date): string => {
   right: -16px;
   top: 12px;
   border-left-color: var(--color-primary);
+}
+
+.entity-created {
+  margin-top: 8px;
+}
+
+.entity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  transform: rotate(-0.1deg);
+}
+
+.chat-message--user .entity-badge {
+  transform: rotate(0.1deg);
+}
+
+.entity-icon {
+  font-size: 0.9rem;
+}
+
+.entity-title {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.entity-type {
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .chat-message__suggestions {

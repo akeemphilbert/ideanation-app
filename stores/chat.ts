@@ -1,11 +1,17 @@
 import { defineStore } from 'pinia'
 import { ApiService } from '~/services/api'
+import { useEntityParser } from '~/composables/useEntityParser'
 
 export interface ChatMessage {
   id: string
   type: 'user' | 'ai'
   content: string
   timestamp: Date
+  entityCreated?: {
+    type: string
+    title: string
+    id: string
+  }
   suggestions?: Array<{
     id: string
     title: string
@@ -29,7 +35,48 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const sendMessage = async (content: string) => {
-    // Add user message
+    const { processEntityText, looksLikeEntityCommand, getEntityHelp } = useEntityParser()
+    
+    // Check if this is an entity creation command
+    const entityResult = processEntityText(content)
+    
+    if (entityResult.wasCreated && entityResult.entity && entityResult.parsed) {
+      // Add user message with entity creation info
+      addMessage({
+        type: 'user',
+        content,
+        entityCreated: {
+          type: entityResult.parsed.type,
+          title: entityResult.parsed.title,
+          id: entityResult.entity.id
+        }
+      })
+
+      // Add AI confirmation message
+      addMessage({
+        type: 'ai',
+        content: `Great! I've created a new ${entityResult.parsed.type} called "${entityResult.parsed.title}" and added it to your idea canvas. ${getRelationshipMessage(entityResult.parsed.type)}`
+      })
+
+      return
+    }
+
+    // If it looks like an entity command but failed, provide help
+    if (looksLikeEntityCommand(content) && !entityResult.wasCreated) {
+      addMessage({
+        type: 'user',
+        content
+      })
+
+      addMessage({
+        type: 'ai',
+        content: `I noticed you're trying to create an entity, but there was an issue. ${getEntityHelp()}. Make sure to include some text after the colon!`
+      })
+
+      return
+    }
+
+    // Regular chat message processing
     addMessage({
       type: 'user',
       content
@@ -57,6 +104,27 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  const getRelationshipMessage = (entityType: string): string => {
+    switch (entityType) {
+      case 'problem':
+        return "I've linked it to your current idea."
+      case 'customer':
+        return "I've linked it to your current idea."
+      case 'product':
+        return "I've linked it as an MVP for your current idea."
+      case 'feature':
+        return "I've linked it to your product."
+      case 'job':
+        return "I've linked it to your customers."
+      case 'pain':
+        return "I've linked it to your customers as something they experience."
+      case 'gain':
+        return "I've linked it to your customers as something they desire."
+      default:
+        return "I've added it to your canvas."
+    }
+  }
+
   const generateAIResponse = async (userMessage: string): Promise<{
     content: string
     suggestions?: Array<{
@@ -69,9 +137,16 @@ export const useChatStore = defineStore('chat', () => {
     // Mock AI responses based on keywords
     const lowerMessage = userMessage.toLowerCase()
     
+    if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
+      const { getEntityHelp } = useEntityParser()
+      return {
+        content: `I can help you build your startup idea! ${getEntityHelp()}. You can also ask me about problems, customers, features, or how to connect different components.`
+      }
+    }
+    
     if (lowerMessage.includes('problem') || lowerMessage.includes('issue')) {
       return {
-        content: "Great question about problems! Understanding the core problem is crucial for any startup. I can help you identify pain points your customers face.",
+        content: "Understanding problems is crucial for any startup. What specific problems are you trying to solve? You can create a problem by typing 'problem: your problem description'.",
         suggestions: [
           {
             id: 'sug-1',
@@ -90,7 +165,7 @@ export const useChatStore = defineStore('chat', () => {
     
     if (lowerMessage.includes('customer') || lowerMessage.includes('user')) {
       return {
-        content: "Understanding your customers is key! Let me help you define who would benefit most from your solution.",
+        content: "Understanding your customers is key! Who would benefit most from your solution? Try typing 'customer: your customer description' to add them.",
         suggestions: [
           {
             id: 'sug-2',
@@ -109,7 +184,7 @@ export const useChatStore = defineStore('chat', () => {
     
     if (lowerMessage.includes('feature') || lowerMessage.includes('functionality')) {
       return {
-        content: "Features should directly address your customers' pain points. What specific functionality would provide the most value?",
+        content: "Features should directly address your customers' pain points. What specific functionality would provide the most value? Use 'feature: your feature description' to add one.",
         suggestions: [
           {
             id: 'sug-3',
@@ -126,28 +201,27 @@ export const useChatStore = defineStore('chat', () => {
       }
     }
     
-    if (lowerMessage.includes('solution') || lowerMessage.includes('solve')) {
+    if (lowerMessage.includes('pain')) {
       return {
-        content: "Your solution should elegantly address the problems you've identified. How might we connect the dots between problems and solutions?",
-        suggestions: [
-          {
-            id: 'sug-4',
-            title: 'Connect Problem to Solution',
-            type: 'relationship',
-            data: {
-              source: 'comp-1', // This would be dynamically determined
-              target: 'comp-3',
-              relationship: 'addresses',
-              strength: 0.9
-            }
-          }
-        ]
+        content: "Pain points are what drive customers to seek solutions. What frustrations or challenges do your customers face? Try 'pain: description of the pain point'."
+      }
+    }
+    
+    if (lowerMessage.includes('gain')) {
+      return {
+        content: "Gain creators are the benefits your solution provides. What positive outcomes do customers want? Use 'gain: description of the gain' to add one."
+      }
+    }
+    
+    if (lowerMessage.includes('job')) {
+      return {
+        content: "Jobs to be done represent what customers are trying to accomplish. What tasks or goals do they have? Try 'job: description of the job'."
       }
     }
     
     // Default response
     return {
-      content: "That's an interesting point! Can you tell me more about what specific aspect of your idea you'd like to explore? I can help you break it down into problems, customers, solutions, or features."
+      content: "That's interesting! I can help you structure your idea by creating different components. Try typing things like 'problem: your problem', 'customer: your customer', or 'feature: your feature' to quickly add them to your canvas."
     }
   }
 

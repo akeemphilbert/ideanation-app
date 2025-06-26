@@ -15,12 +15,15 @@
           <div v-if="chatStore.messages.length === 0" class="chat-welcome">
             <div class="welcome-message">
               <p class="handwritten">👋 Hi! I'm here to help you structure your startup idea.</p>
-              <p>Try asking me about:</p>
+              <p>Try creating entities by typing:</p>
               <ul>
-                <li>What problems does your idea solve?</li>
-                <li>Who are your target customers?</li>
-                <li>What features should you prioritize?</li>
+                <li><strong>problem:</strong> your problem description</li>
+                <li><strong>customer:</strong> your customer description</li>
+                <li><strong>feature:</strong> your feature description</li>
+                <li><strong>pain:</strong> customer pain point</li>
+                <li><strong>gain:</strong> customer gain</li>
               </ul>
+              <p class="help-note">Or ask me questions about your idea!</p>
             </div>
           </div>
           
@@ -46,7 +49,7 @@
             <input
               v-model="chatMessage"
               type="text"
-              placeholder="Ask me about your idea..."
+              placeholder="Type 'problem: your problem' or ask me anything..."
               class="message-input handwritten"
               :disabled="chatStore.isTyping"
               @focus="showQuickSuggestions = true"
@@ -71,6 +74,17 @@
               {{ suggestion }}
             </button>
           </div>
+          
+          <div class="entity-help" v-if="showEntityHelp">
+            <div class="help-content">
+              <h4>Quick Entity Creation:</h4>
+              <div class="entity-examples">
+                <span v-for="prefix in entityPrefixes" :key="prefix" class="prefix-example">
+                  {{ prefix }}:
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -79,6 +93,17 @@
         <div class="graph-header">
           <h2 class="handwritten">Your Idea Canvas</h2>
           <div class="graph-controls">
+            <div class="entity-stats">
+              <span class="stat-item">
+                {{ entitiesStore.problems.length }} Problems
+              </span>
+              <span class="stat-item">
+                {{ entitiesStore.customers.length }} Customers
+              </span>
+              <span class="stat-item">
+                {{ entitiesStore.features.length }} Features
+              </span>
+            </div>
             <button class="btn-sketch" @click="addNewComponent">
               Add Component
             </button>
@@ -90,8 +115,8 @@
         
         <div class="graph-container" ref="graphContainer">
           <GraphVisualization
-            :nodes="ideaStore.currentIdea.components"
-            :edges="ideaStore.currentIdea.relationships"
+            :nodes="graphNodes"
+            :edges="graphEdges"
             @node-click="handleNodeClick"
             @node-hover="handleNodeHover"
           />
@@ -110,8 +135,11 @@
 </template>
 
 <script setup lang="ts">
+import { useEntityParser } from '~/composables/useEntityParser'
+
 const ideaStore = useIdeaStore()
 const chatStore = useChatStore()
+const entitiesStore = useEntitiesStore()
 const graphContainer = ref<HTMLElement>()
 const messagesContainer = ref<HTMLElement>()
 
@@ -119,21 +147,150 @@ const showComponentModal = ref(false)
 const selectedComponent = ref(null)
 const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
+const showEntityHelp = ref(false)
+
+const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
+const entityPrefixes = getAvailablePrefixes()
 
 const quickSuggestions = [
+  "problem: not having a place for pets to stay when I'm on vacation",
+  "customer: busy pet owners who travel frequently",
+  "feature: real-time pet monitoring",
   "What problems does this solve?",
-  "Who are the customers?",
-  "Add a new feature",
-  "Connect these components",
-  "What's missing?"
+  "How do these components connect?"
 ]
+
+// Convert entities to graph format
+const graphNodes = computed(() => {
+  const nodes: any[] = []
+  
+  // Add problems
+  entitiesStore.problems.forEach(problem => {
+    nodes.push({
+      id: problem.id,
+      title: problem.title,
+      type: 'problem',
+      description: problem.description
+    })
+  })
+  
+  // Add customers
+  entitiesStore.customers.forEach(customer => {
+    nodes.push({
+      id: customer.id,
+      title: customer.title || customer.fullName,
+      type: 'customer',
+      description: customer.description
+    })
+  })
+  
+  // Add features
+  entitiesStore.features.forEach(feature => {
+    nodes.push({
+      id: feature.id,
+      title: feature.title,
+      type: 'feature',
+      description: feature.description
+    })
+  })
+  
+  // Add other entities...
+  entitiesStore.products.forEach(product => {
+    nodes.push({
+      id: product.id,
+      title: product.title,
+      type: 'solution',
+      description: product.description
+    })
+  })
+  
+  entitiesStore.jobs.forEach(job => {
+    nodes.push({
+      id: job.id,
+      title: job.title,
+      type: 'job',
+      description: job.description
+    })
+  })
+  
+  entitiesStore.pains.forEach(pain => {
+    nodes.push({
+      id: pain.id,
+      title: pain.title,
+      type: 'pain',
+      description: pain.description
+    })
+  })
+  
+  entitiesStore.gains.forEach(gain => {
+    nodes.push({
+      id: gain.id,
+      title: gain.title,
+      type: 'gain',
+      description: gain.description
+    })
+  })
+  
+  return nodes
+})
+
+const graphEdges = computed(() => {
+  return entitiesStore.relationships.map(rel => ({
+    source: rel.sourceId,
+    target: rel.targetId,
+    relationship: rel.relationshipType
+  }))
+})
 
 onMounted(() => {
   // Initialize with sample data if empty
-  if (ideaStore.currentIdea.components.length === 0) {
-    ideaStore.initializeSampleIdea()
+  if (entitiesStore.problems.length === 0 && entitiesStore.customers.length === 0) {
+    initializeSampleData()
   }
 })
+
+const initializeSampleData = () => {
+  // Create sample entities
+  const problem = entitiesStore.createProblem({
+    title: 'Pet owners need reliable pet care when traveling',
+    description: 'Many pet owners struggle to find trustworthy, convenient pet care options when they travel'
+  })
+  
+  const customer = entitiesStore.createCustomer({
+    title: 'Frequent Business Travelers with Pets',
+    description: 'Professionals who travel regularly for work and own pets',
+    givenName: 'Sarah',
+    familyName: 'Johnson',
+    role: 'Sales Manager',
+    organization: 'Tech Corp'
+  })
+  
+  const feature = entitiesStore.createFeature({
+    title: 'Pet Sitter Matching',
+    description: 'Algorithm to match pet owners with qualified pet sitters in their area'
+  })
+  
+  // Create sample idea and set as current
+  const idea = entitiesStore.createIdea({
+    title: 'PetCare Connect',
+    description: 'Platform connecting pet owners with trusted pet sitters'
+  })
+  
+  entitiesStore.setCurrentIdea(idea)
+  
+  // Create relationships
+  entitiesStore.createRelationship({
+    sourceId: problem.id,
+    targetId: idea.id,
+    relationshipType: 'belongs'
+  })
+  
+  entitiesStore.createRelationship({
+    sourceId: customer.id,
+    targetId: idea.id,
+    relationshipType: 'belongs'
+  })
+}
 
 const addNewComponent = () => {
   selectedComponent.value = null
@@ -146,7 +303,6 @@ const handleNodeClick = (node: any) => {
 }
 
 const handleNodeHover = (node: any) => {
-  // Show tooltip or highlight connections
   console.log('Hovering node:', node)
 }
 
@@ -165,17 +321,12 @@ const handleChatMessage = async () => {
   const message = chatMessage.value.trim()
   chatMessage.value = ''
   showQuickSuggestions.value = false
+  showEntityHelp.value = false
   
   await chatStore.sendMessage(message)
   
   // Scroll to bottom after message is sent
   nextTick(() => scrollToBottom())
-  
-  // Process AI suggestions and update idea
-  const lastMessage = chatStore.messages[chatStore.messages.length - 1]
-  if (lastMessage && lastMessage.type === 'ai' && lastMessage.suggestions) {
-    ideaStore.processSuggestions(lastMessage.suggestions)
-  }
 }
 
 const handleSuggestionApply = (suggestion: any) => {
@@ -200,7 +351,6 @@ const selectSuggestion = (suggestion: string) => {
 }
 
 const hideQuickSuggestions = () => {
-  // Delay hiding suggestions to allow clicking
   setTimeout(() => {
     showQuickSuggestions.value = false
   }, 200)
@@ -213,13 +363,23 @@ const scrollToBottom = () => {
 }
 
 const saveIdea = async () => {
-  await ideaStore.saveCurrentIdea()
-  // Show success message
+  // In a real app, this would save to backend
+  console.log('Saving idea with entities:', {
+    problems: entitiesStore.problems.length,
+    customers: entitiesStore.customers.length,
+    features: entitiesStore.features.length,
+    relationships: entitiesStore.relationships.length
+  })
 }
 
 // Watch for new messages and scroll to bottom
 watch(() => chatStore.messages.length, () => {
   nextTick(() => scrollToBottom())
+})
+
+// Watch chat input for entity commands
+watch(chatMessage, (newValue) => {
+  showEntityHelp.value = looksLikeEntityCommand(newValue)
 })
 
 // SEO
@@ -321,12 +481,23 @@ useHead({
 
 .welcome-message ul {
   text-align: left;
-  margin: 8px 0 0 0;
+  margin: 8px 0;
   padding-left: 20px;
 }
 
 .welcome-message li {
   margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.welcome-message strong {
+  color: var(--color-primary);
+  font-family: var(--font-handwritten);
+}
+
+.help-note {
+  font-style: italic;
+  color: var(--color-secondary);
   font-size: 0.9rem;
 }
 
@@ -434,6 +605,37 @@ useHead({
   transform: rotate(-0.1deg);
 }
 
+.entity-help {
+  margin-top: 8px;
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.help-content h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-family: var(--font-handwritten);
+}
+
+.entity-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.prefix-example {
+  background: white;
+  border: 1px solid #4caf50;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: var(--color-primary);
+}
+
 /* Graph Section Styles */
 .graph-section {
   display: flex;
@@ -457,7 +659,23 @@ useHead({
 
 .graph-controls {
   display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.entity-stats {
+  display: flex;
   gap: 10px;
+}
+
+.stat-item {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  font-family: var(--font-handwritten);
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
 }
 
 .graph-container {
@@ -521,6 +739,11 @@ useHead({
   
   .graph-container {
     transform: rotate(0deg);
+  }
+  
+  .entity-stats {
+    flex-direction: column;
+    gap: 4px;
   }
 }
 </style>
