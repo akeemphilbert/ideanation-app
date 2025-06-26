@@ -96,14 +96,35 @@
             {{ entitiesStore.currentIdea?.title || 'Your Idea Canvas' }}
           </h2>
           <div class="graph-controls" v-if="entitiesStore.currentIdea">
-            <div class="selection-info" v-if="selectedNodeId">
-              <span class="selected-node">
-                Selected: {{ getSelectedNodeTitle() }}
-              </span>
-              <button class="btn-sketch btn-small" @click="clearSelection">
-                Clear
-              </button>
+            <!-- Selection Info -->
+            <div class="selection-info" v-if="selectedNodeIds.length > 0">
+              <div class="selected-nodes">
+                <span class="selection-label">Selected:</span>
+                <div class="selected-list">
+                  <span 
+                    v-for="nodeId in selectedNodeIds" 
+                    :key="nodeId"
+                    class="selected-node"
+                  >
+                    {{ getNodeTitle(nodeId) }}
+                  </span>
+                </div>
+              </div>
+              <div class="selection-actions">
+                <button 
+                  v-if="selectedNodeIds.length === 2" 
+                  class="btn-sketch btn-link"
+                  @click="showLinkModal = true"
+                >
+                  🔗 Link Nodes
+                </button>
+                <button class="btn-sketch btn-small" @click="clearSelection">
+                  Clear
+                </button>
+              </div>
             </div>
+            
+            <!-- Entity Stats -->
             <div class="entity-stats">
               <span class="stat-item">
                 {{ entitiesStore.problems.length }} Problems
@@ -121,12 +142,16 @@
                 {{ entitiesStore.relationships.length }} Links
               </span>
             </div>
-            <button class="btn-sketch" @click="addNewComponent">
-              Add Component
-            </button>
-            <button class="btn-sketch" @click="saveIdea">
-              Save Idea
-            </button>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button class="btn-sketch" @click="addNewComponent">
+                Add Component
+              </button>
+              <button class="btn-sketch" @click="saveIdea">
+                Save Idea
+              </button>
+            </div>
           </div>
         </div>
         
@@ -161,7 +186,7 @@
             v-else
             :nodes="graphNodes"
             :edges="graphEdges"
-            :selectedNodeId="selectedNodeId"
+            :selectedNodeIds="selectedNodeIds"
             @node-click="handleNodeClick"
             @node-hover="handleNodeHover"
             @node-select="handleNodeSelect"
@@ -177,12 +202,22 @@
       @save="handleComponentSave"
       @close="showComponentModal = false"
     />
+    
+    <!-- Link Creation Modal -->
+    <LinkModal
+      v-if="showLinkModal"
+      :sourceNode="getNodeById(selectedNodeIds[0])"
+      :targetNode="getNodeById(selectedNodeIds[1])"
+      @save="handleLinkSave"
+      @close="showLinkModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useEntityParser } from '~/composables/useEntityParser'
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
+import LinkModal from '~/components/molecules/LinkModal.vue'
 
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
@@ -190,8 +225,9 @@ const graphContainer = ref<HTMLElement>()
 const messagesContainer = ref<HTMLElement>()
 
 const showComponentModal = ref(false)
+const showLinkModal = ref(false)
 const selectedComponent = ref(null)
-const selectedNodeId = ref<string | null>(null)
+const selectedNodeIds = ref<string[]>([])
 const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
@@ -312,30 +348,35 @@ const getInputPlaceholder = () => {
     return "What's your startup idea called?"
   }
   
-  if (selectedNodeId.value) {
-    const selectedNode = graphNodes.value.find(n => n.id === selectedNodeId.value)
+  if (selectedNodeIds.value.length === 1) {
+    const selectedNode = graphNodes.value.find(n => n.id === selectedNodeIds.value[0])
     if (selectedNode) {
       return `Add entity linked to "${selectedNode.title}" (e.g., problem: your problem)`
     }
+  } else if (selectedNodeIds.value.length === 2) {
+    return "Click 'Link Nodes' to connect the selected entities"
   }
   
   return "Type 'problem: your problem' or ask me anything..."
 }
 
-const getSelectedNodeTitle = () => {
-  if (!selectedNodeId.value) return ''
-  const node = graphNodes.value.find(n => n.id === selectedNodeId.value)
+const getNodeTitle = (nodeId: string) => {
+  const node = graphNodes.value.find(n => n.id === nodeId)
   return node ? node.title : ''
 }
 
+const getNodeById = (nodeId: string) => {
+  return graphNodes.value.find(n => n.id === nodeId) || null
+}
+
 const clearSelection = () => {
-  selectedNodeId.value = null
+  selectedNodeIds.value = []
 }
 
 const getTargetNodeForNewEntity = (): string | null => {
-  // 1. If a node is selected, use that
-  if (selectedNodeId.value) {
-    return selectedNodeId.value
+  // 1. If exactly one node is selected, use that
+  if (selectedNodeIds.value.length === 1) {
+    return selectedNodeIds.value[0]
   }
   
   // 2. If only one node exists, use that
@@ -460,8 +501,36 @@ const handleNodeClick = (node: any) => {
   }
 }
 
-const handleNodeSelect = (nodeId: string | null) => {
-  selectedNodeId.value = nodeId
+const handleNodeSelect = (nodeId: string | null, isMultiSelect: boolean = false) => {
+  if (!nodeId) {
+    selectedNodeIds.value = []
+    return
+  }
+  
+  if (isMultiSelect) {
+    // Multi-select mode (Ctrl/Cmd + click)
+    const index = selectedNodeIds.value.indexOf(nodeId)
+    if (index > -1) {
+      // Deselect if already selected
+      selectedNodeIds.value.splice(index, 1)
+    } else {
+      // Add to selection (max 2 for linking)
+      if (selectedNodeIds.value.length < 2) {
+        selectedNodeIds.value.push(nodeId)
+      } else {
+        // Replace oldest selection
+        selectedNodeIds.value.shift()
+        selectedNodeIds.value.push(nodeId)
+      }
+    }
+  } else {
+    // Single select mode
+    if (selectedNodeIds.value.includes(nodeId)) {
+      selectedNodeIds.value = []
+    } else {
+      selectedNodeIds.value = [nodeId]
+    }
+  }
 }
 
 const handleNodeHover = (node: any) => {
@@ -540,6 +609,34 @@ const handleComponentSave = (component: any) => {
   showComponentModal.value = false
 }
 
+const handleLinkSave = (linkData: { relationshipType: string, description?: string }) => {
+  if (selectedNodeIds.value.length !== 2) return
+  
+  const [sourceId, targetId] = selectedNodeIds.value
+  
+  // Create the relationship
+  entitiesStore.createRelationship({
+    sourceId,
+    targetId,
+    relationshipType: linkData.relationshipType
+  })
+  
+  // Add success message to chat
+  const sourceNode = getNodeById(sourceId)
+  const targetNode = getNodeById(targetId)
+  
+  chatStore.addMessage({
+    type: 'ai',
+    content: `Perfect! I've created a "${linkData.relationshipType}" relationship between "${sourceNode?.title}" and "${targetNode?.title}".`
+  })
+  
+  // Clear selection and close modal
+  selectedNodeIds.value = []
+  showLinkModal.value = false
+  
+  nextTick(() => scrollToBottom())
+}
+
 const handleChatMessage = async () => {
   if (!chatMessage.value.trim() || chatStore.isTyping) return
   
@@ -548,7 +645,9 @@ const handleChatMessage = async () => {
   showQuickSuggestions.value = false
   showEntityHelp.value = false
   
-  await chatStore.sendMessage(message)
+  // Pass the selected node for context
+  const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
+  await chatStore.sendMessage(message, targetNodeId)
   
   // Scroll to bottom after message is sent
   nextTick(() => scrollToBottom())
@@ -897,44 +996,88 @@ useHead({
 .graph-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
   padding: 0 10px;
+  gap: 15px;
 }
 
 .graph-header h2 {
   margin: 0;
   font-size: 1.8rem;
   color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .graph-controls {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
+/* Selection Info Styles */
 .selection-info {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   background: #e8f5e8;
   border: 1px solid #4caf50;
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: 8px;
 }
 
-.selected-node {
+.selected-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selection-label {
   font-size: 0.8rem;
   color: var(--color-primary);
   font-family: var(--font-handwritten);
   font-weight: 600;
 }
 
+.selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.selected-node {
+  background: white;
+  border: 1px solid #4caf50;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: var(--color-primary);
+  font-family: var(--font-handwritten);
+}
+
+.selection-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-link {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.btn-link:hover {
+  background: #45a049;
+  border-color: #45a049;
+}
+
+/* Entity Stats and Action Buttons */
 .entity-stats {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -946,6 +1089,12 @@ useHead({
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid #ddd;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .graph-container {
@@ -1056,6 +1205,16 @@ useHead({
   .canvas-layout {
     grid-template-columns: 300px 1fr;
   }
+  
+  .graph-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .graph-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1072,15 +1231,18 @@ useHead({
     transform: rotate(0deg);
   }
   
+  .graph-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
   .entity-stats {
     flex-direction: column;
     gap: 4px;
   }
   
-  .graph-controls {
+  .action-buttons {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
   }
 }
 </style>

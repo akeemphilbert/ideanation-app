@@ -9,6 +9,19 @@
       <button class="btn-sketch btn-small" @click="zoomOut">-</button>
       <button class="btn-sketch btn-small" @click="resetZoom">Reset</button>
     </div>
+    
+    <!-- Selection Instructions -->
+    <div class="selection-instructions" v-if="selectedNodeIds.length === 0">
+      <div class="instruction-text">
+        💡 <strong>Click</strong> to select • <strong>Ctrl+Click</strong> for multi-select • <strong>Double-click</strong> to edit
+      </div>
+    </div>
+    
+    <div class="selection-instructions" v-else-if="selectedNodeIds.length === 1">
+      <div class="instruction-text">
+        ✨ <strong>Ctrl+Click</strong> another node to link them together
+      </div>
+    </div>
   </div>
 </template>
 
@@ -35,10 +48,13 @@ interface Link {
 interface Props {
   nodes: Node[]
   edges: Array<{ source: string, target: string, relationship: string }>
-  selectedNodeId?: string | null
+  selectedNodeIds?: string[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  selectedNodeIds: () => []
+})
+
 const emit = defineEmits(['node-click', 'node-hover', 'node-select'])
 
 const container = ref<HTMLElement>()
@@ -56,9 +72,9 @@ watch(() => [props.nodes, props.edges], () => {
   updateGraph()
 }, { deep: true })
 
-watch(() => props.selectedNodeId, () => {
+watch(() => props.selectedNodeIds, () => {
   updateNodeSelection()
-})
+}, { deep: true })
 
 const initializeGraph = () => {
   if (!svgRef.value || !container.value) return
@@ -146,17 +162,17 @@ const updateGraph = () => {
     .on('click', (event, d) => {
       event.stopPropagation()
       
-      // Toggle selection
-      if (props.selectedNodeId === d.id) {
-        emit('node-select', null)
-      } else {
-        emit('node-select', d.id)
+      // Check for multi-select (Ctrl/Cmd + click)
+      const isMultiSelect = event.ctrlKey || event.metaKey
+      
+      // Handle double-click for editing
+      if (event.detail === 2) {
+        emit('node-click', d)
+        return
       }
       
-      // Also emit the click event for editing
-      if (event.detail === 2) { // Double click for edit
-        emit('node-click', d)
-      }
+      // Handle selection
+      emit('node-select', d.id, isMultiSelect)
     })
     .on('mouseenter', (event, d) => {
       emit('node-hover', d)
@@ -170,13 +186,23 @@ const updateGraph = () => {
     .attr('stroke-width', 2)
     .attr('class', 'node-circle')
 
-  // Add selection ring
+  // Add selection ring (primary selection - green)
   node.append('circle')
     .attr('r', (d) => getNodeRadius(d) + 5)
     .attr('fill', 'none')
     .attr('stroke', '#4caf50')
     .attr('stroke-width', 3)
-    .attr('class', 'selection-ring')
+    .attr('class', 'selection-ring-primary')
+    .style('opacity', 0)
+
+  // Add secondary selection ring (multi-select - blue)
+  node.append('circle')
+    .attr('r', (d) => getNodeRadius(d) + 8)
+    .attr('fill', 'none')
+    .attr('stroke', '#2196f3')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray', '4,4')
+    .attr('class', 'selection-ring-secondary')
     .style('opacity', 0)
 
   // Add icons to nodes
@@ -199,7 +225,7 @@ const updateGraph = () => {
 
   // Add click handler to svg background to clear selection
   svg.on('click', () => {
-    emit('node-select', null)
+    emit('node-select', null, false)
   })
 
   // Update selection state
@@ -239,11 +265,29 @@ const updateGraph = () => {
 const updateNodeSelection = () => {
   if (!svg) return
   
-  svg.selectAll('.selection-ring')
-    .style('opacity', (d: any) => d.id === props.selectedNodeId ? 1 : 0)
+  // Update primary selection ring (first selected node)
+  svg.selectAll('.selection-ring-primary')
+    .style('opacity', (d: any) => {
+      return props.selectedNodeIds.length > 0 && d.id === props.selectedNodeIds[0] ? 1 : 0
+    })
     
+  // Update secondary selection ring (second selected node)
+  svg.selectAll('.selection-ring-secondary')
+    .style('opacity', (d: any) => {
+      return props.selectedNodeIds.length > 1 && d.id === props.selectedNodeIds[1] ? 1 : 0
+    })
+    
+  // Update node circle stroke for all selected nodes
   svg.selectAll('.node-circle')
-    .attr('stroke-width', (d: any) => d.id === props.selectedNodeId ? 4 : 2)
+    .attr('stroke-width', (d: any) => {
+      return props.selectedNodeIds.includes(d.id) ? 4 : 2
+    })
+    .attr('stroke', (d: any) => {
+      if (props.selectedNodeIds.includes(d.id)) {
+        return props.selectedNodeIds.indexOf(d.id) === 0 ? '#4caf50' : '#2196f3'
+      }
+      return '#1a1a1a'
+    })
 }
 
 const getNodeRadius = (node: Node): number => {
@@ -350,9 +394,14 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 
-:deep(.selection-ring) {
+:deep(.selection-ring-primary),
+:deep(.selection-ring-secondary) {
   transition: opacity 0.2s ease;
   pointer-events: none;
+}
+
+:deep(.selection-ring-secondary) {
+  animation: dash-rotate 2s linear infinite;
 }
 
 :deep(.node-label) {
@@ -391,5 +440,50 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
+}
+
+.selection-instructions {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  backdrop-filter: blur(4px);
+}
+
+.instruction-text {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  font-family: var(--font-handwritten);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.instruction-text strong {
+  color: var(--color-primary);
+}
+
+@keyframes dash-rotate {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+@media (max-width: 768px) {
+  .selection-instructions {
+    position: static;
+    transform: none;
+    margin: 10px;
+    text-align: center;
+  }
+  
+  .instruction-text {
+    white-space: normal;
+    line-height: 1.3;
+  }
 }
 </style>
