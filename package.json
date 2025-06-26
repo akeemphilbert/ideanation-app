@@ -1,0 +1,24 @@
+{
+  "name": "ideanation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "HOST=0.0.0.0 nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^3.13.0",
+    "@pinia/nuxt": "^0.5.1",
+    "pinia": "^2.1.7",
+    "ant-design-vue": "^4.0.0",
+    "@ant-design/icons-vue": "^7.0.1",
+    "d3": "^7.8.5",
+    "roughjs": "^4.6.6"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.4.3"
+  }
+}
