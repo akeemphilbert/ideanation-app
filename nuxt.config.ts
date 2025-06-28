@@ -24,12 +24,6 @@ export default defineNuxtConfig({
   
   // Environment variables
   runtimeConfig: {
-    // Supabase configuration
-    supabase: {
-      url: process.env.SUPABASE_URL,
-      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY
-    },
-    // Fallback environment variables (optional)
     azureOpenAI: {
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       basePath: process.env.AZURE_OPENAI_BASE_PATH,
