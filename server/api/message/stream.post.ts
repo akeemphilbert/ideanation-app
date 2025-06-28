@@ -5,8 +5,6 @@ import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { StateGraph, END, START , interrupt} from "@langchain/langgraph";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
 import type { WorkspaceResource, IdeaResource, ProblemResource } from "~/types/resources";
-import ExportDialog from "~/components/ExportDialog.vue";
-
 
 const config = useRuntimeConfig()
 
@@ -57,13 +55,25 @@ export default defineEventHandler(async (event) => {
         }
 
         const createWorkspaceNode = async (state: typeof WorkspaceState.State) => {
-            console.log("🏢 Creating workspace...")
+            console.log("🏢 Creating workspace and idea...")
             
             const prompt = ChatPromptTemplate.fromMessages([
-                ["system", `You are helping create a workspace for a startup idea. 
-                The user's message suggests they want to start working on an idea.
-                Extract a workspace title from their message, or suggest one if unclear.
-                Respond with just the workspace title, nothing else.`],
+                ["system", `You are helping create a workspace and startup idea. 
+                The user has provided their startup idea or concept.
+                
+                Extract or generate:
+                1. A workspace title (should be descriptive but concise)
+                2. An idea title (the main startup concept)
+                3. A brief description of what the idea does
+                
+                Respond in JSON format:
+                {
+                  "workspace_title": "workspace name",
+                  "idea_title": "startup idea name", 
+                  "idea_description": "brief description of what the startup does"
+                }
+                
+                If the user input is unclear, make reasonable assumptions based on context.`],
                 ["user", "{input}"],
             ])
 
@@ -72,72 +82,62 @@ export default defineEventHandler(async (event) => {
                 input: state.messages[state.messages.length - 1]?.content
             })
 
-            // Create workspace (mock - in real app this would use the store)
+            let workspaceTitle = "New Workspace"
+            let ideaTitle = "New Startup Idea"
+            let ideaDescription = "A new startup idea"
+
+            try {
+                // Try to parse JSON response
+                const parsed = JSON.parse(String(result.content))
+                workspaceTitle = parsed.workspace_title || workspaceTitle
+                ideaTitle = parsed.idea_title || ideaTitle
+                ideaDescription = parsed.idea_description || ideaDescription
+            } catch (e) {
+                // Fallback: use the raw content as idea title
+                const content = String(result.content).trim()
+                if (content) {
+                    ideaTitle = content
+                    workspaceTitle = `${content} Workspace`
+                    ideaDescription = `Startup idea: ${content}`
+                }
+            }
+
+            // Create workspace
             const workspace: WorkspaceResource = {
                 '@id': '/workspaces/new-workspace',
                 '@type': 'ideanation:Workspace' as const,
                 id: 'new-workspace',
-                title: String(result.content) || 'New Workspace',
-                description: 'A new workspace for your startup idea',
+                title: workspaceTitle,
+                description: `Workspace for ${ideaTitle}`,
                 identifier: 'WS-001',
                 created: new Date(),
                 updated: new Date()
             }
 
-            return {
-                workspace,
-                lastAction: "workspace_created"
-            }
-        }
-
-        const createIdeaNode = async (state: typeof WorkspaceState.State) => {
-            console.log("💡 Creating idea...")
-            
-            // If we have a user message, use it to create the idea
-            const userMessage = state.messages[state.messages.length - 1]
-            let ideaTitle = "New Startup Idea"
-            
-            if (userMessage && userMessage.content) {
-                const prompt = ChatPromptTemplate.fromMessages([
-                    ["system", `You are helping create an idea within a workspace. 
-                    The user has provided their startup idea. Extract a clear, concise idea title from their input.
-                    Respond with just the idea title, nothing else.`],
-                    ["user", "{input}"],
-                ])
-
-                const chain = prompt.pipe(llm)
-                const result = await chain.invoke({
-                    input: userMessage.content
-                })
-                
-                ideaTitle = String(result.content) || "New Startup Idea"
-            }
-
-            // Create idea (mock - in real app this would use the store)
+            // Create idea
             const idea: IdeaResource = {
                 '@id': '/ideas/new-idea',
                 '@type': 'ideanation:Idea' as const,
                 id: 'new-idea',
                 title: ideaTitle,
-                description: 'A new startup idea',
+                description: ideaDescription,
                 identifier: 'IDEA-001',
                 created: new Date(),
                 updated: new Date()
             }
 
             return {
-                ideas: [...state.ideas, idea],
+                workspace,
+                ideas: [idea],
                 currentIdea: idea,
-                lastAction: "idea_created"
+                lastAction: "workspace_and_idea_created"
             }
         }
 
         const getInputNode = async (state: typeof WorkspaceState.State) => {
             let prompt = "What would you like to do next? (add a problem, a customer, a feature, a pain, a gain, a job, a product)"
-            if (state.lastAction === "workspace_created") {
-                prompt = "What's your startup idea? Please describe the main concept you want to work on."
-            } else if (state.lastAction === "idea_created") {
-                prompt = "What problems does your idea solve? Please describe the main problems or pain points your startup addresses."
+            if (state.lastAction === "workspace_and_idea_created") {
+                prompt = "Great! Now let's build out your idea. What problems does your startup solve? Please describe the main problems or pain points your idea addresses."
             } else if (state.lastAction === "should_create_problems") {
                 prompt = "What problems does your idea solve?"
             }
@@ -169,7 +169,7 @@ export default defineEventHandler(async (event) => {
                 problemTitle = String(result.content) || "New Problem"
             }
 
-            // Create problem (mock - in real app this would use the store)
+            // Create problem
             const problem: ProblemResource = {
                 '@id': '/problems/new-problem',
                 '@type': 'ideanation:Problem' as const,
@@ -182,7 +182,7 @@ export default defineEventHandler(async (event) => {
             }
 
             return {
-                problems: [...state.problems, problem],
+                problems: [problem],
                 lastAction: "problem_created"
             }
         }
@@ -220,7 +220,7 @@ export default defineEventHandler(async (event) => {
             const aiMessage = new AIMessage(responseContent)
             
             return {
-                messages: [...state.messages, aiMessage],
+                messages: [aiMessage],
                 lastAction: "message_processed"
             }
         }
@@ -230,12 +230,18 @@ export default defineEventHandler(async (event) => {
             
             let responseMessage = ""
             
-            if (state.lastAction === "workspace_created") {
-                responseMessage = `Great! I've created your workspace "${state.workspace?.title}". Now, what's your startup idea? Please tell me about the main concept you want to work on.`
-            } else if (state.lastAction === "idea_created") {
-                responseMessage = `Perfect! I've created your idea "${state.currentIdea?.title}" in the workspace "${state.workspace?.title}". 
+            if (state.lastAction === "workspace_and_idea_created") {
+                responseMessage = `Perfect! I've created your workspace "${state.workspace?.title}" with your startup idea "${state.currentIdea?.title}".
 
-Now let's start building it out. First, what problems does your idea solve? Please describe the main problems or pain points your startup addresses.`
+${state.currentIdea?.description}
+
+Now let's start building it out! What problems does your startup solve? Please describe the main problems or pain points your idea addresses.
+
+You can also create other components by typing:
+• **customer:** describe your target customers  
+• **feature:** describe key features
+• **pain:** describe customer pain points
+• **gain:** describe customer gains`
             } else if (state.lastAction === "problem_created") {
                 responseMessage = `Excellent! I've added the problem "${state.problems[state.problems.length - 1]?.title}" to your idea.
 
@@ -254,7 +260,7 @@ What would you like to add next?`
                 const aiMessage = new AIMessage(responseMessage)
                 
                 return {
-                    messages: [...state.messages, aiMessage],
+                    messages: [aiMessage],
                     lastAction: "response_generated"
                 }
             }
@@ -294,7 +300,6 @@ What would you like to add next?`
         workflow.addNode("check_problems", checkWorkspaceNode) // Reuse checkWorkspaceNode for problem checking
         workflow.addNode("get_idea_input", getInputNode)
         workflow.addNode("get_problem_input", getInputNode)
-        workflow.addNode("create_idea", createIdeaNode)
         workflow.addNode("create_problem", createProblemNode)
         workflow.addNode("process_message", processMessageNode)
         workflow.addNode("generate_response", generateResponseNode)
@@ -332,9 +337,9 @@ What would you like to add next?`
         )
         
         // Direct edges for sequential flow
-        workflow.addEdge("get_idea_input", "create_idea")
+        workflow.addEdge("get_idea_input", "create_problem")
         workflow.addEdge("get_problem_input", "create_problem")
-        workflow.addEdge("create_idea", "generate_response")
+        workflow.addEdge("create_workspace", "generate_response")
         workflow.addEdge("create_problem", "generate_response")
         
         // End edges
@@ -354,10 +359,10 @@ What would you like to add next?`
             for (const key in chunk) {
                 switch (key) {
                     case "create_workspace":
-                        if (chunk[key].workspace) {
-                            writer.write("Great! I've created your workspace \"" + chunk[key].workspace.title + "\".")
+                        if (chunk[key].workspace && chunk[key].currentIdea) {
+                            writer.write(`🎉 Great! I've created your workspace "${chunk[key].workspace.title}" with your startup idea "${chunk[key].currentIdea.title}". `)
                         } else {
-                            writer.write("Sorry, I encountered an error while creating your workspace. Please try again.")
+                            writer.write("Sorry, I encountered an error while creating your workspace and idea. Please try again.")
                         }
                         break;
                     case "__interrupt__":
