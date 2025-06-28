@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ApiService } from '~/services/api'
+import { useEntityParser } from '~/composables/useEntityParser'
 
 export interface ChatMessage {
   id: string
@@ -193,12 +194,11 @@ What would you like to add first?`,
       data: any
     }>
   }> => {
-    const { getEntityHelp } = useEntityParser()
-    
     // Mock AI responses based on keywords
     const lowerMessage = userMessage.toLowerCase()
     
     if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
+      const { getEntityHelp } = useEntityParser()
       return {
         content: `I can help you build your startup idea! ${getEntityHelp()}. You can also ask me about problems, customers, features, or how to connect different components.
 
