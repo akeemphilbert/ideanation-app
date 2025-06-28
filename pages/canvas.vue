@@ -15,16 +15,16 @@
           <div v-if="chatStore.messages.length === 0" class="chat-welcome">
             <div class="welcome-message">
               <p class="handwritten">👋 Hi! Let's start building your startup idea.</p>
-              <p v-if="!entitiesStore.currentIdea"><strong>First, what's your idea called?</strong></p>
+              <p v-if="!resourcesStore.currentIdea"><strong>First, what's your idea called?</strong></p>
               <p v-else>Great! Now you can create entities by typing:</p>
-              <ul v-if="entitiesStore.currentIdea">
+              <ul v-if="resourcesStore.currentIdea">
                 <li><strong>problem:</strong> your problem description</li>
                 <li><strong>customer:</strong> your customer description</li>
                 <li><strong>feature:</strong> your feature description</li>
                 <li><strong>pain:</strong> customer pain point</li>
                 <li><strong>gain:</strong> customer gain</li>
               </ul>
-              <p v-if="entitiesStore.currentIdea" class="help-note">Or ask me questions about your idea!</p>
+              <p v-if="resourcesStore.currentIdea" class="help-note">Or ask me questions about your idea!</p>
             </div>
           </div>
           
@@ -65,7 +65,7 @@
             </button>
           </form>
           
-          <div class="quick-suggestions" v-if="showQuickSuggestions && !chatMessage.trim() && entitiesStore.currentIdea">
+          <div class="quick-suggestions" v-if="showQuickSuggestions && !chatMessage.trim() && resourcesStore.currentIdea">
             <button
               v-for="suggestion in quickSuggestions"
               :key="suggestion"
@@ -93,9 +93,9 @@
       <div class="graph-section">
         <div class="graph-header">
           <h2 class="handwritten">
-            {{ entitiesStore.currentIdea?.title || 'Your Idea Canvas' }}
+            {{ resourcesStore.currentIdea?.title || 'Your Idea Canvas' }}
           </h2>
-          <div class="graph-controls" v-if="entitiesStore.currentIdea">
+          <div class="graph-controls" v-if="resourcesStore.currentIdea">
             <!-- Selection Info -->
             <div class="selection-info" v-if="selectedNodeIds.length > 0">
               <div class="selected-nodes">
@@ -127,19 +127,19 @@
             <!-- Entity Stats -->
             <div class="entity-stats">
               <span class="stat-item">
-                {{ entitiesStore.problems.length }} Problems
+                {{ resourcesStore.problems.length }} Problems
               </span>
               <span class="stat-item">
-                {{ entitiesStore.customers.length }} Customers
+                {{ resourcesStore.customers.length }} Customers
               </span>
               <span class="stat-item">
-                {{ entitiesStore.features.length }} Features
+                {{ resourcesStore.features.length }} Features
               </span>
               <span class="stat-item">
-                {{ entitiesStore.products.length }} Products
+                {{ resourcesStore.products.length }} Products
               </span>
               <span class="stat-item">
-                {{ entitiesStore.relationships.length }} Links
+                {{ resourcesStore.relationships.length }} Links
               </span>
             </div>
             
@@ -154,18 +154,12 @@
               <button class="btn-sketch" @click="exportAllEntities">
                 Export All Entities
               </button>
-              <button class="btn-sketch" @click="saveToLocalStorage">
-                Save to Storage
-              </button>
-              <button class="btn-sketch" @click="loadFromLocalStorage">
-                Load from Storage
-              </button>
             </div>
           </div>
         </div>
         
         <div class="graph-container" ref="graphContainer">
-          <div v-if="!entitiesStore.currentIdea" class="empty-graph">
+          <div v-if="!resourcesStore.currentIdea" class="empty-graph">
             <div class="empty-message">
               <h3 class="handwritten">Welcome to Ideanation!</h3>
               <p>Let's start by giving your startup idea a name.</p>
@@ -180,7 +174,7 @@
           
           <div v-else-if="graphNodes.length === 0" class="empty-graph">
             <div class="empty-message">
-              <h3 class="handwritten">Great! Now let's build "{{ entitiesStore.currentIdea.title }}"</h3>
+              <h3 class="handwritten">Great! Now let's build "{{ resourcesStore.currentIdea.title }}"</h3>
               <p>Create your first entity by typing something like:</p>
               <div class="example-commands">
                 <code>problem: users can't find reliable pet sitters</code>
@@ -233,7 +227,7 @@ import { ExportType } from '~/types/export'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
 
 const chatStore = useChatStore()
-const entitiesStore = useEntitiesStore()
+const resourcesStore = useResourcesStore()
 const graphContainer = ref<HTMLElement>()
 const messagesContainer = ref<HTMLElement>()
 
@@ -261,19 +255,19 @@ const graphNodes = computed(() => {
   const nodes: any[] = []
   
   // Add current idea as central node
-  if (entitiesStore.currentIdea) {
+  if (resourcesStore.currentIdea) {
     nodes.push({
-      id: entitiesStore.currentIdea.id,
-      title: entitiesStore.currentIdea.title,
+      id: resourcesStore.currentIdea['@id'],
+      title: resourcesStore.currentIdea.title,
       type: 'idea',
-      description: entitiesStore.currentIdea.description
+      description: resourcesStore.currentIdea.description
     })
   }
   
   // Add problems
-  entitiesStore.problems.forEach(problem => {
+  resourcesStore.problems.forEach(problem => {
     nodes.push({
-      id: problem.id,
+      id: problem['@id'],
       title: problem.title,
       type: 'problem',
       description: problem.description
@@ -281,19 +275,19 @@ const graphNodes = computed(() => {
   })
   
   // Add customers
-  entitiesStore.customers.forEach(customer => {
+  resourcesStore.customers.forEach(customer => {
     nodes.push({
-      id: customer.id,
-      title: customer.title || customer.fullName,
+      id: customer['@id'],
+      title: customer.title || `${customer.givenName} ${customer.familyName}`.trim(),
       type: 'customer',
       description: customer.title || `${customer.role} at ${customer.organization}`.trim()
     })
   })
   
   // Add features
-  entitiesStore.features.forEach(feature => {
+  resourcesStore.features.forEach(feature => {
     nodes.push({
-      id: feature.id,
+      id: feature['@id'],
       title: feature.title,
       type: 'feature',
       description: feature.description
@@ -301,9 +295,9 @@ const graphNodes = computed(() => {
   })
   
   // Add products
-  entitiesStore.products.forEach(product => {
+  resourcesStore.products.forEach(product => {
     nodes.push({
-      id: product.id,
+      id: product['@id'],
       title: product.title,
       type: 'solution',
       description: product.description
@@ -311,9 +305,9 @@ const graphNodes = computed(() => {
   })
   
   // Add jobs
-  entitiesStore.jobs.forEach(job => {
+  resourcesStore.jobs.forEach(job => {
     nodes.push({
-      id: job.id,
+      id: job['@id'],
       title: job.title,
       type: 'job',
       description: job.description
@@ -321,9 +315,9 @@ const graphNodes = computed(() => {
   })
   
   // Add pains
-  entitiesStore.pains.forEach(pain => {
+  resourcesStore.pains.forEach(pain => {
     nodes.push({
-      id: pain.id,
+      id: pain['@id'],
       title: pain.title,
       type: 'pain',
       description: pain.description
@@ -331,9 +325,9 @@ const graphNodes = computed(() => {
   })
   
   // Add gains
-  entitiesStore.gains.forEach(gain => {
+  resourcesStore.gains.forEach(gain => {
     nodes.push({
-      id: gain.id,
+      id: gain['@id'],
       title: gain.title,
       type: 'gain',
       description: gain.description
@@ -344,7 +338,7 @@ const graphNodes = computed(() => {
 })
 
 const graphEdges = computed(() => {
-  return entitiesStore.relationships.map(rel => ({
+  return resourcesStore.relationships.map(rel => ({
     source: rel.sourceId,
     target: rel.targetId,
     relationship: rel.relationshipType
@@ -357,7 +351,7 @@ onMounted(() => {
 })
 
 const getInputPlaceholder = () => {
-  if (!entitiesStore.currentIdea) {
+  if (!resourcesStore.currentIdea) {
     return "What's your startup idea called?"
   }
   
@@ -459,7 +453,7 @@ const createRelationshipForNewEntity = (newEntityId: string, newEntityType: stri
   }
   
   // Create the relationship
-  entitiesStore.createRelationship({
+  resourcesStore.createRelationship({
     sourceId,
     targetId,
     relationshipType
@@ -477,28 +471,28 @@ const handleNodeClick = (node: any) => {
   
   switch (node.type) {
     case 'idea':
-      entity = entitiesStore.ideas.find(i => i.id === node.id)
+      entity = resourcesStore.ideas.find(i => i['@id'] === node.id)
       break
     case 'problem':
-      entity = entitiesStore.problems.find(p => p.id === node.id)
+      entity = resourcesStore.problems.find(p => p['@id'] === node.id)
       break
     case 'customer':
-      entity = entitiesStore.customers.find(c => c.id === node.id)
+      entity = resourcesStore.customers.find(c => c['@id'] === node.id)
       break
     case 'feature':
-      entity = entitiesStore.features.find(f => f.id === node.id)
+      entity = resourcesStore.features.find(f => f['@id'] === node.id)
       break
     case 'solution':
-      entity = entitiesStore.products.find(p => p.id === node.id)
+      entity = resourcesStore.products.find(p => p['@id'] === node.id)
       break
     case 'job':
-      entity = entitiesStore.jobs.find(j => j.id === node.id)
+      entity = resourcesStore.jobs.find(j => j['@id'] === node.id)
       break
     case 'pain':
-      entity = entitiesStore.pains.find(p => p.id === node.id)
+      entity = resourcesStore.pains.find(p => p['@id'] === node.id)
       break
     case 'gain':
-      entity = entitiesStore.gains.find(g => g.id === node.id)
+      entity = resourcesStore.gains.find(g => g['@id'] === node.id)
       break
   }
   
@@ -533,7 +527,7 @@ const handleNodeClick = (node: any) => {
     }
     
     selectedComponent.value = {
-      id: entity.id,
+      id: entity['@id'],
       type: node.type,
       title: entity.title,
       description: description,
@@ -586,66 +580,66 @@ const handleComponentSave = (component: any) => {
   switch (component.type) {
     case 'idea':
       if (component.id) {
-        entitiesStore.updateIdea(component.id, component)
+        resourcesStore.updateIdea(component.id, component)
       } else {
-        newEntity = entitiesStore.createIdea(component)
-        entitiesStore.setCurrentIdea(newEntity)
+        newEntity = resourcesStore.createIdea(component)
+        resourcesStore.setCurrentIdea(newEntity.toJSON())
       }
       break
     case 'problem':
       if (component.id) {
-        entitiesStore.updateProblem(component.id, component)
+        resourcesStore.updateProblem(component.id, component)
       } else {
-        newEntity = entitiesStore.createProblem(component)
+        newEntity = resourcesStore.createProblem(component)
       }
       break
     case 'customer':
       if (component.id) {
-        entitiesStore.updateCustomer(component.id, component)
+        resourcesStore.updateCustomer(component.id, component)
       } else {
-        newEntity = entitiesStore.createCustomer(component)
+        newEntity = resourcesStore.createCustomer(component)
       }
       break
     case 'feature':
       if (component.id) {
-        entitiesStore.updateFeature(component.id, component)
+        resourcesStore.updateFeature(component.id, component)
       } else {
-        newEntity = entitiesStore.createFeature(component)
+        newEntity = resourcesStore.createFeature(component)
       }
       break
     case 'solution':
       if (component.id) {
-        entitiesStore.updateProduct(component.id, component)
+        resourcesStore.updateProduct(component.id, component)
       } else {
-        newEntity = entitiesStore.createProduct(component)
+        newEntity = resourcesStore.createProduct(component)
       }
       break
     case 'job':
       if (component.id) {
-        entitiesStore.updateJob(component.id, component)
+        resourcesStore.updateJob(component.id, component)
       } else {
-        newEntity = entitiesStore.createJob(component)
+        newEntity = resourcesStore.createJob(component)
       }
       break
     case 'pain':
       if (component.id) {
-        entitiesStore.updatePain(component.id, component)
+        resourcesStore.updatePain(component.id, component)
       } else {
-        newEntity = entitiesStore.createPain(component)
+        newEntity = resourcesStore.createPain(component)
       }
       break
     case 'gain':
       if (component.id) {
-        entitiesStore.updateGain(component.id, component)
+        resourcesStore.updateGain(component.id, component)
       } else {
-        newEntity = entitiesStore.createGain(component)
+        newEntity = resourcesStore.createGain(component)
       }
       break
   }
   
   // If this is a new entity, create relationship to selected/target node
   if (newEntity) {
-    createRelationshipForNewEntity(newEntity.id, component.type)
+    createRelationshipForNewEntity(newEntity.toJSON()['@id'], component.type)
   }
   
   showComponentModal.value = false
@@ -657,7 +651,7 @@ const handleLinkSave = (linkData: { relationshipType: string, description?: stri
   const [sourceId, targetId] = selectedNodeIds.value
   
   // Create the relationship
-  entitiesStore.createRelationship({
+  resourcesStore.createRelationship({
     sourceId,
     targetId,
     relationshipType: linkData.relationshipType
@@ -688,7 +682,7 @@ const handleChatMessage = async () => {
   showEntityHelp.value = false
 
   // Check if we need to create an idea first
-  if (!entitiesStore.currentIdea) {
+  if (!resourcesStore.currentIdea) {
     // This is the idea name
     chatStore.addMessage({
       type: 'user',
@@ -696,12 +690,12 @@ const handleChatMessage = async () => {
     })
 
     // Create the idea
-    const idea = entitiesStore.createIdea({
+    const idea = resourcesStore.createIdea({
       title: message,
       description: `Startup idea: ${message}`
     })
     
-    entitiesStore.setCurrentIdea(idea)
+    resourcesStore.setCurrentIdea(idea.toJSON())
 
     // Add AI response
     chatStore.addMessage({
@@ -718,7 +712,7 @@ What would you like to add first?`,
       entityCreated: {
         type: 'idea',
         title: message,
-        id: idea.id
+        id: idea.toJSON()['@id']
       }
     })
 
@@ -743,13 +737,13 @@ What would you like to add first?`,
       body: JSON.stringify({
         message: message,
         context: {
-          currentIdea: entitiesStore.currentIdea?.title,
+          currentIdea: resourcesStore.currentIdea?.title,
           selectedNode: selectedNodeIds.value.length === 1 ? getNodeTitle(selectedNodeIds.value[0]) : null,
           entityCounts: {
-            problems: entitiesStore.problems.length,
-            customers: entitiesStore.customers.length,
-            features: entitiesStore.features.length,
-            products: entitiesStore.products.length
+            problems: resourcesStore.problems.length,
+            customers: resourcesStore.customers.length,
+            features: resourcesStore.features.length,
+            products: resourcesStore.products.length
           }
         }
       }),
@@ -804,7 +798,7 @@ What would you like to add first?`,
         entityCreated: {
           type: entityResult.parsed.type,
           title: entityResult.parsed.title,
-          id: entityResult.entity.id
+          id: entityResult.entity['@id']
         }
       })
     }
@@ -828,19 +822,19 @@ const handleSuggestionApply = (suggestion: any) => {
     // Add component to appropriate store
     switch (suggestion.data.type) {
       case 'problem':
-        newEntity = entitiesStore.createProblem(suggestion.data)
+        newEntity = resourcesStore.createProblem(suggestion.data)
         break
       case 'customer':
-        newEntity = entitiesStore.createCustomer(suggestion.data)
+        newEntity = resourcesStore.createCustomer(suggestion.data)
         break
       case 'feature':
-        newEntity = entitiesStore.createFeature(suggestion.data)
+        newEntity = resourcesStore.createFeature(suggestion.data)
         break
     }
     
     // Create relationship if new entity was created
     if (newEntity) {
-      createRelationshipForNewEntity(newEntity.id, suggestion.data.type)
+      createRelationshipForNewEntity(newEntity.toJSON()['@id'], suggestion.data.type)
     }
   }
   
@@ -896,7 +890,7 @@ const saveIdea = async () => {
     // Show success message
     chatStore.addMessage({
       type: 'ai',
-      content: `✅ Your business model canvas for "${entitiesStore.currentIdea?.title}" has been exported to markdown and downloaded! The file contains ${entitiesStore.problems.length} problems, ${entitiesStore.customers.length} customers, ${entitiesStore.features.length} features, and ${entitiesStore.relationships.length} relationships.`
+      content: `✅ Your business model canvas for "${resourcesStore.currentIdea?.title}" has been exported to markdown and downloaded! The file contains ${resourcesStore.problems.length} problems, ${resourcesStore.customers.length} customers, ${resourcesStore.features.length} features, and ${resourcesStore.relationships.length} relationships.`
     })
     
     nextTick(() => scrollToBottom())
@@ -940,7 +934,7 @@ const exportAllEntities = async () => {
     // Show success message
     chatStore.addMessage({
       type: 'ai',
-      content: `✅ All entities for "${entitiesStore.currentIdea?.title}" have been exported to markdown and downloaded! The file contains all ${entitiesStore.ideas.length + entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length + entitiesStore.jobs.length + entitiesStore.pains.length + entitiesStore.gains.length} entities and ${entitiesStore.relationships.length} relationships.`
+      content: `✅ All entities for "${resourcesStore.currentIdea?.title}" have been exported to markdown and downloaded! The file contains all ${resourcesStore.ideas.length + resourcesStore.problems.length + resourcesStore.customers.length + resourcesStore.features.length + resourcesStore.products.length + resourcesStore.jobs.length + resourcesStore.pains.length + resourcesStore.gains.length} entities and ${resourcesStore.relationships.length} relationships.`
     })
     
     nextTick(() => scrollToBottom())
@@ -958,252 +952,6 @@ const exportAllEntities = async () => {
   }
 }
 
-const saveToLocalStorage = async () => {
-  try {
-    // Build the all entities export data
-    const exportBuilder = new ExportDataBuilder()
-    const exportData = await exportBuilder.buildExportData(ExportType.ALL_ENTITIES)
-    
-    // Format as JSON
-    const jsonFormatter = new JSONFormatter()
-    const formattedContent = await jsonFormatter.format(exportData)
-    
-    // Save to local storage
-    const storageKey = `ideanation_idea_${entitiesStore.currentIdea?.id || 'default'}`
-    const jsonData = formattedContent.content as string
-    
-    // Store the JSON data
-    localStorage.setItem(storageKey, jsonData)
-    
-    // Also store a metadata entry for easy retrieval
-    const metadata = {
-      id: entitiesStore.currentIdea?.id,
-      title: entitiesStore.currentIdea?.title,
-      savedAt: new Date().toISOString(),
-      entityCount: entitiesStore.ideas.length + entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length + entitiesStore.jobs.length + entitiesStore.pains.length + entitiesStore.gains.length,
-      relationshipCount: entitiesStore.relationships.length
-    }
-    
-    localStorage.setItem(`${storageKey}_metadata`, JSON.stringify(metadata))
-    
-    // Show success message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `💾 Your idea "${entitiesStore.currentIdea?.title}" has been saved to local storage! The save includes ${metadata.entityCount} entities and ${metadata.relationshipCount} relationships. You can retrieve it later using the storage key: "${storageKey}"`
-    })
-    
-    nextTick(() => scrollToBottom())
-    
-  } catch (error) {
-    console.error('Save to local storage failed:', error)
-    
-    // Show error message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `❌ Sorry, there was an error saving to local storage. Please try again.`
-    })
-    
-    nextTick(() => scrollToBottom())
-  }
-}
-
-const loadFromLocalStorage = async () => {
-  try {
-    // Find saved ideas in local storage
-    const savedIdeas: Array<{key: string, metadata: any}> = []
-    
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith('ideanation_idea_') && key.endsWith('_metadata')) {
-        const metadataStr = localStorage.getItem(key)
-        if (metadataStr) {
-          try {
-            const metadata = JSON.parse(metadataStr)
-            const dataKey = key.replace('_metadata', '')
-            savedIdeas.push({ key: dataKey, metadata })
-          } catch (e) {
-            console.warn('Invalid metadata for key:', key)
-          }
-        }
-      }
-    }
-    
-    if (savedIdeas.length === 0) {
-      chatStore.addMessage({
-        type: 'ai',
-        content: `📭 No saved ideas found in local storage. Save an idea first using the "Save to Storage" button.`
-      })
-      return
-    }
-    
-    // If there's only one saved idea, load it directly
-    if (savedIdeas.length === 1) {
-      await loadSpecificIdea(savedIdeas[0].key)
-      return
-    }
-    
-    // If multiple saved ideas, show a selection message
-    const ideaList = savedIdeas.map((idea, index) => 
-      `${index + 1}. "${idea.metadata.title}" (${idea.metadata.entityCount} entities, saved ${new Date(idea.metadata.savedAt).toLocaleDateString()})`
-    ).join('\n')
-    
-    chatStore.addMessage({
-      type: 'ai',
-      content: `📚 Found ${savedIdeas.length} saved ideas:\n\n${ideaList}\n\nTo load a specific idea, type "load idea [number]" (e.g., "load idea 1")`
-    })
-    
-    // Store the saved ideas for reference
-    ;(window as any).savedIdeas = savedIdeas
-    
-  } catch (error) {
-    console.error('Load from local storage failed:', error)
-    
-    chatStore.addMessage({
-      type: 'ai',
-      content: `❌ Sorry, there was an error loading from local storage. Please try again.`
-    })
-  }
-  
-  nextTick(() => scrollToBottom())
-}
-
-const loadSpecificIdea = async (storageKey: string) => {
-  try {
-    const jsonData = localStorage.getItem(storageKey)
-    if (!jsonData) {
-      throw new Error('No data found for this key')
-    }
-    
-    const exportData = JSON.parse(jsonData)
-    
-    // Clear current entities
-    entitiesStore.ideas = []
-    entitiesStore.problems = []
-    entitiesStore.customers = []
-    entitiesStore.products = []
-    entitiesStore.features = []
-    entitiesStore.jobs = []
-    entitiesStore.pains = []
-    entitiesStore.gains = []
-    entitiesStore.relationships = []
-    
-    // Load ideas
-    if (exportData.content.ideas) {
-      exportData.content.ideas.forEach((idea: any) => {
-        const newIdea = entitiesStore.createIdea({
-          title: idea.title,
-          description: idea.description,
-          identifier: idea.identifier
-        })
-        // Set as current idea
-        entitiesStore.setCurrentIdea(newIdea)
-      })
-    }
-    
-    // Load problems
-    if (exportData.content.problems) {
-      exportData.content.problems.forEach((problem: any) => {
-        entitiesStore.createProblem({
-          title: problem.title,
-          description: problem.description
-        })
-      })
-    }
-    
-    // Load customers
-    if (exportData.content.customers) {
-      exportData.content.customers.forEach((customer: any) => {
-        entitiesStore.createCustomer({
-          title: customer.title,
-          givenName: customer.givenName,
-          familyName: customer.familyName,
-          role: customer.role,
-          organization: customer.organization
-        })
-      })
-    }
-    
-    // Load products
-    if (exportData.content.products) {
-      exportData.content.products.forEach((product: any) => {
-        entitiesStore.createProduct({
-          title: product.title,
-          description: product.description
-        })
-      })
-    }
-    
-    // Load features
-    if (exportData.content.features) {
-      exportData.content.features.forEach((feature: any) => {
-        entitiesStore.createFeature({
-          title: feature.title,
-          description: feature.description,
-          type: feature.type,
-          status: feature.status
-        })
-      })
-    }
-    
-    // Load jobs
-    if (exportData.content.jobs) {
-      exportData.content.jobs.forEach((job: any) => {
-        entitiesStore.createJob({
-          title: job.title,
-          description: job.description
-        })
-      })
-    }
-    
-    // Load pains
-    if (exportData.content.pains) {
-      exportData.content.pains.forEach((pain: any) => {
-        entitiesStore.createPain({
-          title: pain.title,
-          description: pain.description
-        })
-      })
-    }
-    
-    // Load gains
-    if (exportData.content.gains) {
-      exportData.content.gains.forEach((gain: any) => {
-        entitiesStore.createGain({
-          title: gain.title,
-          description: gain.description
-        })
-      })
-    }
-    
-    // Load relationships
-    if (exportData.content.relationships) {
-      exportData.content.relationships.forEach((relationship: any) => {
-        entitiesStore.createRelationship({
-          sourceId: relationship.sourceId,
-          targetId: relationship.targetId,
-          relationshipType: relationship.relationshipType
-        })
-      })
-    }
-    
-    const metadata = exportData.content.statistics
-    chatStore.addMessage({
-      type: 'ai',
-      content: `✅ Successfully loaded "${exportData.title}" from local storage! Loaded ${metadata.totalIdeas + metadata.totalProblems + metadata.totalCustomers + metadata.totalProducts + metadata.totalFeatures + metadata.totalJobs + metadata.totalPains + metadata.totalGains} entities and ${metadata.totalRelationships} relationships.`
-    })
-    
-  } catch (error) {
-    console.error('Load specific idea failed:', error)
-    
-    chatStore.addMessage({
-      type: 'ai',
-      content: `❌ Sorry, there was an error loading the idea. Please try again.`
-    })
-  }
-  
-  nextTick(() => scrollToBottom())
-}
-
 // Watch for new messages and scroll to bottom
 watch(() => chatStore.messages.length, () => {
   nextTick(() => scrollToBottom())
@@ -1211,7 +959,7 @@ watch(() => chatStore.messages.length, () => {
 
 // Watch chat input for entity commands
 watch(chatMessage, (newValue) => {
-  if (entitiesStore.currentIdea) {
+  if (resourcesStore.currentIdea) {
     showEntityHelp.value = looksLikeEntityCommand(newValue)
   }
 })
