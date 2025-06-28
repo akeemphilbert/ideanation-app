@@ -681,45 +681,6 @@ const handleChatMessage = async () => {
   showQuickSuggestions.value = false
   showEntityHelp.value = false
 
-  // Check if we need to create an idea first
-  if (!resourcesStore.currentIdea) {
-    // This is the idea name
-    chatStore.addMessage({
-      type: 'user',
-      content: message
-    })
-
-    // Create the idea
-    const idea = resourcesStore.createIdea({
-      title: message,
-      description: `Startup idea: ${message}`
-    })
-    
-    resourcesStore.setCurrentIdea(idea.toJSON())
-
-    // Add AI response
-    chatStore.addMessage({
-      type: 'ai',
-      content: `Perfect! I've created your idea "${message}". Now let's start building it out. You can create entities by typing things like:
-
-• problem: describe a problem your idea solves
-• customer: describe your target customers  
-• feature: describe a key feature
-• pain: describe customer pain points
-• gain: describe customer gains
-
-What would you like to add first?`,
-      entityCreated: {
-        type: 'idea',
-        title: message,
-        id: idea.toJSON()['@id']
-      }
-    })
-
-    nextTick(() => scrollToBottom())
-    return
-  }
-
   // Add user message first
   chatStore.addMessage({
     type: 'user',
