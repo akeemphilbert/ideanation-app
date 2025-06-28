@@ -259,19 +259,11 @@ const quickSuggestions = [
   "How do these components connect?"
 ]
 
-// Convert entities to graph format
+// Convert entities to graph format - EXCLUDE workspace from nodes
 const graphNodes = computed(() => {
   const nodes: any[] = []
   
-  // Add current workspace as central node
-  if (resourcesStore.currentWorkspace) {
-    nodes.push({
-      id: resourcesStore.currentWorkspace.id,
-      title: resourcesStore.currentWorkspace.title,
-      type: 'workspace',
-      description: resourcesStore.currentWorkspace.description
-    })
-  }
+  // DO NOT add workspace as a node - it's just the container
   
   // Add problems
   entitiesStore.problems.forEach(problem => {
@@ -347,11 +339,19 @@ const graphNodes = computed(() => {
 })
 
 const graphEdges = computed(() => {
-  return entitiesStore.relationships.map(rel => ({
-    source: rel.sourceId,
-    target: rel.targetId,
-    relationship: rel.relationshipType
-  }))
+  // Filter out relationships that involve the workspace
+  return entitiesStore.relationships
+    .filter(rel => {
+      // Exclude relationships where source or target is the workspace
+      const sourceIsWorkspace = resourcesStore.currentWorkspace && rel.sourceId === resourcesStore.currentWorkspace['@id']
+      const targetIsWorkspace = resourcesStore.currentWorkspace && rel.targetId === resourcesStore.currentWorkspace['@id']
+      return !sourceIsWorkspace && !targetIsWorkspace
+    })
+    .map(rel => ({
+      source: rel.sourceId,
+      target: rel.targetId,
+      relationship: rel.relationshipType
+    }))
 })
 
 onMounted(() => {
@@ -406,9 +406,8 @@ const getTargetNodeForNewEntity = (): string | null => {
     return graphNodes.value[0].id
   }
   
-  // 3. Default to the first workspace node
-  const workspaceNode = graphNodes.value.find(n => n.type === 'workspace')
-  return workspaceNode ? workspaceNode.id : null
+  // 3. No default target - let entities exist independently
+  return null
 }
 
 const createRelationshipForNewEntity = (newEntityId: string, newEntityType: string) => {
@@ -485,9 +484,6 @@ const handleNodeClick = (node: any) => {
   let entity = null
   
   switch (node.type) {
-    case 'workspace':
-      entity = resourcesStore.workspaces.find(w => w.id === node.id)
-      break
     case 'problem':
       entity = entitiesStore.problems.find(p => p.id === node.id)
       break
@@ -518,9 +514,6 @@ const handleNodeClick = (node: any) => {
     if (node.type === 'customer') {
       const customer = entity as any
       description = `${customer.role} at ${customer.organization}`
-    } else if (node.type === 'workspace') {
-      const workspace = entity as any
-      description = workspace.description || ''
     } else if (node.type === 'problem') {
       const problem = entity as any
       description = problem.description || ''
