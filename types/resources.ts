@@ -1,5 +1,3 @@
-import ksuid from 'ksuid'
-
 // Base resource interface - all entities and relationships are resources
 export interface BaseResource {
   '@id': string
@@ -182,18 +180,23 @@ export const RELATIONSHIP_TYPES = {
   SOLVES: 'solves'
 } as const
 
-// Utility functions
-export function generateKSUID(): string {
-  return ksuid.randomSync().string
+// Utility functions - replace KSUID with simple UUID
+export function generateUUID(): string {
+  // Simple UUID v4 implementation
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c == 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
 }
 
 export function generateResourceId(type: string): string {
-  const ksuidValue = generateKSUID()
+  const uuid = generateUUID()
   const path = RESOURCE_PATHS[type as keyof typeof RESOURCE_PATHS]
-  return `${path}/${ksuidValue}`
+  return `${path}/${uuid}`
 }
 
-export function extractKSUIDFromId(id: string): string {
+export function extractUUIDFromId(id: string): string {
   return id.split('/').pop() || ''
 }
 
@@ -212,7 +215,7 @@ export abstract class BaseResourceModel implements BaseResource {
   updated: Date
 
   constructor(type: string, data: Partial<BaseResource> = {}) {
-    this.id = data.id || generateKSUID()
+    this.id = data.id || generateUUID()
     this['@id'] = data['@id'] || generateResourceId(type)
     this['@type'] = type
     this.created = data.created || new Date()
@@ -246,7 +249,7 @@ export class WorkspaceResourceModel extends BaseResourceModel implements Workspa
     super(RESOURCE_TYPES.WORKSPACE, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `WS-${this.id}`
+    this.identifier = data.identifier || `WS-${this.id.substring(0, 8)}`
   }
 
   toJSON(): WorkspaceResource {
@@ -271,7 +274,7 @@ export class IdeaResourceModel extends BaseResourceModel implements IdeaResource
     super(RESOURCE_TYPES.IDEA, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `IDEA-${this.id}`
+    this.identifier = data.identifier || `IDEA-${this.id.substring(0, 8)}`
   }
 
   toJSON(): IdeaResource {
@@ -295,7 +298,7 @@ export class ProblemResourceModel extends BaseResourceModel implements ProblemRe
     super(RESOURCE_TYPES.PROBLEM, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `PROB-${this.id}`
+    this.identifier = data.identifier || `PROB-${this.id.substring(0, 8)}`
   }
 
   toJSON(): ProblemResource {
@@ -325,7 +328,7 @@ export class CustomerResourceModel extends BaseResourceModel implements Customer
     this.familyName = data.familyName || ''
     this.role = data.role || ''
     this.organization = data.organization || ''
-    this.identifier = data.identifier || `CUST-${this.id}`
+    this.identifier = data.identifier || `CUST-${this.id.substring(0, 8)}`
   }
 
   get fullName(): string {
@@ -404,7 +407,7 @@ export class JobResourceModel extends BaseResourceModel implements JobResource {
     super(RESOURCE_TYPES.JOB, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `JOB-${this.id}`
+    this.identifier = data.identifier || `JOB-${this.id.substring(0, 8)}`
   }
 
   toJSON(): JobResource {
@@ -428,7 +431,7 @@ export class PainResourceModel extends BaseResourceModel implements PainResource
     super(RESOURCE_TYPES.PAIN, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `PAIN-${this.id}`
+    this.identifier = data.identifier || `PAIN-${this.id.substring(0, 8)}`
   }
 
   toJSON(): PainResource {
@@ -452,7 +455,7 @@ export class GainResourceModel extends BaseResourceModel implements GainResource
     super(RESOURCE_TYPES.GAIN, data)
     this.title = data.title || ''
     this.description = data.description || ''
-    this.identifier = data.identifier || `GAIN-${this.id}`
+    this.identifier = data.identifier || `GAIN-${this.id.substring(0, 8)}`
   }
 
   toJSON(): GainResource {
@@ -474,7 +477,7 @@ export class CustomerJourneyResourceModel extends BaseResourceModel implements C
   constructor(data: Partial<CustomerJourneyResource> = {}) {
     super(RESOURCE_TYPES.CUSTOMER_JOURNEY, data)
     this.title = data.title || ''
-    this.identifier = data.identifier || `JOURNEY-${this.id}`
+    this.identifier = data.identifier || `JOURNEY-${this.id.substring(0, 8)}`
   }
 
   toJSON(): CustomerJourneyResource {
@@ -495,7 +498,7 @@ export class CustomerJourneyStepResourceModel extends BaseResourceModel implemen
   constructor(data: Partial<CustomerJourneyStepResource> = {}) {
     super(RESOURCE_TYPES.CUSTOMER_JOURNEY_STEP, data)
     this.title = data.title || ''
-    this.identifier = data.identifier || `STEP-${this.id}`
+    this.identifier = data.identifier || `STEP-${this.id.substring(0, 8)}`
   }
 
   toJSON(): CustomerJourneyStepResource {

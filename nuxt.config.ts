@@ -8,6 +8,7 @@ export default defineNuxtConfig({
   
   // CSS configuration
   css: [
+    'ant-design-vue/dist/reset.css',
     '~/assets/css/main.css'
   ],
   
@@ -18,18 +19,17 @@ export default defineNuxtConfig({
   
   // Build configuration
   build: {
-    transpile: ['dayjs', 'ant-design-vue']
+    transpile: ['ant-design-vue']
   },
-  
-  // SSR configuration - disable for Ant Design Vue compatibility
-  ssr: false,
   
   // Environment variables
   runtimeConfig: {
-    // Private keys (only available on server-side)
-    supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    
-    // Azure OpenAI configuration
+    // Supabase configuration
+    supabase: {
+      url: process.env.SUPABASE_URL,
+      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+    },
+    // Fallback environment variables (optional)
     azureOpenAI: {
       apiKey: process.env.AZURE_OPENAI_API_KEY,
       basePath: process.env.AZURE_OPENAI_BASE_PATH,
@@ -42,9 +42,6 @@ export default defineNuxtConfig({
       endpoint: process.env.LANGSMITH_ENDPOINT
     },
     public: {
-      // Public keys (exposed to client-side)
-      supabaseUrl: process.env.SUPABASE_URL,
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
       apiUrl: process.env.API_URL
     }
   },
