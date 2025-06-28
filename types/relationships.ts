@@ -1,4 +1,4 @@
-// Relationship interfaces based on the ERD
+// Simplified relationship interfaces
 export interface EntityRelationship {
   id: string
   sourceId: string
@@ -6,89 +6,6 @@ export interface EntityRelationship {
   relationshipType: string
   created: Date
   updated: Date
-}
-
-// Account-User relationship
-export interface AccountUserRelationship extends EntityRelationship {
-  relationshipType: 'has'
-}
-
-// User-Idea relationship
-export interface UserIdeaRelationship extends EntityRelationship {
-  relationshipType: 'owns'
-}
-
-// User-Problem relationship
-export interface UserProblemRelationship extends EntityRelationship {
-  relationshipType: 'experiences'
-}
-
-// Idea-Product relationship
-export interface IdeaProductRelationship extends EntityRelationship {
-  relationshipType: 'mvp'
-}
-
-// Feature-Product relationships
-export interface FeatureProductRelationship extends EntityRelationship {
-  relationshipType: 'belongs' | 'planned'
-}
-
-// Problem-Idea relationship
-export interface ProblemIdeaRelationship extends EntityRelationship {
-  relationshipType: 'belongs'
-}
-
-// Customer-Idea relationship
-export interface CustomerIdeaRelationship extends EntityRelationship {
-  relationshipType: 'belongs'
-}
-
-// Customer relationships
-export interface CustomerJobRelationship extends EntityRelationship {
-  relationshipType: 'performs'
-}
-
-export interface CustomerPainRelationship extends EntityRelationship {
-  relationshipType: 'experiences'
-}
-
-export interface CustomerGainRelationship extends EntityRelationship {
-  relationshipType: 'desires'
-}
-
-// CustomerJourney relationships
-export interface CustomerJourneyCustomerRelationship extends EntityRelationship {
-  relationshipType: 'belongs'
-}
-
-export interface CustomerJourneyStepJourneyRelationship extends EntityRelationship {
-  relationshipType: 'belongs'
-}
-
-// CustomerJourneyStep relationships
-export interface CustomerJourneyStepProductRelationship extends EntityRelationship {
-  relationshipType: 'uses'
-}
-
-export interface CustomerJourneyStepPainRelationship extends EntityRelationship {
-  relationshipType: 'associated'
-}
-
-export interface CustomerJourneyStepGainRelationship extends EntityRelationship {
-  relationshipType: 'associated'
-}
-
-// Feature relationships
-export interface FeatureJobRelationship extends EntityRelationship {
-  relationshipType: 'associated'
-}
-
-export interface FeaturePainRelationship extends EntityRelationship {
-  relationshipType: 'associated' | 'relieves'
-}
-
-export interface FeatureGainRelationship extends EntityRelationship {
-  relationshipType: 'associated' | 'creates'
 }
 
 // Generic relationship model class
@@ -130,23 +47,35 @@ export class RelationshipModel implements EntityRelationship {
   }
 }
 
-// Relationship type unions for type safety
-export type AllRelationshipTypes = 
-  | AccountUserRelationship
-  | UserIdeaRelationship
-  | UserProblemRelationship
-  | IdeaProductRelationship
-  | FeatureProductRelationship
-  | ProblemIdeaRelationship
-  | CustomerIdeaRelationship
-  | CustomerJobRelationship
-  | CustomerPainRelationship
-  | CustomerGainRelationship
-  | CustomerJourneyCustomerRelationship
-  | CustomerJourneyStepJourneyRelationship
-  | CustomerJourneyStepProductRelationship
-  | CustomerJourneyStepPainRelationship
-  | CustomerJourneyStepGainRelationship
-  | FeatureJobRelationship
-  | FeaturePainRelationship
-  | FeatureGainRelationship
+// Common relationship types as constants for consistency
+export const RELATIONSHIP_TYPES = {
+  // Ownership relationships
+  HAS: 'has',
+  OWNS: 'owns',
+  BELONGS: 'belongs',
+  
+  // Product relationships
+  MVP: 'mvp',
+  PLANNED: 'planned',
+  
+  // Customer relationships
+  PERFORMS: 'performs',
+  EXPERIENCES: 'experiences',
+  DESIRES: 'desires',
+  
+  // Feature relationships
+  ASSOCIATED: 'associated',
+  RELIEVES: 'relieves',
+  CREATES: 'creates',
+  USES: 'uses',
+  
+  // Generic relationships
+  RELATED: 'related',
+  DEPENDS: 'depends',
+  INFLUENCES: 'influences',
+  SUPPORTS: 'supports',
+  ADDRESSES: 'addresses',
+  SOLVES: 'solves'
+} as const
+
+export type RelationshipType = typeof RELATIONSHIP_TYPES[keyof typeof RELATIONSHIP_TYPES]
