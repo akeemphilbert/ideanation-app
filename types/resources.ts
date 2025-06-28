@@ -7,6 +7,14 @@ export interface BaseResource {
   updated: Date
 }
 
+// Workspace resource - the aggregate root
+export interface WorkspaceResource extends BaseResource {
+  '@type': 'ideanation:Workspace'
+  title: string
+  description: string
+  identifier: string
+}
+
 // Entity resource types
 export interface IdeaResource extends BaseResource {
   '@type': 'ideanation:Idea'
@@ -89,6 +97,7 @@ export interface RelationshipResource extends BaseResource {
 
 // Union type for all resources
 export type Resource = 
+  | WorkspaceResource
   | IdeaResource
   | ProblemResource
   | CustomerResource
@@ -119,6 +128,7 @@ export enum FeatureStatus {
 
 // Resource type mapping
 export const RESOURCE_TYPES = {
+  WORKSPACE: 'ideanation:Workspace',
   IDEA: 'ideanation:Idea',
   PROBLEM: 'ideanation:Problem',
   CUSTOMER: 'ideanation:Customer',
@@ -134,6 +144,7 @@ export const RESOURCE_TYPES = {
 
 // URL path mapping for @id generation
 export const RESOURCE_PATHS = {
+  'ideanation:Workspace': '/workspaces',
   'ideanation:Idea': '/ideas',
   'ideanation:Problem': '/problems',
   'ideanation:Customer': '/customers',
@@ -171,11 +182,9 @@ export const RELATIONSHIP_TYPES = {
 
 // Utility functions
 export function generateKSUID(): string {
-  // Browser-compatible unique ID generation
-  const timestamp = Date.now().toString(36)
-  const randomPart = Math.random().toString(36).substring(2, 15)
-  const additionalRandom = Math.random().toString(36).substring(2, 15)
-  return `${timestamp}${randomPart}${additionalRandom}`
+  // Import ksuid for proper unique ID generation
+  const ksuid = require('ksuid')
+  return ksuid.randomSync().string
 }
 
 export function generateResourceId(type: string): string {
@@ -222,6 +231,31 @@ export abstract class BaseResourceModel implements BaseResource {
       id: this.id,
       created: this.created,
       updated: this.updated
+    }
+  }
+}
+
+// Workspace resource model
+export class WorkspaceResourceModel extends BaseResourceModel implements WorkspaceResource {
+  '@type': 'ideanation:Workspace' = RESOURCE_TYPES.WORKSPACE
+  title: string
+  description: string
+  identifier: string
+
+  constructor(data: Partial<WorkspaceResource> = {}) {
+    super(RESOURCE_TYPES.WORKSPACE, data)
+    this.title = data.title || ''
+    this.description = data.description || ''
+    this.identifier = data.identifier || `WS-${this.id}`
+  }
+
+  toJSON(): WorkspaceResource {
+    return {
+      ...super.toJSON(),
+      '@type': this['@type'],
+      title: this.title,
+      description: this.description,
+      identifier: this.identifier
     }
   }
 }

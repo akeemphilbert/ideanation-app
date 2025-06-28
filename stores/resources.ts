@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { 
   Resource,
+  WorkspaceResource,
   IdeaResource,
   ProblemResource,
   CustomerResource,
@@ -14,6 +15,7 @@ import type {
   RelationshipResource
 } from '~/types/resources'
 import {
+  WorkspaceResourceModel,
   IdeaResourceModel,
   ProblemResourceModel,
   CustomerResourceModel,
@@ -34,6 +36,7 @@ export const useResourcesStore = defineStore('resources', () => {
   const resources = ref<Map<string, Resource>>(new Map())
   
   // Current active resources
+  const currentWorkspace = ref<WorkspaceResource | null>(null)
   const currentIdea = ref<IdeaResource | null>(null)
 
   // Generic resource operations
@@ -65,6 +68,7 @@ export const useResourcesStore = defineStore('resources', () => {
       .filter(resource => resource['@type'] === type) as T[]
   }
 
+  const workspaces = computed(() => getResourcesByType<WorkspaceResource>(RESOURCE_TYPES.WORKSPACE))
   const ideas = computed(() => getResourcesByType<IdeaResource>(RESOURCE_TYPES.IDEA))
   const problems = computed(() => getResourcesByType<ProblemResource>(RESOURCE_TYPES.PROBLEM))
   const customers = computed(() => getResourcesByType<CustomerResource>(RESOURCE_TYPES.CUSTOMER))
@@ -77,64 +81,183 @@ export const useResourcesStore = defineStore('resources', () => {
   const customerJourneySteps = computed(() => getResourcesByType<CustomerJourneyStepResource>(RESOURCE_TYPES.CUSTOMER_JOURNEY_STEP))
   const relationships = computed(() => getResourcesByType<RelationshipResource>(RESOURCE_TYPES.RELATIONSHIP))
 
-  // Entity creation methods
+  // Workspace creation and management
+  const createWorkspace = (data: Partial<WorkspaceResource>): WorkspaceResourceModel => {
+    const workspace = new WorkspaceResourceModel(data)
+    addResource(workspace.toJSON())
+    return workspace
+  }
+
+  const setCurrentWorkspace = (workspace: WorkspaceResource | null): void => {
+    currentWorkspace.value = workspace
+    // Clear current idea when switching workspaces
+    if (workspace) {
+      // Find the first idea in this workspace
+      const workspaceIdeas = getIdeasForWorkspace(workspace['@id'])
+      currentIdea.value = workspaceIdeas.length > 0 ? workspaceIdeas[0] : null
+    } else {
+      currentIdea.value = null
+    }
+  }
+
+  // Entity creation methods - all entities belong to current workspace
   const createIdea = (data: Partial<IdeaResource>): IdeaResourceModel => {
     const idea = new IdeaResourceModel(data)
     addResource(idea.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: idea.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return idea
   }
 
   const createProblem = (data: Partial<ProblemResource>): ProblemResourceModel => {
     const problem = new ProblemResourceModel(data)
     addResource(problem.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: problem.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return problem
   }
 
   const createCustomer = (data: Partial<CustomerResource>): CustomerResourceModel => {
     const customer = new CustomerResourceModel(data)
     addResource(customer.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: customer.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return customer
   }
 
   const createProduct = (data: Partial<ProductResource>): ProductResourceModel => {
     const product = new ProductResourceModel(data)
     addResource(product.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: product.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return product
   }
 
   const createFeature = (data: Partial<FeatureResource>): FeatureResourceModel => {
     const feature = new FeatureResourceModel(data)
     addResource(feature.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: feature.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return feature
   }
 
   const createJob = (data: Partial<JobResource>): JobResourceModel => {
     const job = new JobResourceModel(data)
     addResource(job.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: job.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return job
   }
 
   const createPain = (data: Partial<PainResource>): PainResourceModel => {
     const pain = new PainResourceModel(data)
     addResource(pain.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: pain.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return pain
   }
 
   const createGain = (data: Partial<GainResource>): GainResourceModel => {
     const gain = new GainResourceModel(data)
     addResource(gain.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: gain.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return gain
   }
 
   const createCustomerJourney = (data: Partial<CustomerJourneyResource>): CustomerJourneyResourceModel => {
     const journey = new CustomerJourneyResourceModel(data)
     addResource(journey.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: journey.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return journey
   }
 
   const createCustomerJourneyStep = (data: Partial<CustomerJourneyStepResource>): CustomerJourneyStepResourceModel => {
     const step = new CustomerJourneyStepResourceModel(data)
     addResource(step.toJSON())
+    
+    // Create belongs relationship to current workspace
+    if (currentWorkspace.value) {
+      createRelationship({
+        sourceId: step.toJSON()['@id'],
+        targetId: currentWorkspace.value['@id'],
+        relationshipType: RELATIONSHIP_TYPES.BELONGS
+      })
+    }
+    
     return step
   }
 
@@ -179,6 +302,52 @@ export const useResourcesStore = defineStore('resources', () => {
         const matchesType = targetType ? resource['@type'] === targetType : true
         return matchesId && matchesType
       }) as T[]
+  }
+
+  // Workspace-specific queries
+  const getIdeasForWorkspace = (workspaceId: string): IdeaResource[] => {
+    return getRelatedResources<IdeaResource>(
+      workspaceId, 
+      RELATIONSHIP_TYPES.BELONGS, 
+      RESOURCE_TYPES.IDEA, 
+      false
+    )
+  }
+
+  const getProblemsForWorkspace = (workspaceId: string): ProblemResource[] => {
+    return getRelatedResources<ProblemResource>(
+      workspaceId, 
+      RELATIONSHIP_TYPES.BELONGS, 
+      RESOURCE_TYPES.PROBLEM, 
+      false
+    )
+  }
+
+  const getCustomersForWorkspace = (workspaceId: string): CustomerResource[] => {
+    return getRelatedResources<CustomerResource>(
+      workspaceId, 
+      RELATIONSHIP_TYPES.BELONGS, 
+      RESOURCE_TYPES.CUSTOMER, 
+      false
+    )
+  }
+
+  const getProductsForWorkspace = (workspaceId: string): ProductResource[] => {
+    return getRelatedResources<ProductResource>(
+      workspaceId, 
+      RELATIONSHIP_TYPES.BELONGS, 
+      RESOURCE_TYPES.PRODUCT, 
+      false
+    )
+  }
+
+  const getFeaturesForWorkspace = (workspaceId: string): FeatureResource[] => {
+    return getRelatedResources<FeatureResource>(
+      workspaceId, 
+      RELATIONSHIP_TYPES.BELONGS, 
+      RESOURCE_TYPES.FEATURE, 
+      false
+    )
   }
 
   // Convenience methods for common queries
@@ -246,6 +415,32 @@ export const useResourcesStore = defineStore('resources', () => {
     currentIdea.value = idea
   }
 
+  // Current workspace filtered collections
+  const currentWorkspaceIdeas = computed(() => {
+    if (!currentWorkspace.value) return []
+    return getIdeasForWorkspace(currentWorkspace.value['@id'])
+  })
+
+  const currentWorkspaceProblems = computed(() => {
+    if (!currentWorkspace.value) return []
+    return getProblemsForWorkspace(currentWorkspace.value['@id'])
+  })
+
+  const currentWorkspaceCustomers = computed(() => {
+    if (!currentWorkspace.value) return []
+    return getCustomersForWorkspace(currentWorkspace.value['@id'])
+  })
+
+  const currentWorkspaceProducts = computed(() => {
+    if (!currentWorkspace.value) return []
+    return getProductsForWorkspace(currentWorkspace.value['@id'])
+  })
+
+  const currentWorkspaceFeatures = computed(() => {
+    if (!currentWorkspace.value) return []
+    return getFeaturesForWorkspace(currentWorkspace.value['@id'])
+  })
+
   const currentIdeaProblems = computed(() => {
     if (!currentIdea.value) return []
     return getProblemsForIdea(currentIdea.value['@id'])
@@ -296,6 +491,10 @@ export const useResourcesStore = defineStore('resources', () => {
   }
 
   // Update methods for specific resource types
+  const updateWorkspace = (id: string, data: Partial<WorkspaceResource>): void => {
+    updateResource(id, data)
+  }
+
   const updateIdea = (id: string, data: Partial<IdeaResource>): void => {
     updateResource(id, data)
   }
@@ -341,6 +540,10 @@ export const useResourcesStore = defineStore('resources', () => {
   }
 
   // Delete methods for specific resource types
+  const deleteWorkspace = (id: string): void => {
+    deleteResource(id)
+  }
+
   const deleteIdea = (id: string): void => {
     deleteResource(id)
   }
@@ -388,9 +591,11 @@ export const useResourcesStore = defineStore('resources', () => {
   return {
     // State
     resources: readonly(resources),
+    currentWorkspace: readonly(currentWorkspace),
     currentIdea: readonly(currentIdea),
 
     // Computed collections
+    workspaces,
     ideas,
     problems,
     customers,
@@ -403,11 +608,22 @@ export const useResourcesStore = defineStore('resources', () => {
     customerJourneySteps,
     relationships,
 
+    // Current workspace filtered collections
+    currentWorkspaceIdeas,
+    currentWorkspaceProblems,
+    currentWorkspaceCustomers,
+    currentWorkspaceProducts,
+    currentWorkspaceFeatures,
+
     // Generic operations
     addResource,
     getResource,
     updateResource,
     deleteResource,
+
+    // Workspace operations
+    createWorkspace,
+    setCurrentWorkspace,
 
     // Creation methods
     createIdea,
@@ -423,6 +639,7 @@ export const useResourcesStore = defineStore('resources', () => {
     createRelationship,
 
     // Update methods
+    updateWorkspace,
     updateIdea,
     updateProblem,
     updateCustomer,
@@ -436,6 +653,7 @@ export const useResourcesStore = defineStore('resources', () => {
     updateRelationship,
 
     // Delete methods
+    deleteWorkspace,
     deleteIdea,
     deleteProblem,
     deleteCustomer,
@@ -450,6 +668,11 @@ export const useResourcesStore = defineStore('resources', () => {
 
     // Relationship operations
     getRelatedResources,
+    getIdeasForWorkspace,
+    getProblemsForWorkspace,
+    getCustomersForWorkspace,
+    getProductsForWorkspace,
+    getFeaturesForWorkspace,
     getProblemsForIdea,
     getCustomersForIdea,
     getProductsForIdea,

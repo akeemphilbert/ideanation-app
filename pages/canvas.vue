@@ -1,6 +1,44 @@
 <template>
   <div class="canvas-page">
-    <div class="canvas-layout">
+    <!-- Workspace Header -->
+    <div class="workspace-header">
+      <div class="workspace-info">
+        <h1 class="workspace-title handwritten">
+          {{ resourcesStore.currentWorkspace?.title || 'No Workspace Selected' }}
+        </h1>
+        <p class="workspace-description">
+          {{ resourcesStore.currentWorkspace?.description || 'Please select or create a workspace' }}
+        </p>
+      </div>
+      
+      <div class="workspace-controls" v-if="resourcesStore.currentWorkspace">
+        <div class="workspace-selector">
+          <select 
+            v-model="selectedWorkspaceId" 
+            @change="switchWorkspace"
+            class="workspace-select"
+          >
+            <option 
+              v-for="workspace in resourcesStore.workspaces" 
+              :key="workspace['@id']"
+              :value="workspace['@id']"
+            >
+              {{ workspace.title }}
+            </option>
+          </select>
+        </div>
+        
+        <button class="btn-sketch" @click="createNewWorkspace">
+          New Workspace
+        </button>
+        
+        <button class="btn-sketch" @click="goHome">
+          Home
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-layout" v-if="resourcesStore.currentWorkspace">
       <!-- Chat Sidebar on Left -->
       <div class="chat-sidebar">
         <div class="chat-header">
@@ -127,16 +165,16 @@
             <!-- Entity Stats -->
             <div class="entity-stats">
               <span class="stat-item">
-                {{ resourcesStore.problems.length }} Problems
+                {{ resourcesStore.currentWorkspaceProblems.length }} Problems
               </span>
               <span class="stat-item">
-                {{ resourcesStore.customers.length }} Customers
+                {{ resourcesStore.currentWorkspaceCustomers.length }} Customers
               </span>
               <span class="stat-item">
-                {{ resourcesStore.features.length }} Features
+                {{ resourcesStore.currentWorkspaceFeatures.length }} Features
               </span>
               <span class="stat-item">
-                {{ resourcesStore.products.length }} Products
+                {{ resourcesStore.currentWorkspaceProducts.length }} Products
               </span>
               <span class="stat-item">
                 {{ resourcesStore.relationships.length }} Links
@@ -161,7 +199,7 @@
         <div class="graph-container" ref="graphContainer">
           <div v-if="!resourcesStore.currentIdea" class="empty-graph">
             <div class="empty-message">
-              <h3 class="handwritten">Welcome to Ideanation!</h3>
+              <h3 class="handwritten">Welcome to your workspace!</h3>
               <p>Let's start by giving your startup idea a name.</p>
               <p>Just type it in the chat and I'll create your idea canvas!</p>
               <div class="example-commands">
@@ -197,6 +235,22 @@
         </div>
       </div>
     </div>
+
+    <!-- No Workspace Selected -->
+    <div v-else class="no-workspace">
+      <div class="no-workspace-content">
+        <h2 class="handwritten">No Workspace Selected</h2>
+        <p>Please select an existing workspace or create a new one to get started.</p>
+        <div class="no-workspace-actions">
+          <button class="btn-sketch btn-primary" @click="createNewWorkspace">
+            Create New Workspace
+          </button>
+          <button class="btn-sketch" @click="goHome">
+            Go to Home
+          </button>
+        </div>
+      </div>
+    </div>
     
     <!-- Component Modal -->
     <ComponentModal
@@ -226,6 +280,7 @@ import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormat
 import { ExportType } from '~/types/export'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
 
+const router = useRouter()
 const chatStore = useChatStore()
 const resourcesStore = useResourcesStore()
 const graphContainer = ref<HTMLElement>()
@@ -238,6 +293,7 @@ const selectedNodeIds = ref<string[]>([])
 const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
+const selectedWorkspaceId = ref('')
 
 const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
 const entityPrefixes = getAvailablePrefixes()
@@ -249,6 +305,13 @@ const quickSuggestions = [
   "What problems does this solve?",
   "How do these components connect?"
 ]
+
+// Initialize selected workspace
+watch(() => resourcesStore.currentWorkspace, (workspace) => {
+  if (workspace) {
+    selectedWorkspaceId.value = workspace['@id']
+  }
+}, { immediate: true })
 
 // Convert entities to graph format
 const graphNodes = computed(() => {
@@ -264,8 +327,8 @@ const graphNodes = computed(() => {
     })
   }
   
-  // Add problems
-  resourcesStore.problems.forEach(problem => {
+  // Add workspace entities
+  resourcesStore.currentWorkspaceProblems.forEach(problem => {
     nodes.push({
       id: problem['@id'],
       title: problem.title,
@@ -274,8 +337,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add customers
-  resourcesStore.customers.forEach(customer => {
+  resourcesStore.currentWorkspaceCustomers.forEach(customer => {
     nodes.push({
       id: customer['@id'],
       title: customer.title || `${customer.givenName} ${customer.familyName}`.trim(),
@@ -284,8 +346,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add features
-  resourcesStore.features.forEach(feature => {
+  resourcesStore.currentWorkspaceFeatures.forEach(feature => {
     nodes.push({
       id: feature['@id'],
       title: feature.title,
@@ -294,8 +355,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add products
-  resourcesStore.products.forEach(product => {
+  resourcesStore.currentWorkspaceProducts.forEach(product => {
     nodes.push({
       id: product['@id'],
       title: product.title,
@@ -304,8 +364,15 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add jobs
-  resourcesStore.jobs.forEach(job => {
+  // Add other workspace entities
+  const workspaceJobs = resourcesStore.currentWorkspace ? 
+    resourcesStore.getRelatedResources(resourcesStore.currentWorkspace['@id'], 'belongs', 'ideanation:Job', false) : []
+  const workspacePains = resourcesStore.currentWorkspace ? 
+    resourcesStore.getRelatedResources(resourcesStore.currentWorkspace['@id'], 'belongs', 'ideanation:Pain', false) : []
+  const workspaceGains = resourcesStore.currentWorkspace ? 
+    resourcesStore.getRelatedResources(resourcesStore.currentWorkspace['@id'], 'belongs', 'ideanation:Gain', false) : []
+  
+  workspaceJobs.forEach(job => {
     nodes.push({
       id: job['@id'],
       title: job.title,
@@ -314,8 +381,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add pains
-  resourcesStore.pains.forEach(pain => {
+  workspacePains.forEach(pain => {
     nodes.push({
       id: pain['@id'],
       title: pain.title,
@@ -324,8 +390,7 @@ const graphNodes = computed(() => {
     })
   })
   
-  // Add gains
-  resourcesStore.gains.forEach(gain => {
+  workspaceGains.forEach(gain => {
     nodes.push({
       id: gain['@id'],
       title: gain.title,
@@ -338,17 +403,52 @@ const graphNodes = computed(() => {
 })
 
 const graphEdges = computed(() => {
-  return resourcesStore.relationships.map(rel => ({
-    source: rel.sourceId,
-    target: rel.targetId,
-    relationship: rel.relationshipType
-  }))
+  return resourcesStore.relationships
+    .filter(rel => {
+      // Only show relationships between nodes that are currently visible
+      const sourceExists = graphNodes.value.some(n => n.id === rel.sourceId)
+      const targetExists = graphNodes.value.some(n => n.id === rel.targetId)
+      return sourceExists && targetExists
+    })
+    .map(rel => ({
+      source: rel.sourceId,
+      target: rel.targetId,
+      relationship: rel.relationshipType
+    }))
 })
 
 onMounted(() => {
-  // Don't initialize sample data - start completely empty
-  // User must first provide idea name
+  // Redirect to home if no workspace is selected
+  if (!resourcesStore.currentWorkspace) {
+    router.push('/')
+  }
 })
+
+const switchWorkspace = () => {
+  const workspace = resourcesStore.workspaces.find(w => w['@id'] === selectedWorkspaceId.value)
+  if (workspace) {
+    resourcesStore.setCurrentWorkspace(workspace)
+    // Clear chat when switching workspaces
+    chatStore.clearMessages()
+  }
+}
+
+const createNewWorkspace = () => {
+  const workspace = resourcesStore.createWorkspace({
+    title: `New Workspace ${new Date().toLocaleDateString()}`,
+    description: 'A new workspace for your startup idea'
+  })
+  
+  resourcesStore.setCurrentWorkspace(workspace.toJSON())
+  selectedWorkspaceId.value = workspace.toJSON()['@id']
+  
+  // Clear chat for new workspace
+  chatStore.clearMessages()
+}
+
+const goHome = () => {
+  router.push('/')
+}
 
 const getInputPlaceholder = () => {
   if (!resourcesStore.currentIdea) {
@@ -845,7 +945,7 @@ const saveIdea = async () => {
     // Show success message
     chatStore.addMessage({
       type: 'ai',
-      content: `✅ Your business model canvas for "${resourcesStore.currentIdea?.title}" has been exported to markdown and downloaded! The file contains ${resourcesStore.problems.length} problems, ${resourcesStore.customers.length} customers, ${resourcesStore.features.length} features, and ${resourcesStore.relationships.length} relationships.`
+      content: `✅ Your business model canvas for "${resourcesStore.currentIdea?.title}" has been exported to markdown and downloaded!`
     })
     
     nextTick(() => scrollToBottom())
@@ -889,7 +989,7 @@ const exportAllEntities = async () => {
     // Show success message
     chatStore.addMessage({
       type: 'ai',
-      content: `✅ All entities for "${resourcesStore.currentIdea?.title}" have been exported to markdown and downloaded! The file contains all ${resourcesStore.ideas.length + resourcesStore.problems.length + resourcesStore.customers.length + resourcesStore.features.length + resourcesStore.products.length + resourcesStore.jobs.length + resourcesStore.pains.length + resourcesStore.gains.length} entities and ${resourcesStore.relationships.length} relationships.`
+      content: `✅ All entities for "${resourcesStore.currentWorkspace?.title}" have been exported to markdown and downloaded!`
     })
     
     nextTick(() => scrollToBottom())
@@ -932,16 +1032,92 @@ useHead({
 .canvas-page {
   min-height: 100vh;
   background: var(--color-background);
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 2px solid var(--color-primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.workspace-info h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+  color: var(--color-primary);
+}
+
+.workspace-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+}
+
+.workspace-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspace-select {
+  padding: 8px 12px;
+  border: 2px solid var(--color-primary);
+  border-radius: 4px;
+  font-family: var(--font-handwritten);
+  background: white;
+  color: var(--color-primary);
+  min-width: 200px;
+}
+
+.workspace-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
 }
 
 .canvas-layout {
-  max-width: 1400px;
-  margin: 0 auto;
+  flex: 1;
   display: grid;
   grid-template-columns: 350px 1fr;
   gap: 20px;
-  height: calc(100vh - 40px);
+  padding: 20px;
+  min-height: 0;
+}
+
+.no-workspace {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.no-workspace-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.no-workspace-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 2rem;
+  color: var(--color-primary);
+}
+
+.no-workspace-content p {
+  margin: 0 0 24px 0;
+  color: var(--color-secondary);
+  line-height: 1.5;
+}
+
+.no-workspace-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* Chat Sidebar Styles */
@@ -954,6 +1130,8 @@ useHead({
   overflow: hidden;
   transform: rotate(-0.3deg);
   box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+  height: fit-content;
+  max-height: calc(100vh - 140px);
 }
 
 .chat-header {
@@ -995,7 +1173,8 @@ useHead({
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  min-height: 0;
+  min-height: 200px;
+  max-height: 400px;
 }
 
 .chat-welcome {
@@ -1286,7 +1465,7 @@ useHead({
 
 .graph-container {
   flex: 1;
-  min-height: 0;
+  min-height: 400px;
   background: white;
   position: relative;
   overflow: hidden;
@@ -1393,6 +1572,16 @@ useHead({
     grid-template-columns: 300px 1fr;
   }
   
+  .workspace-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .workspace-controls {
+    justify-content: space-between;
+  }
+  
   .graph-header {
     flex-direction: column;
     align-items: stretch;
@@ -1412,10 +1601,12 @@ useHead({
   
   .chat-sidebar {
     transform: rotate(0deg);
+    max-height: 300px;
   }
   
   .graph-container {
     transform: rotate(0deg);
+    min-height: 300px;
   }
   
   .graph-controls {
@@ -1430,6 +1621,15 @@ useHead({
   
   .action-buttons {
     flex-direction: column;
+  }
+  
+  .workspace-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .workspace-select {
+    min-width: auto;
   }
 }
 </style>
