@@ -8,7 +8,6 @@ export default defineNuxtConfig({
   
   // CSS configuration
   css: [
-    'ant-design-vue/dist/reset.css',
     '~/assets/css/main.css'
   ],
   
@@ -19,8 +18,11 @@ export default defineNuxtConfig({
   
   // Build configuration
   build: {
-    transpile: ['ant-design-vue', 'dayjs']
+    transpile: ['dayjs']
   },
+  
+  // SSR configuration - disable for Ant Design Vue
+  ssr: true,
   
   // Environment variables
   runtimeConfig: {
