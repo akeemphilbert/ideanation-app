@@ -738,17 +738,7 @@ What would you like to add first?`,
         'Accept': 'text/event-stream'
       },
       body: JSON.stringify({
-        message: message,
-        context: {
-          currentIdea: resourcesStore.currentIdea?.title,
-          selectedNode: selectedNodeIds.value.length === 1 ? getNodeTitle(selectedNodeIds.value[0]) : null,
-          entityCounts: {
-            problems: resourcesStore.problems.length,
-            customers: resourcesStore.customers.length,
-            features: resourcesStore.features.length,
-            products: resourcesStore.products.length
-          }
-        }
+        message: message
       }),
     })
 
