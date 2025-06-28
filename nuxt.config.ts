@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   
   // Build configuration
   build: {
-    transpile: ['ant-design-vue']
+    transpile: ['ant-design-vue', 'dayjs']
   },
   
   // Environment variables
