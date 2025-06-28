@@ -230,6 +230,7 @@ import LinkModal from '~/components/molecules/LinkModal.vue'
 import { ExportDataBuilder } from '~/services/export/ExportDataBuilder'
 import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormatter'
 import { ExportType } from '~/types/export'
+import  ChatMessage from '~/components/molecules/ChatMessage.vue'
 
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
@@ -685,32 +686,59 @@ const handleChatMessage = async () => {
   chatMessage.value = ''
   showQuickSuggestions.value = false
   showEntityHelp.value = false
-  
-  // Check if this is a load idea command
-  const loadMatch = message.match(/^load idea (\d+)$/i)
-  if (loadMatch) {
-    const ideaNumber = parseInt(loadMatch[1]) - 1
-    const savedIdeas = (window as any).savedIdeas
-    
-    if (savedIdeas && savedIdeas[ideaNumber]) {
-      await loadSpecificIdea(savedIdeas[ideaNumber].key)
-      return
-    } else {
-      chatStore.addMessage({
-        type: 'ai',
-        content: `❌ Idea number ${ideaNumber + 1} not found. Please use "Load from Storage" to see available ideas first.`
-      })
-      nextTick(() => scrollToBottom())
-      return
-    }
+
+  const res = await fetch('/api/message/stream', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    message: message
+  }),
+})
+
+const reader = res.body?.getReader()
+const decoder = new TextDecoder()
+
+while (true) {
+  const { done, value } = await reader.read()
+  if (done) break
+  const chunkString = decoder.decode(value, { stream: true })
+  try {
+    console.log(chunkString)
+    // Pass the selected node for context
+    const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
+    await chatStore.sendMessage(chunkString, targetNodeId)
+    nextTick(() => scrollToBottom())
+  } catch (error) {
+    console.log(chunkString)
+    console.error('Error parsing chunk:', error)
   }
   
-  // Pass the selected node for context
-  const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
-  await chatStore.sendMessage(message, targetNodeId)
+}
+
+  
+  // Check if this is a load idea command
+  // const loadMatch = message.match(/^load idea (\d+)$/i)
+  // if (loadMatch) {
+  //   const ideaNumber = parseInt(loadMatch[1]) - 1
+  //   const savedIdeas = (window as any).savedIdeas
+    
+  //   if (savedIdeas && savedIdeas[ideaNumber]) {
+  //     await loadSpecificIdea(savedIdeas[ideaNumber].key)
+  //     return
+  //   } else {
+  //     chatStore.addMessage({
+  //       type: 'ai',
+  //       content: `❌ Idea number ${ideaNumber + 1} not found. Please use "Load from Storage" to see available ideas first.`
+  //     })
+  //     nextTick(() => scrollToBottom())
+  //     return
+  //   }
+  // }
+  
+  
   
   // Scroll to bottom after message is sent
-  nextTick(() => scrollToBottom())
+  // nextTick(() => scrollToBottom())
 }
 
 const handleSuggestionApply = (suggestion: any) => {

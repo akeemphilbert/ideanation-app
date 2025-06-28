@@ -22,6 +22,24 @@ export default defineNuxtConfig({
     transpile: ['ant-design-vue']
   },
   
+  // Environment variables
+  runtimeConfig: {
+    azureOpenAI: {
+      apiKey: process.env.AZURE_OPENAI_API_KEY,
+      basePath: process.env.AZURE_OPENAI_BASE_PATH,
+      deployment: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME,
+      apiVersion: process.env.AZURE_OPENAI_API_VERSION
+    },
+    langsmith: {
+      apiKey: process.env.LANGSMITH_API_KEY,
+      projectName: process.env.LANGSMITH_PROJECT_NAME,
+      endpoint: process.env.LANGSMITH_ENDPOINT
+    },
+    public: {
+      apiUrl: process.env.API_URL
+    }
+  },
+  
   // App head configuration
   app: {
     head: {
