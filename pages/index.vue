@@ -14,53 +14,56 @@
               <line x1="22" y1="11" x2="18" y2="21" stroke="#6b7280" stroke-width="1.5"/>
             </svg>
           </div>
-          <span class="brand-text">Ideanation</span>
+          <span class="brand-name">Ideanation</span>
         </div>
-        
+
         <div class="nav-links">
           <a href="#features" class="nav-link">Features</a>
           <a href="#how-it-works" class="nav-link">How it works</a>
           <a href="#pricing" class="nav-link">Pricing</a>
-          <a href="https://github.com" class="nav-link">GitHub</a>
         </div>
-        
+
         <div class="nav-actions">
           <template v-if="user">
-            <!-- User Menu -->
             <div class="user-menu" ref="userMenuRef">
-              <button class="user-button" @click="showUserMenu = !showUserMenu">
+              <button class="user-button" @click="toggleUserMenu">
                 <div class="user-avatar">
-                  <img v-if="profile?.avatar_url" :src="profile.avatar_url" :alt="profile.full_name || 'User'" />
-                  <span v-else>{{ getUserInitials() }}</span>
+                  <img 
+                    v-if="profile?.avatar_url" 
+                    :src="profile.avatar_url" 
+                    :alt="profile.full_name || user.email"
+                    class="avatar-image"
+                  />
+                  <div v-else class="avatar-initials">
+                    {{ getUserInitials() }}
+                  </div>
                 </div>
                 <span class="user-name">{{ profile?.full_name || user.email }}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6,9 12,15 18,9"></polyline>
+                <svg class="chevron" :class="{ 'chevron-open': showUserMenu }" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4.427 9.573L8 6l3.573 3.573a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708z"/>
                 </svg>
               </button>
               
-              <div class="user-dropdown" :class="{ 'active': showUserMenu }">
+              <div v-if="showUserMenu" class="user-dropdown">
                 <div class="dropdown-header">
-                  <div class="dropdown-user-info">
-                    <div class="dropdown-name">{{ profile?.full_name || 'User' }}</div>
-                    <div class="dropdown-email">{{ user.email }}</div>
+                  <div class="user-info">
+                    <div class="user-name-full">{{ profile?.full_name || 'User' }}</div>
+                    <div class="user-email">{{ user.email }}</div>
                   </div>
                 </div>
                 <div class="dropdown-divider"></div>
                 <div class="dropdown-items">
                   <button class="dropdown-item" @click="goToCanvas">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M12 1v6m0 6v6"/>
-                      <path d="m21 12-6-6-6 6-6-6"/>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
+                      <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                     </svg>
-                    Canvas
+                    Go to Canvas
                   </button>
                   <button class="dropdown-item" @click="handleSignOut">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                      <polyline points="16,17 21,12 16,7"/>
-                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                      <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
                     </svg>
                     Sign out
                   </button>
@@ -69,38 +72,37 @@
             </div>
           </template>
           <template v-else>
-            <a href="/login" class="nav-link">Sign in</a>
-            <button class="btn-primary" @click="startNewIdea">Get started</button>
+            <NuxtLink to="/login" class="btn-secondary">Sign in</NuxtLink>
+            <NuxtLink to="/login" class="btn-primary">Get started</NuxtLink>
           </template>
         </div>
-        
+
         <!-- Mobile menu button -->
-        <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
-          <div class="hamburger" :class="{ 'active': mobileMenuOpen }">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+        <button class="mobile-menu-button" @click="toggleMobileMenu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
       </div>
-      
+
       <!-- Mobile menu -->
-      <div class="mobile-menu" :class="{ 'active': mobileMenuOpen }">
-        <div class="mobile-menu-content">
-          <a href="#features" class="mobile-nav-link" @click="mobileMenuOpen = false">Features</a>
-          <a href="#how-it-works" class="mobile-nav-link" @click="mobileMenuOpen = false">How it works</a>
-          <a href="#pricing" class="mobile-nav-link" @click="mobileMenuOpen = false">Pricing</a>
-          <a href="https://github.com" class="mobile-nav-link" @click="mobileMenuOpen = false">GitHub</a>
-          <div class="mobile-menu-actions">
-            <template v-if="user">
-              <button class="mobile-nav-link" @click="goToCanvas">Canvas</button>
-              <button class="mobile-nav-link" @click="handleSignOut">Sign out</button>
-            </template>
-            <template v-else>
-              <a href="/login" class="mobile-nav-link">Sign in</a>
-              <button class="btn-primary" @click="startNewIdea">Get started</button>
-            </template>
-          </div>
+      <div v-if="showMobileMenu" class="mobile-menu">
+        <div class="mobile-nav-links">
+          <a href="#features" class="mobile-nav-link" @click="closeMobileMenu">Features</a>
+          <a href="#how-it-works" class="mobile-nav-link" @click="closeMobileMenu">How it works</a>
+          <a href="#pricing" class="mobile-nav-link" @click="closeMobileMenu">Pricing</a>
+        </div>
+        <div class="mobile-nav-actions">
+          <template v-if="user">
+            <button class="mobile-nav-button" @click="goToCanvas">Go to Canvas</button>
+            <button class="mobile-nav-button secondary" @click="handleSignOut">Sign out</button>
+          </template>
+          <template v-else>
+            <NuxtLink to="/login" class="mobile-nav-button secondary" @click="closeMobileMenu">Sign in</NuxtLink>
+            <NuxtLink to="/login" class="mobile-nav-button" @click="closeMobileMenu">Get started</NuxtLink>
+          </template>
         </div>
       </div>
     </nav>
@@ -110,133 +112,100 @@
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">
-            <span class="badge-icon">✨</span>
-            <span>AI-powered idea structuring</span>
+            <span class="badge-text">Transform ideas into structured insights</span>
           </div>
           
           <h1 class="hero-title">
-            Transform scattered thoughts into 
+            Turn scattered thoughts into 
             <span class="gradient-text">structured startup ideas</span>
           </h1>
           
           <p class="hero-description">
-            Stop losing brilliant ideas in scattered notes. Ideanation uses AI to help you capture, 
-            structure, and develop your startup concepts into comprehensive business frameworks—all 
-            through natural conversation.
+            Ideanation helps entrepreneurs organize their ideas using proven frameworks, 
+            AI-powered insights, and visual knowledge graphs. Stop losing great ideas in scattered notes.
           </p>
           
           <div class="hero-actions">
-            <button class="btn-primary btn-large" @click="startNewIdea">
-              <span class="btn-icon">🚀</span>
-              Start building your idea
-            </button>
-            <button class="btn-secondary btn-large" @click="watchDemo">
-              <span class="btn-icon">▶️</span>
-              Watch demo
+            <NuxtLink to="/login" class="btn-primary btn-large">
+              Start building for free
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </NuxtLink>
+            <button class="btn-secondary btn-large" @click="scrollToDemo">
+              See how it works
             </button>
           </div>
-          
+
           <div class="hero-stats">
             <div class="stat">
-              <div class="stat-number">2.5k+</div>
-              <div class="stat-label">Ideas structured</div>
+              <div class="stat-number">10x</div>
+              <div class="stat-label">Faster idea structuring</div>
             </div>
             <div class="stat">
-              <div class="stat-number">89%</div>
-              <div class="stat-label">Faster ideation</div>
+              <div class="stat-number">50+</div>
+              <div class="stat-label">Business frameworks</div>
             </div>
             <div class="stat">
-              <div class="stat-number">4.8/5</div>
-              <div class="stat-label">User rating</div>
+              <div class="stat-number">AI</div>
+              <div class="stat-label">Powered insights</div>
             </div>
           </div>
         </div>
         
         <div class="hero-visual">
           <div class="visual-container">
-            <!-- Interactive Knowledge Graph -->
-            <div class="knowledge-graph">
-              <svg width="500" height="400" viewBox="0 0 500 400" class="graph-svg">
+            <div class="graph-preview">
+              <svg width="400" height="300" viewBox="0 0 400 300" class="preview-svg">
                 <!-- Background grid -->
                 <defs>
                   <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="0.5"/>
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/>
                   </pattern>
-                  <linearGradient id="nodeGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
-                  </linearGradient>
-                  <linearGradient id="nodeGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
-                  </linearGradient>
-                  <linearGradient id="nodeGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
-                  </linearGradient>
                 </defs>
-                
-                <rect width="100%" height="100%" fill="url(#grid)" opacity="0.3"/>
-                
-                <!-- Connections -->
-                <g class="connections">
-                  <line x1="150" y1="120" x2="250" y2="120" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                  <line x1="150" y1="120" x2="350" y2="120" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                  <line x1="150" y1="120" x2="200" y2="220" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                  <line x1="250" y1="120" x2="300" y2="220" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                  <line x1="350" y1="120" x2="300" y2="220" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                  <line x1="200" y1="220" x2="300" y2="220" stroke="#e2e8f0" stroke-width="2" class="connection-line"/>
-                </g>
+                <rect width="100%" height="100%" fill="url(#grid)" />
                 
                 <!-- Nodes -->
                 <g class="nodes">
-                  <!-- Central Idea Node -->
-                  <circle cx="250" cy="120" r="25" fill="url(#nodeGradient1)" class="node central-node"/>
-                  <text x="250" y="125" text-anchor="middle" fill="white" font-size="12" font-weight="600">Idea</text>
-                  
-                  <!-- Problem Node -->
-                  <circle cx="150" cy="120" r="20" fill="url(#nodeGradient2)" class="node"/>
-                  <text x="150" y="125" text-anchor="middle" fill="white" font-size="10" font-weight="500">Problem</text>
-                  
-                  <!-- Customer Node -->
-                  <circle cx="350" cy="120" r="20" fill="url(#nodeGradient3)" class="node"/>
-                  <text x="350" y="125" text-anchor="middle" fill="white" font-size="10" font-weight="500">Customer</text>
-                  
-                  <!-- Solution Node -->
-                  <circle cx="200" cy="220" r="18" fill="#f59e0b" class="node"/>
-                  <text x="200" y="225" text-anchor="middle" fill="white" font-size="9" font-weight="500">Solution</text>
-                  
-                  <!-- Feature Node -->
-                  <circle cx="300" cy="220" r="18" fill="#ef4444" class="node"/>
-                  <text x="300" y="225" text-anchor="middle" fill="white" font-size="9" font-weight="500">Feature</text>
+                  <circle cx="100" cy="80" r="25" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" class="node problem-node"/>
+                  <circle cx="300" cy="80" r="25" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" class="node customer-node"/>
+                  <circle cx="200" cy="180" r="25" fill="#dcfce7" stroke="#10b981" stroke-width="2" class="node solution-node"/>
+                  <circle cx="120" cy="220" r="20" fill="#fce7f3" stroke="#ec4899" stroke-width="2" class="node pain-node"/>
+                  <circle cx="280" cy="220" r="20" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" class="node gain-node"/>
                 </g>
                 
-                <!-- Floating particles -->
-                <g class="particles">
-                  <circle cx="100" cy="80" r="2" fill="#6366f1" opacity="0.6" class="particle"/>
-                  <circle cx="400" cy="60" r="1.5" fill="#06b6d4" opacity="0.4" class="particle"/>
-                  <circle cx="80" cy="300" r="2.5" fill="#10b981" opacity="0.5" class="particle"/>
-                  <circle cx="420" cy="320" r="1" fill="#f59e0b" opacity="0.7" class="particle"/>
+                <!-- Connections -->
+                <g class="connections">
+                  <line x1="125" y1="80" x2="275" y2="80" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" class="connection"/>
+                  <line x1="110" y1="100" x2="190" y2="160" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" class="connection"/>
+                  <line x1="290" y1="100" x2="210" y2="160" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" class="connection"/>
+                  <line x1="130" y1="200" x2="180" y2="180" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" class="connection"/>
+                  <line x1="270" y1="200" x2="220" y2="180" stroke="#6b7280" stroke-width="2" stroke-dasharray="5,5" class="connection"/>
+                </g>
+                
+                <!-- Labels -->
+                <g class="labels">
+                  <text x="100" y="85" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Problem</text>
+                  <text x="300" y="85" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Customer</text>
+                  <text x="200" y="185" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Solution</text>
+                  <text x="120" y="225" text-anchor="middle" class="node-label" font-size="8" fill="#374151">Pain</text>
+                  <text x="280" y="225" text-anchor="middle" class="node-label" font-size="8" fill="#374151">Gain</text>
                 </g>
               </svg>
-              
-              <!-- Floating UI Elements -->
-              <div class="floating-ui chat-bubble">
-                <div class="chat-header">
-                  <div class="chat-avatar">🤖</div>
-                  <span>AI Assistant</span>
-                </div>
-                <div class="chat-message">
-                  "What problem does your idea solve?"
-                </div>
+            </div>
+            
+            <div class="floating-cards">
+              <div class="floating-card card-1">
+                <div class="card-icon">💡</div>
+                <div class="card-text">AI suggests connections</div>
               </div>
-              
-              <div class="floating-ui insight-card">
-                <div class="insight-icon">💡</div>
-                <div class="insight-content">
-                  <div class="insight-title">Market Insight</div>
-                  <div class="insight-text">87% of startups fail due to lack of market need</div>
-                </div>
+              <div class="floating-card card-2">
+                <div class="card-icon">📊</div>
+                <div class="card-text">Export to frameworks</div>
+              </div>
+              <div class="floating-card card-3">
+                <div class="card-icon">🎯</div>
+                <div class="card-text">Focus on MVP</div>
               </div>
             </div>
           </div>
@@ -250,308 +219,318 @@
         <div class="section-header">
           <h2 class="section-title">Everything you need to structure your startup idea</h2>
           <p class="section-description">
-            From scattered thoughts to comprehensive business framework—all powered by AI
+            From scattered thoughts to structured insights, Ideanation provides the tools 
+            and frameworks used by successful entrepreneurs.
           </p>
         </div>
-        
+
         <div class="features-grid">
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#6366f1" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="#6366f1" stroke-width="2" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="#6366f1" stroke-width="2" stroke-linejoin="round"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
               </svg>
             </div>
-            <h3 class="feature-title">AI-Powered Structuring</h3>
+            <h3 class="feature-title">Atomic Components</h3>
             <p class="feature-description">
-              Transform free-flowing thoughts into structured business components through natural conversation with AI.
+              Break down complex ideas into manageable atomic pieces: problems, customers, 
+              jobs-to-be-done, pains, gains, and solutions.
             </p>
           </div>
-          
+
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="3" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M12 1V3" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M12 21V23" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M4.22 4.22L5.64 5.64" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M18.36 18.36L19.78 19.78" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M1 12H3" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M21 12H23" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M4.22 19.78L5.64 18.36" stroke="#06b6d4" stroke-width="2"/>
-                <path d="M18.36 5.64L19.78 4.22" stroke="#06b6d4" stroke-width="2"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6"/>
+                <path d="M1 12h6m6 0h6"/>
               </svg>
             </div>
             <h3 class="feature-title">Visual Knowledge Graph</h3>
             <p class="feature-description">
-              See how your ideas connect with an interactive graph that reveals relationships between concepts.
+              See how different components of your idea connect and influence each other 
+              through an interactive force-directed graph.
             </p>
           </div>
-          
+
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="#10b981" stroke-width="2"/>
-                <circle cx="9" cy="9" r="2" stroke="#10b981" stroke-width="2"/>
-                <path d="M21 15L16 10L5 21" stroke="#10b981" stroke-width="2"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                <path d="M3 12h6m6 0h6"/>
               </svg>
             </div>
-            <h3 class="feature-title">Instant Artifacts</h3>
+            <h3 class="feature-title">AI-Powered Insights</h3>
             <p class="feature-description">
-              Generate pitch decks, business plans, and other essential documents directly from your structured ideas.
+              Get intelligent suggestions for missing components, potential connections, 
+              and framework-based recommendations.
             </p>
           </div>
-          
+
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M17 21V13H7V21" stroke="#f59e0b" stroke-width="2"/>
-                <path d="M7 13L12 8L17 13" stroke="#f59e0b" stroke-width="2"/>
-                <path d="M12 8V21" stroke="#f59e0b" stroke-width="2"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10,9 9,9 8,9"/>
               </svg>
             </div>
-            <h3 class="feature-title">Persistent Memory</h3>
+            <h3 class="feature-title">Export to Frameworks</h3>
             <p class="feature-description">
-              Never lose an insight again. All conversations and iterations are saved and searchable.
+              Generate business model canvases, pitch decks, SWOT analyses, and other 
+              artifacts directly from your structured idea.
             </p>
           </div>
-          
+
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M16 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V6A2 2 0 0 1 6 4H8" stroke="#ef4444" stroke-width="2"/>
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" stroke="#ef4444" stroke-width="2"/>
-                <path d="M9 12L11 14L15 10" stroke="#ef4444" stroke-width="2"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                <path d="M8 9h8"/>
+                <path d="M8 13h6"/>
               </svg>
             </div>
-            <h3 class="feature-title">Framework Integration</h3>
+            <h3 class="feature-title">Conversational Interface</h3>
             <p class="feature-description">
-              Built-in support for Lean Canvas, Design Sprint, and other proven startup methodologies.
+              Build your idea naturally through conversation. Just type "problem: users can't find..." 
+              and watch your graph grow.
             </p>
           </div>
-          
+
           <div class="feature-card">
             <div class="feature-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M17 3A2.828 2.828 0 1 1 19.828 5.828A2.828 2.828 0 0 1 17 3ZM21 12A9 9 0 1 1 12 3" stroke="#8b5cf6" stroke-width="2"/>
-                <path d="M16 12A4 4 0 1 1 12 8" stroke="#8b5cf6" stroke-width="2"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             </div>
-            <h3 class="feature-title">Smart Validation</h3>
+            <h3 class="feature-title">Collaboration Ready</h3>
             <p class="feature-description">
-              Get AI-powered insights on market fit, competitive landscape, and validation strategies.
+              Share your structured ideas with co-founders, mentors, and investors. 
+              Export to formats they understand and love.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- How It Works Section -->
+    <!-- How it Works Section -->
     <section id="how-it-works" class="how-it-works-section">
       <div class="section-container">
         <div class="section-header">
-          <h2 class="section-title">From idea to structured plan in minutes</h2>
+          <h2 class="section-title">How Ideanation works</h2>
           <p class="section-description">
-            Our AI guides you through proven frameworks to build comprehensive startup concepts
+            From scattered thoughts to structured startup ideas in three simple steps.
           </p>
         </div>
-        
+
         <div class="steps-container">
           <div class="step">
-            <div class="step-visual">
-              <div class="step-illustration chat-illustration">
-                <div class="chat-window">
-                  <div class="chat-header-bar">
-                    <div class="chat-controls">
-                      <div class="control red"></div>
-                      <div class="control yellow"></div>
-                      <div class="control green"></div>
-                    </div>
-                    <span>AI Assistant</span>
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3 class="step-title">Capture your thoughts</h3>
+              <p class="step-description">
+                Start by chatting with our AI. Type naturally about your idea: 
+                "problem: people struggle to find reliable pet sitters"
+              </p>
+              <div class="step-visual">
+                <div class="chat-example">
+                  <div class="chat-bubble user">
+                    problem: people struggle to find reliable pet sitters
                   </div>
-                  <div class="chat-messages">
-                    <div class="message ai-message">
-                      <div class="message-avatar">🤖</div>
-                      <div class="message-content">What problem are you trying to solve?</div>
-                    </div>
-                    <div class="message user-message">
-                      <div class="message-content">Remote teams struggle with async communication...</div>
-                      <div class="message-avatar">👤</div>
-                    </div>
-                  </div>
-                  <div class="typing-indicator">
-                    <div class="typing-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
+                  <div class="chat-bubble ai">
+                    Great! I've added that problem to your idea. Who would benefit most from solving this?
                   </div>
                 </div>
               </div>
             </div>
-            <div class="step-content">
-              <div class="step-number">01</div>
-              <h3 class="step-title">Start with conversation</h3>
-              <p class="step-description">
-                Simply describe your idea in natural language. Our AI asks the right questions to understand your vision and extract key components.
-              </p>
-            </div>
           </div>
-          
+
           <div class="step">
-            <div class="step-visual">
-              <div class="step-illustration graph-illustration">
-                <svg width="300" height="200" viewBox="0 0 300 200" class="step-graph">
-                  <defs>
-                    <linearGradient id="stepGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.8" />
-                      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.8" />
-                    </linearGradient>
-                  </defs>
-                  
-                  <!-- Animated connections -->
-                  <g class="step-connections">
-                    <line x1="80" y1="60" x2="150" y2="60" stroke="#e2e8f0" stroke-width="2" class="step-line"/>
-                    <line x1="80" y1="60" x2="220" y2="60" stroke="#e2e8f0" stroke-width="2" class="step-line"/>
-                    <line x1="80" y1="60" x2="120" y2="140" stroke="#e2e8f0" stroke-width="2" class="step-line"/>
-                    <line x1="150" y1="60" x2="180" y2="140" stroke="#e2e8f0" stroke-width="2" class="step-line"/>
-                  </g>
-                  
-                  <!-- Nodes with animation -->
-                  <g class="step-nodes">
-                    <circle cx="80" cy="60" r="15" fill="url(#stepGradient1)" class="step-node"/>
-                    <text x="80" y="65" text-anchor="middle" fill="white" font-size="8">Problem</text>
-                    
-                    <circle cx="150" cy="60" r="15" fill="#06b6d4" class="step-node"/>
-                    <text x="150" y="65" text-anchor="middle" fill="white" font-size="8">Customer</text>
-                    
-                    <circle cx="220" cy="60" r="15" fill="#10b981" class="step-node"/>
-                    <text x="220" y="65" text-anchor="middle" fill="white" font-size="8">Solution</text>
-                    
-                    <circle cx="120" cy="140" r="12" fill="#f59e0b" class="step-node"/>
-                    <text x="120" y="145" text-anchor="middle" fill="white" font-size="7">Feature</text>
-                    
-                    <circle cx="180" cy="140" r="12" fill="#ef4444" class="step-node"/>
-                    <text x="180" y="145" text-anchor="middle" fill="white" font-size="7">Market</text>
-                  </g>
-                </svg>
-              </div>
-            </div>
+            <div class="step-number">2</div>
             <div class="step-content">
-              <div class="step-number">02</div>
-              <h3 class="step-title">Watch it structure</h3>
+              <h3 class="step-title">Watch your idea take shape</h3>
               <p class="step-description">
-                See your idea transform into atomic components—problems, customers, solutions, features—connected in an intelligent knowledge graph.
+                As you add components, see them automatically organized in a visual knowledge graph 
+                with intelligent connections.
               </p>
-            </div>
-          </div>
-          
-          <div class="step">
-            <div class="step-visual">
-              <div class="step-illustration artifacts-illustration">
-                <div class="artifacts-grid">
-                  <div class="artifact-card pitch-deck">
-                    <div class="artifact-header">
-                      <div class="artifact-icon">📊</div>
-                      <span>Pitch Deck</span>
-                    </div>
-                    <div class="artifact-preview">
-                      <div class="slide-preview">
-                        <div class="slide-title">Problem</div>
-                        <div class="slide-content"></div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="artifact-card business-plan">
-                    <div class="artifact-header">
-                      <div class="artifact-icon">📋</div>
-                      <span>Business Plan</span>
-                    </div>
-                    <div class="artifact-preview">
-                      <div class="plan-lines">
-                        <div class="plan-line"></div>
-                        <div class="plan-line"></div>
-                        <div class="plan-line short"></div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="artifact-card canvas">
-                    <div class="artifact-header">
-                      <div class="artifact-icon">🎯</div>
-                      <span>Lean Canvas</span>
-                    </div>
-                    <div class="artifact-preview">
-                      <div class="canvas-grid">
-                        <div class="canvas-cell"></div>
-                        <div class="canvas-cell"></div>
-                        <div class="canvas-cell"></div>
-                        <div class="canvas-cell"></div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="step-visual">
+                <div class="mini-graph">
+                  <div class="mini-node problem">Problem</div>
+                  <div class="mini-node customer">Customer</div>
+                  <div class="mini-node solution">Solution</div>
+                  <div class="connection-line line-1"></div>
+                  <div class="connection-line line-2"></div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
             <div class="step-content">
-              <div class="step-number">03</div>
-              <h3 class="step-title">Generate artifacts</h3>
+              <h3 class="step-title">Export and share</h3>
               <p class="step-description">
-                Instantly create pitch decks, business plans, lean canvases, and other essential documents from your structured idea components.
+                Generate professional artifacts: business model canvases, pitch decks, 
+                and SWOT analyses ready for investors and stakeholders.
               </p>
+              <div class="step-visual">
+                <div class="export-options">
+                  <div class="export-item">📊 Business Model Canvas</div>
+                  <div class="export-item">📈 Pitch Deck</div>
+                  <div class="export-item">🎯 SWOT Analysis</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Social Proof Section -->
-    <section class="social-proof-section">
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing-section">
       <div class="section-container">
-        <div class="social-proof-content">
-          <div class="proof-stats">
-            <div class="proof-stat">
-              <div class="proof-number">2,500+</div>
-              <div class="proof-label">Ideas structured</div>
+        <div class="section-header">
+          <h2 class="section-title">Simple, transparent pricing</h2>
+          <p class="section-description">
+            Start free and upgrade as your ideas grow into successful startups.
+          </p>
+        </div>
+
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3 class="pricing-title">Free</h3>
+              <div class="pricing-price">
+                <span class="price-amount">$0</span>
+                <span class="price-period">/month</span>
+              </div>
+              <p class="pricing-description">Perfect for exploring and validating your first idea</p>
             </div>
-            <div class="proof-stat">
-              <div class="proof-number">89%</div>
-              <div class="proof-label">Faster ideation process</div>
+            <div class="pricing-features">
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                1 idea workspace
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                AI chat assistance
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Visual knowledge graph
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Basic export (Markdown)
+              </div>
             </div>
-            <div class="proof-stat">
-              <div class="proof-number">4.8/5</div>
-              <div class="proof-label">Average user rating</div>
-            </div>
+            <NuxtLink to="/login" class="pricing-button secondary">Get started</NuxtLink>
           </div>
-          
-          <div class="testimonials">
-            <div class="testimonial">
-              <div class="testimonial-content">
-                "Ideanation helped me turn a vague concept into a comprehensive business plan in just 30 minutes. The AI guidance was incredible."
+
+          <div class="pricing-card featured">
+            <div class="pricing-badge">Most popular</div>
+            <div class="pricing-header">
+              <h3 class="pricing-title">Solo Pro</h3>
+              <div class="pricing-price">
+                <span class="price-amount">$10</span>
+                <span class="price-period">/month</span>
               </div>
-              <div class="testimonial-author">
-                <div class="author-avatar">👨‍💼</div>
-                <div class="author-info">
-                  <div class="author-name">Alex Chen</div>
-                  <div class="author-title">Founder, TechStart</div>
-                </div>
+              <p class="pricing-description">For serious entrepreneurs building multiple ideas</p>
+            </div>
+            <div class="pricing-features">
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Unlimited ideas
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Advanced AI insights
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                All export formats
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Competitor analysis
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Priority support
               </div>
             </div>
-            
-            <div class="testimonial">
-              <div class="testimonial-content">
-                "Finally, a tool that understands how entrepreneurs actually think. No more scattered notes across different apps."
+            <NuxtLink to="/login" class="pricing-button primary">Start free trial</NuxtLink>
+          </div>
+
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3 class="pricing-title">Team</h3>
+              <div class="pricing-price">
+                <span class="price-amount">$25</span>
+                <span class="price-period">/month</span>
               </div>
-              <div class="testimonial-author">
-                <div class="author-avatar">👩‍💻</div>
-                <div class="author-info">
-                  <div class="author-name">Sarah Johnson</div>
-                  <div class="author-title">Product Manager, InnovateCo</div>
-                </div>
+              <p class="pricing-description">For teams and agencies building multiple startups</p>
+            </div>
+            <div class="pricing-features">
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Everything in Solo Pro
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Team collaboration
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Client portal access
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                Advanced analytics
+              </div>
+              <div class="feature-item">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                </svg>
+                White-label options
               </div>
             </div>
+            <NuxtLink to="/login" class="pricing-button secondary">Contact sales</NuxtLink>
           </div>
         </div>
       </div>
@@ -563,83 +542,119 @@
         <div class="cta-content">
           <h2 class="cta-title">Ready to structure your next big idea?</h2>
           <p class="cta-description">
-            Join thousands of entrepreneurs who've transformed their scattered thoughts into structured startup plans.
+            Join thousands of entrepreneurs who've transformed scattered thoughts into structured startup success.
           </p>
           <div class="cta-actions">
-            <button class="btn-primary btn-large" @click="startNewIdea">
-              <span class="btn-icon">🚀</span>
-              Start for free
-            </button>
-            <div class="cta-note">No credit card required • 5-minute setup</div>
+            <NuxtLink to="/login" class="btn-primary btn-large">
+              Start building for free
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </NuxtLink>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Recent Workspaces -->
-    <section v-if="user && recentWorkspaces.length > 0" class="recent-workspaces-section">
-      <div class="section-container">
-        <h3 class="section-subtitle">Continue where you left off</h3>
-        <div class="workspaces-grid">
-          <div 
-            v-for="workspace in recentWorkspaces" 
-            :key="workspace.id"
-            class="workspace-card"
-            @click="openWorkspace(workspace)"
-          >
-            <div class="workspace-header">
-              <div class="workspace-icon">💡</div>
-              <div class="workspace-meta">
-                <h4 class="workspace-title">{{ workspace.title }}</h4>
-                <p class="workspace-description">{{ workspace.description }}</p>
-              </div>
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <div class="brand-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="8" cy="8" r="3" fill="#6366f1" stroke="#4f46e5" stroke-width="1.5"/>
+                <circle cx="24" cy="8" r="3" fill="#06b6d4" stroke="#0891b2" stroke-width="1.5"/>
+                <circle cx="16" cy="24" r="3" fill="#10b981" stroke="#059669" stroke-width="1.5"/>
+                <line x1="11" y1="8" x2="21" y2="8" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="10" y1="11" x2="14" y2="21" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="22" y1="11" x2="18" y2="21" stroke="#6b7280" stroke-width="1.5"/>
+              </svg>
             </div>
-            <div class="workspace-footer">
-              <span class="workspace-date">{{ formatDate(workspace.updated) }}</span>
-              <div class="workspace-arrow">→</div>
+            <span class="brand-name">Ideanation</span>
+          </div>
+          
+          <div class="footer-links">
+            <div class="footer-section">
+              <h4 class="footer-title">Product</h4>
+              <a href="#features" class="footer-link">Features</a>
+              <a href="#pricing" class="footer-link">Pricing</a>
+              <a href="#" class="footer-link">Changelog</a>
+            </div>
+            
+            <div class="footer-section">
+              <h4 class="footer-title">Company</h4>
+              <a href="#" class="footer-link">About</a>
+              <a href="#" class="footer-link">Blog</a>
+              <a href="#" class="footer-link">Careers</a>
+            </div>
+            
+            <div class="footer-section">
+              <h4 class="footer-title">Support</h4>
+              <a href="#" class="footer-link">Help Center</a>
+              <a href="#" class="footer-link">Contact</a>
+              <a href="#" class="footer-link">Status</a>
             </div>
           </div>
         </div>
+        
+        <div class="footer-bottom">
+          <p class="footer-copyright">
+            © 2024 Ideanation. All rights reserved.
+          </p>
+          <div class="footer-legal">
+            <a href="#" class="footer-link">Privacy</a>
+            <a href="#" class="footer-link">Terms</a>
+          </div>
+        </div>
       </div>
-    </section>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onClickOutside } from '@vueuse/core'
+
 const router = useRouter()
-const resourcesStore = useResourcesStore()
 const { user, profile, signOut } = useAuth()
 
-const mobileMenuOpen = ref(false)
+// User menu state
 const showUserMenu = ref(false)
 const userMenuRef = ref<HTMLElement>()
 
-const recentWorkspaces = computed(() => {
-  if (!user.value) return []
-  return resourcesStore.workspaces
-    .slice()
-    .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
-    .slice(0, 3)
+// Mobile menu state
+const showMobileMenu = ref(false)
+
+// Close user menu when clicking outside
+onClickOutside(userMenuRef, () => {
+  showUserMenu.value = false
 })
 
-const startNewIdea = () => {
-  if (!user.value) {
-    router.push('/login?redirect=/canvas')
-    return
-  }
-  
-  const workspace = resourcesStore.createWorkspace({
-    title: 'New Workspace',
-    description: 'A new workspace for your startup idea'
-  })
-  
-  resourcesStore.setCurrentWorkspace(workspace.toJSON())
-  router.push('/canvas')
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
 }
 
-const openWorkspace = (workspace: any) => {
-  resourcesStore.setCurrentWorkspace(workspace)
-  router.push('/canvas')
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+}
+
+const closeMobileMenu = () => {
+  showMobileMenu.value = false
+}
+
+const getUserInitials = () => {
+  if (profile.value?.full_name) {
+    return profile.value.full_name
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+  if (user.value?.email) {
+    return user.value.email.charAt(0).toUpperCase()
+  }
+  return 'U'
 }
 
 const goToCanvas = () => {
@@ -653,94 +668,61 @@ const handleSignOut = async () => {
   router.push('/')
 }
 
-const getUserInitials = () => {
-  if (profile.value?.full_name) {
-    return profile.value.full_name
-      .split(' ')
-      .map(name => name[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-  return user.value?.email?.[0]?.toUpperCase() || 'U'
-}
-
-const watchDemo = () => {
-  console.log('Watch demo clicked')
-}
-
-const formatDate = (date: Date): string => {
-  return new Date(date).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+const scrollToDemo = () => {
+  document.getElementById('how-it-works')?.scrollIntoView({ 
+    behavior: 'smooth' 
   })
 }
 
-// Close user menu when clicking outside
-onClickOutside(userMenuRef, () => {
-  showUserMenu.value = false
-})
-
 // SEO
 useHead({
-  title: 'Ideanation - Transform Ideas into Structured Startup Plans',
+  title: 'Ideanation - Structure Your Startup Ideas',
   meta: [
-    { name: 'description', content: 'AI-powered platform that transforms scattered thoughts into structured startup ideas. Generate pitch decks, business plans, and frameworks through natural conversation.' }
+    { name: 'description', content: 'Transform your startup ideas into structured atomic components and visualize their relationships with AI-powered insights.' }
   ]
 })
 </script>
 
 <style scoped>
-/* Base Styles */
-.landing-page {
-  min-height: 100vh;
-  background: #ffffff;
-  color: #0f172a;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
-
-/* Navigation */
+/* Navigation Styles */
 .main-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid #e2e8f0;
-  height: 64px;
+  z-index: 1000;
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-weight: 600;
-  font-size: 18px;
-  color: #0f172a;
   text-decoration: none;
+  color: inherit;
 }
 
 .brand-icon {
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.brand-text {
-  font-weight: 600;
+.brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .nav-links {
@@ -766,7 +748,6 @@ useHead({
   gap: 16px;
 }
 
-/* User Menu */
 .user-menu {
   position: relative;
 }
@@ -775,33 +756,33 @@ useHead({
   display: flex;
   align-items: center;
   gap: 8px;
-  background: none;
-  border: none;
-  cursor: pointer;
   padding: 8px 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
+  background: white;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .user-button:hover {
-  background: #f1f5f9;
+  border-color: #6366f1;
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #6366f1;
   color: white;
   font-weight: 600;
-  font-size: 12px;
-  overflow: hidden;
+  font-size: 14px;
 }
 
-.user-avatar img {
+.avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -809,60 +790,58 @@ useHead({
 
 .user-name {
   font-weight: 500;
-  color: #0f172a;
+  color: #374151;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.chevron {
+  transition: transform 0.2s ease;
+  color: #6b7280;
+}
+
+.chevron-open {
+  transform: rotate(180deg);
+}
+
 .user-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
+  margin-top: 8px;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   min-width: 200px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-8px);
-  transition: all 0.2s ease;
-  z-index: 1001;
-}
-
-.user-dropdown.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  z-index: 1000;
 }
 
 .dropdown-header {
   padding: 16px;
 }
 
-.dropdown-user-info {
+.user-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
-.dropdown-name {
+.user-name-full {
   font-weight: 600;
   color: #0f172a;
-  font-size: 14px;
 }
 
-.dropdown-email {
+.user-email {
+  font-size: 14px;
   color: #64748b;
-  font-size: 12px;
 }
 
 .dropdown-divider {
   height: 1px;
   background: #e2e8f0;
-  margin: 0 16px;
 }
 
 .dropdown-items {
@@ -872,84 +851,44 @@ useHead({
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
   padding: 8px 12px;
-  background: none;
   border: none;
+  background: none;
+  color: #374151;
+  font-weight: 500;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: #64748b;
-  font-size: 14px;
+  transition: background 0.2s ease;
   text-align: left;
 }
 
 .dropdown-item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #f8fafc;
 }
 
-.mobile-menu-btn {
+.mobile-menu-button {
   display: none;
   background: none;
   border: none;
+  color: #64748b;
   cursor: pointer;
   padding: 8px;
 }
 
-.hamburger {
-  width: 24px;
-  height: 18px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.hamburger span {
-  width: 100%;
-  height: 2px;
-  background: #0f172a;
-  transition: all 0.3s ease;
-}
-
-.hamburger.active span:nth-child(1) {
-  transform: rotate(45deg) translate(6px, 6px);
-}
-
-.hamburger.active span:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(6px, -6px);
-}
-
 .mobile-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  display: none;
   background: white;
-  border-bottom: 1px solid #e2e8f0;
-  transform: translateY(-100%);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 24px;
 }
 
-.mobile-menu.active {
-  transform: translateY(0);
-  opacity: 1;
-  visibility: visible;
-}
-
-.mobile-menu-content {
-  padding: 24px;
+.mobile-nav-links {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-bottom: 24px;
 }
 
 .mobile-nav-link {
@@ -957,35 +896,47 @@ useHead({
   text-decoration: none;
   font-weight: 500;
   padding: 8px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
 }
 
-.mobile-menu-actions {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+.mobile-nav-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* Buttons */
+.mobile-nav-button {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-button.secondary {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Button Styles */
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
@@ -997,42 +948,44 @@ useHead({
   background: white;
   color: #64748b;
   border: 1px solid #e2e8f0;
-  padding: 12px 24px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
   border-color: #6366f1;
   color: #6366f1;
-  transform: translateY(-1px);
 }
 
 .btn-large {
-  padding: 16px 32px;
+  padding: 12px 24px;
   font-size: 16px;
 }
 
-.btn-icon {
-  font-size: 16px;
+/* Landing Page Styles */
+.landing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 /* Hero Section */
 .hero-section {
-  padding: 120px 0 80px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 120px 24px 80px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
 }
 
 .hero-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 80px;
@@ -1046,30 +999,29 @@ useHead({
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  padding: 6px 12px;
   background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 500;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
   margin-bottom: 24px;
 }
 
-.badge-icon {
-  font-size: 16px;
+.badge-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6366f1;
 }
 
 .hero-title {
   font-size: 48px;
   font-weight: 700;
   line-height: 1.1;
-  margin-bottom: 24px;
   color: #0f172a;
+  margin-bottom: 24px;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1118,111 +1070,84 @@ useHead({
 
 .visual-container {
   position: relative;
-  width: 100%;
-  max-width: 500px;
+  width: 400px;
+  height: 300px;
 }
 
-.knowledge-graph {
-  position: relative;
+.graph-preview {
   background: white;
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
 }
 
-.graph-svg {
+.preview-svg {
   width: 100%;
-  height: auto;
-}
-
-.connection-line {
-  animation: pulse-line 2s ease-in-out infinite;
+  height: 100%;
 }
 
 .node {
   cursor: pointer;
   transition: all 0.3s ease;
-  animation: float 3s ease-in-out infinite;
 }
 
 .node:hover {
   transform: scale(1.1);
 }
 
-.central-node {
-  animation: pulse-node 2s ease-in-out infinite;
+.connection {
+  animation: dash 2s linear infinite;
 }
 
-.particle {
-  animation: float-particle 4s ease-in-out infinite;
+.floating-cards {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
 }
 
-.floating-ui {
+.floating-card {
   position: absolute;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
-  animation: float-ui 3s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  animation: float 3s ease-in-out infinite;
 }
 
-.chat-bubble {
+.card-1 {
   top: 20px;
-  left: -40px;
-  padding: 16px;
-  max-width: 200px;
+  right: -20px;
+  animation-delay: 0s;
 }
 
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
+.card-2 {
+  bottom: 60px;
+  left: -30px;
+  animation-delay: 1s;
 }
 
-.chat-avatar {
-  font-size: 16px;
+.card-3 {
+  top: 50%;
+  right: -40px;
+  animation-delay: 2s;
 }
 
-.chat-message {
+.card-icon {
   font-size: 14px;
-  color: #0f172a;
-  line-height: 1.4;
 }
 
-.insight-card {
-  bottom: 40px;
-  right: -60px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: 220px;
-}
-
-.insight-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.insight-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.insight-text {
-  font-size: 14px;
-  color: #0f172a;
-  line-height: 1.3;
-}
-
-/* Sections */
+/* Section Styles */
 .section-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -1239,33 +1164,25 @@ useHead({
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 16px;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  font-size: 24px;
-  font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 32px;
 }
 
 .section-description {
   font-size: 18px;
-  color: #64748b;
   line-height: 1.6;
+  color: #64748b;
   max-width: 600px;
   margin: 0 auto;
 }
 
 /* Features Section */
 .features-section {
-  padding: 80px 0;
+  padding: 80px 24px;
   background: white;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 32px;
 }
 
@@ -1286,12 +1203,13 @@ useHead({
 .feature-icon {
   width: 48px;
   height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 12px;
-  background: rgba(99, 102, 241, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  color: white;
+  margin-bottom: 20px;
 }
 
 .feature-title {
@@ -1306,378 +1224,302 @@ useHead({
   line-height: 1.6;
 }
 
-/* How It Works Section */
+/* How it Works Section */
 .how-it-works-section {
-  padding: 80px 0;
+  padding: 80px 24px;
   background: #f8fafc;
 }
 
 .steps-container {
   display: flex;
   flex-direction: column;
-  gap: 80px;
+  gap: 64px;
 }
 
 .step {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  grid-template-columns: auto 1fr;
+  gap: 32px;
   align-items: center;
-}
-
-.step:nth-child(even) {
-  direction: rtl;
-}
-
-.step:nth-child(even) .step-content {
-  direction: ltr;
-}
-
-.step-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.step-illustration {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
 }
 
 .step-number {
-  font-size: 14px;
-  font-weight: 700;
-  color: #6366f1;
-  background: rgba(99, 102, 241, 0.1);
-  padding: 8px 12px;
-  border-radius: 8px;
-  display: inline-block;
-  margin-bottom: 16px;
-}
-
-.step-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 16px;
-}
-
-.step-description {
-  font-size: 16px;
-  color: #64748b;
-  line-height: 1.6;
-}
-
-/* Chat Illustration */
-.chat-illustration {
-  width: 300px;
-}
-
-.chat-window {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-}
-
-.chat-header-bar {
-  background: #f8fafc;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
-}
-
-.chat-controls {
-  display: flex;
-  gap: 6px;
-}
-
-.control {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.control.red { background: #ef4444; }
-.control.yellow { background: #f59e0b; }
-.control.green { background: #10b981; }
-
-.chat-messages {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.message {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.user-message {
-  flex-direction: row-reverse;
-}
-
-.message-avatar {
-  width: 24px;
-  height: 24px;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.message-content {
-  background: #f1f5f9;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1.4;
-  max-width: 180px;
-}
-
-.ai-message .message-content {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-}
-
-.typing-indicator {
-  padding: 0 16px 16px;
-}
-
-.typing-dots {
-  display: flex;
-  gap: 4px;
-  padding: 8px 12px;
-  background: #f1f5f9;
-  border-radius: 12px;
-  width: fit-content;
-}
-
-.typing-dots span {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #94a3b8;
-  animation: typing-bounce 1.4s infinite ease-in-out;
-}
-
-.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-.typing-dots span:nth-child(3) { animation-delay: 0; }
-
-/* Graph Illustration */
-.graph-illustration {
-  width: 300px;
-}
-
-.step-graph {
-  width: 100%;
-  height: auto;
-}
-
-.step-line {
-  animation: draw-line 2s ease-in-out infinite;
-}
-
-.step-node {
-  animation: pulse-step-node 2s ease-in-out infinite;
-}
-
-/* Artifacts Illustration */
-.artifacts-illustration {
-  width: 300px;
-}
-
-.artifacts-grid {
+.step-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
 }
 
-.artifact-card {
-  background: #f8fafc;
+.step-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.step-description {
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.step-visual {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.chat-example {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
+}
+
+.chat-bubble {
+  padding: 8px 12px;
   border-radius: 8px;
-  padding: 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.chat-bubble.user {
+  background: #6366f1;
+  color: white;
+  margin-left: 20px;
+}
+
+.chat-bubble.ai {
+  background: #f1f5f9;
+  color: #374151;
+  margin-right: 20px;
+}
+
+.mini-graph {
+  position: relative;
+  height: 120px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.mini-node {
+  position: absolute;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 2px solid;
+}
+
+.mini-node.problem {
+  top: 10px;
+  left: 10px;
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.mini-node.customer {
+  top: 10px;
+  right: 10px;
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.mini-node.solution {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #dcfce7;
+  border-color: #10b981;
+  color: #065f46;
+}
+
+.connection-line {
+  position: absolute;
+  height: 2px;
+  background: #6b7280;
+}
+
+.line-1 {
+  top: 30px;
+  left: 80px;
+  width: 80px;
+}
+
+.line-2 {
+  top: 50px;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  transform: translateX(-50%);
+}
+
+.export-options {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.export-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f8fafc;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Pricing Section */
+.pricing-section {
+  padding: 80px 24px;
+  background: white;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
   transition: all 0.3s ease;
 }
 
-.artifact-card:hover {
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card.featured {
+  border-color: #6366f1;
   transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.artifact-card.pitch-deck { grid-column: 1 / -1; }
-
-.artifact-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.artifact-icon {
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
   font-size: 14px;
-}
-
-.artifact-preview {
-  background: white;
-  border-radius: 4px;
-  padding: 8px;
-  min-height: 40px;
-}
-
-.slide-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.slide-title {
-  font-size: 10px;
   font-weight: 600;
-  color: #6366f1;
 }
 
-.slide-content {
-  height: 20px;
-  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 100%);
-  border-radius: 2px;
+.pricing-header {
+  text-align: center;
+  margin-bottom: 32px;
 }
 
-.plan-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.pricing-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
 }
 
-.plan-line {
-  height: 3px;
-  background: #e2e8f0;
-  border-radius: 2px;
+.pricing-price {
+  margin-bottom: 16px;
 }
 
-.plan-line.short {
-  width: 60%;
-}
-
-.canvas-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-
-.canvas-cell {
-  height: 16px;
-  background: #e2e8f0;
-  border-radius: 2px;
-}
-
-/* Social Proof Section */
-.social-proof-section {
-  padding: 80px 0;
-  background: white;
-}
-
-.social-proof-content {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 64px;
-  align-items: center;
-}
-
-.proof-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.proof-stat {
-  text-align: left;
-}
-
-.proof-number {
-  font-size: 32px;
+.price-amount {
+  font-size: 48px;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 8px;
 }
 
-.proof-label {
+.price-period {
   font-size: 16px;
   color: #64748b;
 }
 
-.testimonials {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+.pricing-description {
+  color: #64748b;
+  line-height: 1.5;
 }
 
-.testimonial {
-  background: #f8fafc;
-  border-radius: 16px;
-  padding: 32px;
-  border: 1px solid #e2e8f0;
+.pricing-features {
+  margin-bottom: 32px;
 }
 
-.testimonial-content {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #0f172a;
-  margin-bottom: 24px;
-  font-style: italic;
-}
-
-.testimonial-author {
+.feature-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  padding: 8px 0;
+  color: #374151;
 }
 
-.author-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
+.feature-item svg {
+  color: #10b981;
+  flex-shrink: 0;
 }
 
-.author-name {
+.pricing-button {
+  width: 100%;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 4px;
+  text-decoration: none;
+  text-align: center;
+  display: block;
+  transition: all 0.2s ease;
 }
 
-.author-title {
-  font-size: 14px;
+.pricing-button.primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+}
+
+.pricing-button.secondary {
+  background: white;
   color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
 /* CTA Section */
 .cta-section {
-  padding: 80px 0;
+  padding: 80px 24px;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
+}
+
+.cta-content {
   text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .cta-title {
@@ -1688,137 +1530,127 @@ useHead({
 
 .cta-description {
   font-size: 18px;
-  opacity: 0.9;
+  line-height: 1.6;
   margin-bottom: 32px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  opacity: 0.9;
 }
 
 .cta-actions {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  justify-content: center;
 }
 
-.cta-note {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-/* Recent Workspaces Section */
-.recent-workspaces-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.workspaces-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.workspace-card {
+.cta-actions .btn-primary {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  color: #6366f1;
 }
 
-.workspace-card:hover {
+.cta-actions .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  border-color: #6366f1;
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
 }
 
-.workspace-header {
+/* Footer */
+.footer {
+  background: #0f172a;
+  color: white;
+  padding: 64px 24px 24px;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 64px;
+  margin-bottom: 48px;
+}
+
+.footer-brand {
   display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 12px;
 }
 
-.workspace-icon {
-  font-size: 24px;
-  flex-shrink: 0;
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
 }
 
-.workspace-title {
-  font-size: 18px;
+.footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-title {
+  font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.workspace-description {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.4;
+.footer-link {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.workspace-footer {
+.footer-link:hover {
+  color: white;
+}
+
+.footer-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid #334155;
 }
 
-.workspace-date {
-  font-size: 12px;
+.footer-copyright {
   color: #94a3b8;
+  margin: 0;
 }
 
-.workspace-arrow {
-  color: #6366f1;
-  font-weight: 600;
+.footer-legal {
+  display: flex;
+  gap: 24px;
 }
 
 /* Animations */
-@keyframes pulse-line {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-@keyframes pulse-node {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes pulse-step-node {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes float-particle {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(180deg); }
-}
-
-@keyframes float-ui {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes typing-bounce {
-  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-  40% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes draw-line {
-  0% { stroke-dasharray: 0, 100; }
-  50% { stroke-dasharray: 50, 100; }
-  100% { stroke-dasharray: 100, 100; }
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
+  .nav-links {
+    display: none;
+  }
+  
+  .mobile-menu-button {
+    display: block;
+  }
+  
+  .mobile-menu {
+    display: block;
+  }
+  
   .hero-container {
     grid-template-columns: 1fr;
     gap: 48px;
@@ -1826,43 +1658,33 @@ useHead({
   }
   
   .hero-title {
-    font-size: 40px;
+    font-size: 36px;
   }
   
-  .social-proof-content {
+  .step-content {
     grid-template-columns: 1fr;
-    gap: 48px;
     text-align: center;
   }
   
-  .proof-stats {
-    flex-direction: row;
-    justify-content: center;
-  }
-  
-  .step {
+  .footer-content {
     grid-template-columns: 1fr;
     gap: 32px;
-    text-align: center;
   }
   
-  .step:nth-child(even) {
-    direction: ltr;
+  .footer-bottom {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
   }
 }
 
 @media (max-width: 768px) {
-  .nav-links,
-  .nav-actions {
-    display: none;
-  }
-  
-  .mobile-menu-btn {
-    display: block;
+  .hero-section {
+    padding: 100px 24px 60px;
   }
   
   .hero-title {
-    font-size: 32px;
+    font-size: 28px;
   }
   
   .hero-actions {
@@ -1871,68 +1693,65 @@ useHead({
   }
   
   .hero-stats {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .features-grid {
-    grid-template-columns: 1fr;
+    justify-content: center;
   }
   
   .section-title {
     font-size: 28px;
   }
   
-  .step-title {
-    font-size: 24px;
+  .features-grid {
+    grid-template-columns: 1fr;
   }
   
-  .proof-stats {
-    flex-direction: column;
+  .step {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .step-visual {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pricing-card.featured {
+    transform: none;
+  }
+  
+  .footer-links {
+    grid-template-columns: 1fr;
     gap: 24px;
-  }
-  
-  .cta-title {
-    font-size: 28px;
   }
 }
 
 @media (max-width: 480px) {
-  .nav-container,
-  .section-container {
+  .nav-container {
     padding: 0 16px;
   }
   
   .hero-section {
-    padding: 100px 0 60px;
+    padding: 80px 16px 40px;
+  }
+  
+  .section-container {
+    padding: 0 16px;
   }
   
   .hero-title {
+    font-size: 24px;
+  }
+  
+  .section-title {
+    font-size: 24px;
+  }
+  
+  .cta-title {
     font-size: 28px;
-  }
-  
-  .hero-description {
-    font-size: 16px;
-  }
-  
-  .floating-ui {
-    display: none;
-  }
-  
-  .features-grid {
-    gap: 24px;
-  }
-  
-  .feature-card {
-    padding: 24px;
-  }
-  
-  .steps-container {
-    gap: 48px;
-  }
-  
-  .step-illustration {
-    padding: 24px;
   }
 }
 </style>
