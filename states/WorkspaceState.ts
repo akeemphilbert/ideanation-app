@@ -1,4 +1,5 @@
 import { BaseMessage } from "@langchain/core/messages";
+import { StateGraph, MessagesAnnotation, Annotation } from "@langchain/langgraph";
 import type { 
   WorkspaceResource,
   IdeaResource,
@@ -14,62 +15,134 @@ import type {
 
 /**
  * WorkspaceState represents the complete state of a workspace
- * for the LangGraph JS agent to operate on
+ * for the LangGraph JS agent to operate on using annotation-based state management
  */
-export interface WorkspaceState {
+export const WorkspaceState = Annotation.Root({
   // Chat conversation history using LangChain's BaseMessage
-  messages: BaseMessage[]
+  messages: Annotation<BaseMessage[]>({
+    reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
+    default: () => [],
+  }),
   
   // Current workspace context
-  workspace: WorkspaceResource | null
-  currentIdea: IdeaResource | null
+  workspace: Annotation<WorkspaceResource | null>({
+    reducer: (x: WorkspaceResource | null, y: WorkspaceResource | null) => y, // Latest value wins
+    default: () => null,
+  }),
+  
+  currentIdea: Annotation<IdeaResource | null>({
+    reducer: (x: IdeaResource | null, y: IdeaResource | null) => y, // Latest value wins
+    default: () => null,
+  }),
   
   // All entities in the workspace
-  ideas: IdeaResource[]
-  problems: ProblemResource[]
-  customers: CustomerResource[]
-  products: ProductResource[]
-  features: FeatureResource[]
-  jobs: JobResource[]
-  pains: PainResource[]
-  gains: GainResource[]
+  ideas: Annotation<IdeaResource[]>({
+    reducer: (x: IdeaResource[], y: IdeaResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  problems: Annotation<ProblemResource[]>({
+    reducer: (x: ProblemResource[], y: ProblemResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  customers: Annotation<CustomerResource[]>({
+    reducer: (x: CustomerResource[], y: CustomerResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  products: Annotation<ProductResource[]>({
+    reducer: (x: ProductResource[], y: ProductResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  features: Annotation<FeatureResource[]>({
+    reducer: (x: FeatureResource[], y: FeatureResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  jobs: Annotation<JobResource[]>({
+    reducer: (x: JobResource[], y: JobResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  pains: Annotation<PainResource[]>({
+    reducer: (x: PainResource[], y: PainResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  
+  gains: Annotation<GainResource[]>({
+    reducer: (x: GainResource[], y: GainResource[]) => x.concat(y),
+    default: () => [],
+  }),
   
   // Relationships between entities
-  relationships: RelationshipResource[]
+  relationships: Annotation<RelationshipResource[]>({
+    reducer: (x: RelationshipResource[], y: RelationshipResource[]) => x.concat(y),
+    default: () => [],
+  }),
   
   // Agent state
-  isProcessing: boolean
-  lastAction: string | null
-  selectedEntityIds: string[]
+  isProcessing: Annotation<boolean>({
+    reducer: (x: boolean, y: boolean) => y, // Latest value wins
+    default: () => false,
+  }),
+  
+  lastAction: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y, // Latest value wins
+    default: () => null,
+  }),
+  
+  selectedEntityIds: Annotation<string[]>({
+    reducer: (x: string[], y: string[]) => y, // Latest selection wins
+    default: () => [],
+  }),
   
   // Context for entity creation
-  entityCreationContext: {
+  entityCreationContext: Annotation<{
     targetEntityId?: string
     suggestedRelationshipType?: string
     pendingEntityType?: string
-  }
+  }>({
+    reducer: (x: any, y: any) => ({ ...x, ...y }), // Merge objects
+    default: () => ({}),
+  }),
   
   // Analysis results
-  insights: {
+  insights: Annotation<{
     problemSolutionFit: number
     customerProblemFit: number
     featureCompleteness: number
     relationshipDensity: number
-  }
+  }>({
+    reducer: (x: any, y: any) => ({ ...x, ...y }), // Merge objects
+    default: () => ({
+      problemSolutionFit: 0,
+      customerProblemFit: 0,
+      featureCompleteness: 0,
+      relationshipDensity: 0
+    }),
+  }),
   
   // Export state
-  exportHistory: Array<{
+  exportHistory: Annotation<Array<{
     timestamp: Date
     type: string
     format: string
     success: boolean
-  }>
-}
+  }>>({
+    reducer: (x: any[], y: any[]) => x.concat(y),
+    default: () => [],
+  }),
+})
+
+// Type alias for the state type
+export type WorkspaceStateType = typeof WorkspaceState
 
 /**
  * Initial state factory for WorkspaceState
  */
-export function createInitialWorkspaceState(): WorkspaceState {
+export function createInitialWorkspaceState() {
   return {
     messages: [],
     workspace: null,
@@ -99,24 +172,23 @@ export function createInitialWorkspaceState(): WorkspaceState {
 
 /**
  * State update helpers for the LangGraph agent
+ * These functions now work with the annotation-based state
  */
 export class WorkspaceStateManager {
   /**
    * Add a message to the conversation history
    */
-  static addMessage(state: WorkspaceState, message: BaseMessage): WorkspaceState {
+  static addMessage(state: any, message: BaseMessage) {
     return {
-      ...state,
-      messages: [...state.messages, message]
+      messages: [message]
     }
   }
 
   /**
    * Set the current workspace
    */
-  static setWorkspace(state: WorkspaceState, workspace: WorkspaceResource): WorkspaceState {
+  static setWorkspace(state: any, workspace: WorkspaceResource) {
     return {
-      ...state,
       workspace,
       // Reset current idea when workspace changes
       currentIdea: null
@@ -126,9 +198,8 @@ export class WorkspaceStateManager {
   /**
    * Set the current idea
    */
-  static setCurrentIdea(state: WorkspaceState, idea: IdeaResource): WorkspaceState {
+  static setCurrentIdea(state: any, idea: IdeaResource) {
     return {
-      ...state,
       currentIdea: idea
     }
   }
@@ -136,55 +207,43 @@ export class WorkspaceStateManager {
   /**
    * Add an entity to the appropriate collection
    */
-  static addEntity(state: WorkspaceState, entity: any): WorkspaceState {
-    const newState = { ...state }
-    
+  static addEntity(state: any, entity: any) {
     switch (entity['@type']) {
       case 'ideanation:Idea':
-        newState.ideas = [...state.ideas, entity as IdeaResource]
-        break
+        return { ideas: [entity as IdeaResource] }
       case 'ideanation:Problem':
-        newState.problems = [...state.problems, entity as ProblemResource]
-        break
+        return { problems: [entity as ProblemResource] }
       case 'ideanation:Customer':
-        newState.customers = [...state.customers, entity as CustomerResource]
-        break
+        return { customers: [entity as CustomerResource] }
       case 'ideanation:Product':
-        newState.products = [...state.products, entity as ProductResource]
-        break
+        return { products: [entity as ProductResource] }
       case 'ideanation:Feature':
-        newState.features = [...state.features, entity as FeatureResource]
-        break
+        return { features: [entity as FeatureResource] }
       case 'ideanation:Job':
-        newState.jobs = [...state.jobs, entity as JobResource]
-        break
+        return { jobs: [entity as JobResource] }
       case 'ideanation:Pain':
-        newState.pains = [...state.pains, entity as PainResource]
-        break
+        return { pains: [entity as PainResource] }
       case 'ideanation:Gain':
-        newState.gains = [...state.gains, entity as GainResource]
-        break
+        return { gains: [entity as GainResource] }
+      default:
+        return {}
     }
-    
-    return newState
   }
 
   /**
    * Add a relationship
    */
-  static addRelationship(state: WorkspaceState, relationship: RelationshipResource): WorkspaceState {
+  static addRelationship(state: any, relationship: RelationshipResource) {
     return {
-      ...state,
-      relationships: [...state.relationships, relationship]
+      relationships: [relationship]
     }
   }
 
   /**
    * Update entity selection
    */
-  static setSelectedEntities(state: WorkspaceState, entityIds: string[]): WorkspaceState {
+  static setSelectedEntities(state: any, entityIds: string[]) {
     return {
-      ...state,
       selectedEntityIds: entityIds
     }
   }
@@ -192,9 +251,8 @@ export class WorkspaceStateManager {
   /**
    * Set processing state
    */
-  static setProcessing(state: WorkspaceState, isProcessing: boolean): WorkspaceState {
+  static setProcessing(state: any, isProcessing: boolean) {
     return {
-      ...state,
       isProcessing
     }
   }
@@ -202,9 +260,8 @@ export class WorkspaceStateManager {
   /**
    * Set last action
    */
-  static setLastAction(state: WorkspaceState, action: string): WorkspaceState {
+  static setLastAction(state: any, action: string) {
     return {
-      ...state,
       lastAction: action
     }
   }
@@ -213,15 +270,15 @@ export class WorkspaceStateManager {
    * Update entity creation context
    */
   static setEntityCreationContext(
-    state: WorkspaceState, 
-    context: Partial<WorkspaceState['entityCreationContext']>
-  ): WorkspaceState {
+    state: any, 
+    context: Partial<{
+      targetEntityId?: string
+      suggestedRelationshipType?: string
+      pendingEntityType?: string
+    }>
+  ) {
     return {
-      ...state,
-      entityCreationContext: {
-        ...state.entityCreationContext,
-        ...context
-      }
+      entityCreationContext: context
     }
   }
 
@@ -229,15 +286,16 @@ export class WorkspaceStateManager {
    * Update insights
    */
   static updateInsights(
-    state: WorkspaceState, 
-    insights: Partial<WorkspaceState['insights']>
-  ): WorkspaceState {
+    state: any, 
+    insights: Partial<{
+      problemSolutionFit: number
+      customerProblemFit: number
+      featureCompleteness: number
+      relationshipDensity: number
+    }>
+  ) {
     return {
-      ...state,
-      insights: {
-        ...state.insights,
-        ...insights
-      }
+      insights
     }
   }
 
@@ -245,35 +303,39 @@ export class WorkspaceStateManager {
    * Add export history entry
    */
   static addExportHistory(
-    state: WorkspaceState, 
-    exportEntry: WorkspaceState['exportHistory'][0]
-  ): WorkspaceState {
+    state: any, 
+    exportEntry: {
+      timestamp: Date
+      type: string
+      format: string
+      success: boolean
+    }
+  ) {
     return {
-      ...state,
-      exportHistory: [...state.exportHistory, exportEntry]
+      exportHistory: [exportEntry]
     }
   }
 
   /**
    * Get all entities as a flat array for analysis
    */
-  static getAllEntities(state: WorkspaceState): Array<any> {
+  static getAllEntities(state: any): Array<any> {
     return [
-      ...state.ideas,
-      ...state.problems,
-      ...state.customers,
-      ...state.products,
-      ...state.features,
-      ...state.jobs,
-      ...state.pains,
-      ...state.gains
+      ...(state.ideas || []),
+      ...(state.problems || []),
+      ...(state.customers || []),
+      ...(state.products || []),
+      ...(state.features || []),
+      ...(state.jobs || []),
+      ...(state.pains || []),
+      ...(state.gains || [])
     ]
   }
 
   /**
    * Find entity by ID across all collections
    */
-  static findEntityById(state: WorkspaceState, entityId: string): any | null {
+  static findEntityById(state: any, entityId: string): any | null {
     const allEntities = WorkspaceStateManager.getAllEntities(state)
     return allEntities.find(entity => entity['@id'] === entityId || entity.id === entityId) || null
   }
@@ -282,13 +344,14 @@ export class WorkspaceStateManager {
    * Get entities related to a specific entity
    */
   static getRelatedEntities(
-    state: WorkspaceState, 
+    state: any, 
     entityId: string, 
     relationshipType?: string
   ): Array<{ entity: any, relationship: RelationshipResource }> {
     const relatedPairs: Array<{ entity: any, relationship: RelationshipResource }> = []
+    const relationships = state.relationships || []
     
-    state.relationships.forEach(relationship => {
+    relationships.forEach((relationship: RelationshipResource) => {
       if (relationshipType && relationship.relationshipType !== relationshipType) {
         return
       }
@@ -315,7 +378,7 @@ export class WorkspaceStateManager {
   /**
    * Calculate workspace statistics
    */
-  static getWorkspaceStats(state: WorkspaceState): {
+  static getWorkspaceStats(state: any): {
     totalEntities: number
     totalRelationships: number
     entitiesByType: Record<string, number>
@@ -329,12 +392,14 @@ export class WorkspaceStateManager {
       entitiesByType[type] = (entitiesByType[type] || 0) + 1
     })
     
+    const totalRelationships = (state.relationships || []).length
+    
     return {
       totalEntities: allEntities.length,
-      totalRelationships: state.relationships.length,
+      totalRelationships,
       entitiesByType,
       avgRelationshipsPerEntity: allEntities.length > 0 
-        ? (state.relationships.length * 2) / allEntities.length 
+        ? (totalRelationships * 2) / allEntities.length 
         : 0
     }
   }
@@ -342,17 +407,18 @@ export class WorkspaceStateManager {
   /**
    * Validate state consistency
    */
-  static validateState(state: WorkspaceState): { isValid: boolean, errors: string[] } {
+  static validateState(state: any): { isValid: boolean, errors: string[] } {
     const errors: string[] = []
     
     // Check if current idea exists in ideas array
-    if (state.currentIdea && !state.ideas.find(idea => idea['@id'] === state.currentIdea!['@id'])) {
+    if (state.currentIdea && !(state.ideas || []).find((idea: any) => idea['@id'] === state.currentIdea!['@id'])) {
       errors.push('Current idea not found in ideas array')
     }
     
     // Check if all relationship targets exist
-    const allEntityIds = WorkspaceStateManager.getAllEntities(state).map(e => e['@id'])
-    state.relationships.forEach(rel => {
+    const allEntityIds = WorkspaceStateManager.getAllEntities(state).map((e: any) => e['@id'])
+    const relationships = state.relationships || []
+    relationships.forEach((rel: RelationshipResource) => {
       if (!allEntityIds.includes(rel.sourceId)) {
         errors.push(`Relationship source ${rel.sourceId} not found`)
       }
@@ -362,7 +428,8 @@ export class WorkspaceStateManager {
     })
     
     // Check if selected entities exist
-    state.selectedEntityIds.forEach(id => {
+    const selectedIds = state.selectedEntityIds || []
+    selectedIds.forEach((id: string) => {
       if (!WorkspaceStateManager.findEntityById(state, id)) {
         errors.push(`Selected entity ${id} not found`)
       }
@@ -378,7 +445,7 @@ export class WorkspaceStateManager {
 /**
  * Type guards for state validation
  */
-export function isWorkspaceState(obj: any): obj is WorkspaceState {
+export function isWorkspaceState(obj: any): boolean {
   return (
     obj &&
     Array.isArray(obj.messages) &&
