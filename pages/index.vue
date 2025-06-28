@@ -1,7 +1,66 @@
 <template>
   <div class="landing-page">
+    <!-- Main Navigation -->
+    <nav class="main-nav">
+      <div class="nav-content">
+        <div class="nav-brand">
+          <NuxtLink to="/" class="brand-link">
+            <div class="brand-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                <circle cx="20" cy="12" r="2" fill="currentColor"/>
+                <circle cx="16" cy="20" r="2" fill="currentColor"/>
+                <path d="M14,14 L18,14 M14,18 L18,18" stroke="currentColor" stroke-width="1"/>
+              </svg>
+            </div>
+            <span class="brand-text">Ideanation</span>
+          </NuxtLink>
+        </div>
+        
+        <div class="nav-links">
+          <NuxtLink to="#features" class="nav-link" @click="scrollToSection('features')">Features</NuxtLink>
+          <NuxtLink to="#how-it-works" class="nav-link" @click="scrollToSection('demo')">How it works</NuxtLink>
+          <NuxtLink to="#pricing" class="nav-link" @click="scrollToSection('pricing')">Pricing</NuxtLink>
+          <a href="https://github.com/ideanation" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+        </div>
+        
+        <div class="nav-actions">
+          <NuxtLink to="/login" class="nav-link">Sign in</NuxtLink>
+          <button class="btn-nav-primary" @click="startNewIdea">
+            Get started
+          </button>
+        </div>
+        
+        <!-- Mobile menu button -->
+        <button class="mobile-menu-btn" @click="toggleMobileMenu" :class="{ active: mobileMenuOpen }">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      
+      <!-- Mobile menu -->
+      <div class="mobile-menu" :class="{ open: mobileMenuOpen }">
+        <div class="mobile-menu-content">
+          <div class="mobile-nav-links">
+            <a href="#features" class="mobile-nav-link" @click="scrollToSection('features')">Features</a>
+            <a href="#how-it-works" class="mobile-nav-link" @click="scrollToSection('demo')">How it works</a>
+            <a href="#pricing" class="mobile-nav-link" @click="scrollToSection('pricing')">Pricing</a>
+            <a href="https://github.com/ideanation" class="mobile-nav-link" target="_blank" rel="noopener">GitHub</a>
+          </div>
+          <div class="mobile-nav-actions">
+            <NuxtLink to="/login" class="mobile-nav-link">Sign in</NuxtLink>
+            <button class="btn-nav-primary" @click="startNewIdea">
+              Get started
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section" id="hero">
       <div class="hero-content">
         <div class="hero-text">
           <h1 class="hero-title">
@@ -124,7 +183,7 @@
     </section>
 
     <!-- Problem Section -->
-    <section class="problem-section">
+    <section class="problem-section" id="problems">
       <div class="section-content">
         <h2 class="section-title">The entrepreneur's dilemma</h2>
         <div class="problems-grid">
@@ -195,7 +254,7 @@
     </section>
 
     <!-- Solution Section -->
-    <section class="solution-section" ref="demoSection">
+    <section class="solution-section" id="demo" ref="demoSection">
       <div class="section-content">
         <h2 class="section-title">One conversation. Complete business structure.</h2>
         <p class="section-subtitle">
@@ -270,7 +329,7 @@
     </section>
 
     <!-- Features Section -->
-    <section class="features-section">
+    <section class="features-section" id="features">
       <div class="section-content">
         <h2 class="section-title">Everything you need to go from idea to fundable business</h2>
         
@@ -459,6 +518,73 @@
       </div>
     </section>
 
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="pricing">
+      <div class="section-content">
+        <h2 class="section-title">Simple, transparent pricing</h2>
+        <p class="section-subtitle">Start free, upgrade when you're ready to build</p>
+        
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>Free</h3>
+              <div class="price">
+                <span class="price-amount">$0</span>
+                <span class="price-period">/month</span>
+              </div>
+              <p class="price-description">Perfect for exploring ideas</p>
+            </div>
+            <div class="pricing-features">
+              <div class="feature">✓ 1 idea workspace</div>
+              <div class="feature">✓ AI-powered structuring</div>
+              <div class="feature">✓ Basic knowledge graph</div>
+              <div class="feature">✓ Pitch deck export</div>
+            </div>
+            <button class="btn-pricing" @click="startNewIdea">Get started</button>
+          </div>
+          
+          <div class="pricing-card featured">
+            <div class="pricing-badge">Most popular</div>
+            <div class="pricing-header">
+              <h3>Pro</h3>
+              <div class="price">
+                <span class="price-amount">$10</span>
+                <span class="price-period">/month</span>
+              </div>
+              <p class="price-description">For serious entrepreneurs</p>
+            </div>
+            <div class="pricing-features">
+              <div class="feature">✓ Unlimited ideas</div>
+              <div class="feature">✓ Advanced AI insights</div>
+              <div class="feature">✓ All export formats</div>
+              <div class="feature">✓ Competitor analysis</div>
+              <div class="feature">✓ Priority support</div>
+            </div>
+            <button class="btn-pricing primary" @click="startNewIdea">Start free trial</button>
+          </div>
+          
+          <div class="pricing-card">
+            <div class="pricing-header">
+              <h3>Team</h3>
+              <div class="price">
+                <span class="price-amount">$25</span>
+                <span class="price-period">/month</span>
+              </div>
+              <p class="price-description">For collaborative teams</p>
+            </div>
+            <div class="pricing-features">
+              <div class="feature">✓ Everything in Pro</div>
+              <div class="feature">✓ Team collaboration</div>
+              <div class="feature">✓ Shared workspaces</div>
+              <div class="feature">✓ Admin controls</div>
+              <div class="feature">✓ Custom integrations</div>
+            </div>
+            <button class="btn-pricing" @click="startNewIdea">Contact sales</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="cta-section">
       <div class="section-content">
@@ -522,6 +648,7 @@
 const router = useRouter()
 const resourcesStore = useResourcesStore()
 const demoSection = ref<HTMLElement>()
+const mobileMenuOpen = ref(false)
 
 const recentWorkspaces = computed(() => {
   return resourcesStore.workspaces
@@ -553,6 +680,18 @@ const scrollToDemo = () => {
   demoSection.value?.scrollIntoView({ behavior: 'smooth' })
 }
 
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' })
+  }
+  mobileMenuOpen.value = false
+}
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+}
+
 const formatDate = (date: Date): string => {
   return new Date(date).toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -560,6 +699,22 @@ const formatDate = (date: Date): string => {
     day: 'numeric' 
   })
 }
+
+// Close mobile menu when clicking outside
+onMounted(() => {
+  const handleClickOutside = (event: Event) => {
+    const target = event.target as Element
+    if (!target.closest('.main-nav') && mobileMenuOpen.value) {
+      mobileMenuOpen.value = false
+    }
+  }
+  
+  document.addEventListener('click', handleClickOutside)
+  
+  onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+  })
+})
 
 // SEO
 useHead({
@@ -582,9 +737,197 @@ useHead({
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
+/* Navigation Styles */
+.main-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(254, 254, 254, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.nav-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 64px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: opacity 0.2s ease;
+}
+
+.brand-link:hover {
+  opacity: 0.8;
+}
+
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #1a1a1a;
+}
+
+.brand-text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-link {
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  color: #1a1a1a;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.btn-nav-primary {
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-nav-primary:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+/* Mobile Menu */
+.mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mobile-menu-btn span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: #1a1a1a;
+  margin: 3px 0;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.mobile-menu-btn.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-btn.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-btn.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu.open {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mobile-nav-link {
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-nav-link:hover {
+  color: #1a1a1a;
+}
+
+.mobile-nav-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
 /* Hero Section */
 .hero-section {
-  padding: 120px 20px 160px;
+  padding: 160px 20px 160px;
   background: linear-gradient(135deg, #fefefe 0%, #f9f9f9 100%);
   position: relative;
   overflow: hidden;
@@ -1066,6 +1409,144 @@ useHead({
   font-weight: 500;
 }
 
+/* Pricing Section */
+.pricing-section {
+  padding: 120px 20px;
+  background: white;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-top: 4rem;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pricing-card {
+  background: #fefefe;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 2.5rem;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.08);
+  border-color: #e0e0e0;
+}
+
+.pricing-card.featured {
+  border-color: #1a1a1a;
+  transform: scale(1.05);
+}
+
+.pricing-card.featured:hover {
+  transform: scale(1.05) translateY(-4px);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+
+.price-period {
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.price-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.pricing-features {
+  margin-bottom: 2rem;
+}
+
+.pricing-features .feature {
+  padding: 0.75rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.pricing-features .feature:last-child {
+  border-bottom: none;
+}
+
+.btn-pricing {
+  width: 100%;
+  background: transparent;
+  color: #1a1a1a;
+  border: 1px solid #d0d0d0;
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-pricing:hover {
+  background: #f8f8f8;
+  border-color: #1a1a1a;
+}
+
+.btn-pricing.primary {
+  background: #1a1a1a;
+  color: white;
+  border-color: #1a1a1a;
+}
+
+.btn-pricing.primary:hover {
+  background: #333;
+}
+
 /* CTA Section */
 .cta-section {
   padding: 120px 20px;
@@ -1180,6 +1661,15 @@ useHead({
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .nav-links,
+  .nav-actions {
+    display: none;
+  }
+  
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
   .hero-content {
     grid-template-columns: 1fr;
     gap: 4rem;
@@ -1224,11 +1714,23 @@ useHead({
   .personas-grid {
     gap: 2rem;
   }
+  
+  .pricing-grid {
+    gap: 1.5rem;
+  }
+  
+  .pricing-card.featured {
+    transform: none;
+  }
+  
+  .pricing-card.featured:hover {
+    transform: translateY(-4px);
+  }
 }
 
 @media (max-width: 480px) {
   .hero-section {
-    padding: 80px 20px 120px;
+    padding: 120px 20px 120px;
   }
   
   .hero-title {
@@ -1266,8 +1768,13 @@ useHead({
   
   .problems-grid,
   .features-grid,
-  .personas-grid {
+  .personas-grid,
+  .pricing-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .nav-content {
+    padding: 0 16px;
   }
 }
 </style>
