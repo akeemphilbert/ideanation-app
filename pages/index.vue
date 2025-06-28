@@ -25,8 +25,53 @@
         </div>
         
         <div class="nav-actions">
-          <a href="/login" class="nav-link">Sign in</a>
-          <button class="btn-primary" @click="startNewIdea">Get started</button>
+          <template v-if="user">
+            <!-- User Menu -->
+            <div class="user-menu" ref="userMenuRef">
+              <button class="user-button" @click="showUserMenu = !showUserMenu">
+                <div class="user-avatar">
+                  <img v-if="profile?.avatar_url" :src="profile.avatar_url" :alt="profile.full_name || 'User'" />
+                  <span v-else>{{ getUserInitials() }}</span>
+                </div>
+                <span class="user-name">{{ profile?.full_name || user.email }}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+              </button>
+              
+              <div class="user-dropdown" :class="{ 'active': showUserMenu }">
+                <div class="dropdown-header">
+                  <div class="dropdown-user-info">
+                    <div class="dropdown-name">{{ profile?.full_name || 'User' }}</div>
+                    <div class="dropdown-email">{{ user.email }}</div>
+                  </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-items">
+                  <button class="dropdown-item" @click="goToCanvas">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M12 1v6m0 6v6"/>
+                      <path d="m21 12-6-6-6 6-6-6"/>
+                    </svg>
+                    Canvas
+                  </button>
+                  <button class="dropdown-item" @click="handleSignOut">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                      <polyline points="16,17 21,12 16,7"/>
+                      <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <a href="/login" class="nav-link">Sign in</a>
+            <button class="btn-primary" @click="startNewIdea">Get started</button>
+          </template>
         </div>
         
         <!-- Mobile menu button -->
@@ -47,8 +92,14 @@
           <a href="#pricing" class="mobile-nav-link" @click="mobileMenuOpen = false">Pricing</a>
           <a href="https://github.com" class="mobile-nav-link" @click="mobileMenuOpen = false">GitHub</a>
           <div class="mobile-menu-actions">
-            <a href="/login" class="mobile-nav-link">Sign in</a>
-            <button class="btn-primary" @click="startNewIdea">Get started</button>
+            <template v-if="user">
+              <button class="mobile-nav-link" @click="goToCanvas">Canvas</button>
+              <button class="mobile-nav-link" @click="handleSignOut">Sign out</button>
+            </template>
+            <template v-else>
+              <a href="/login" class="mobile-nav-link">Sign in</a>
+              <button class="btn-primary" @click="startNewIdea">Get started</button>
+            </template>
           </div>
         </div>
       </div>
@@ -526,7 +577,7 @@
     </section>
 
     <!-- Recent Workspaces -->
-    <section v-if="recentWorkspaces.length > 0" class="recent-workspaces-section">
+    <section v-if="user && recentWorkspaces.length > 0" class="recent-workspaces-section">
       <div class="section-container">
         <h3 class="section-subtitle">Continue where you left off</h3>
         <div class="workspaces-grid">
@@ -557,9 +608,14 @@
 <script setup lang="ts">
 const router = useRouter()
 const resourcesStore = useResourcesStore()
+const { user, profile, signOut } = useAuth()
+
 const mobileMenuOpen = ref(false)
+const showUserMenu = ref(false)
+const userMenuRef = ref<HTMLElement>()
 
 const recentWorkspaces = computed(() => {
+  if (!user.value) return []
   return resourcesStore.workspaces
     .slice()
     .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
@@ -567,6 +623,11 @@ const recentWorkspaces = computed(() => {
 })
 
 const startNewIdea = () => {
+  if (!user.value) {
+    router.push('/login?redirect=/canvas')
+    return
+  }
+  
   const workspace = resourcesStore.createWorkspace({
     title: 'New Workspace',
     description: 'A new workspace for your startup idea'
@@ -581,6 +642,29 @@ const openWorkspace = (workspace: any) => {
   router.push('/canvas')
 }
 
+const goToCanvas = () => {
+  showUserMenu.value = false
+  router.push('/canvas')
+}
+
+const handleSignOut = async () => {
+  showUserMenu.value = false
+  await signOut()
+  router.push('/')
+}
+
+const getUserInitials = () => {
+  if (profile.value?.full_name) {
+    return profile.value.full_name
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+  return user.value?.email?.[0]?.toUpperCase() || 'U'
+}
+
 const watchDemo = () => {
   console.log('Watch demo clicked')
 }
@@ -592,6 +676,11 @@ const formatDate = (date: Date): string => {
     day: 'numeric' 
   })
 }
+
+// Close user menu when clicking outside
+onClickOutside(userMenuRef, () => {
+  showUserMenu.value = false
+})
 
 // SEO
 useHead({
@@ -677,6 +766,130 @@ useHead({
   gap: 16px;
 }
 
+/* User Menu */
+.user-menu {
+  position: relative;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.user-button:hover {
+  background: #f1f5f9;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #0f172a;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s ease;
+  z-index: 1001;
+}
+
+.user-dropdown.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-header {
+  padding: 16px;
+}
+
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdown-name {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.dropdown-email {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0 16px;
+}
+
+.dropdown-items {
+  padding: 8px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  font-size: 14px;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
 .mobile-menu-btn {
   display: none;
   background: none;
@@ -744,6 +957,10 @@ useHead({
   text-decoration: none;
   font-weight: 500;
   padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
 }
 
 .mobile-menu-actions {
