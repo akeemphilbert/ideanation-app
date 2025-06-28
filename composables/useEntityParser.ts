@@ -1,17 +1,18 @@
-import { useEntitiesStore } from '~/stores/entities'
+import { useResourcesStore } from '~/stores/resources'
+import { RESOURCE_TYPES } from '~/types/resources'
 
 // Entity type mapping for parsing
 export const ENTITY_PREFIXES = {
-  'problem': 'problem',
-  'customer': 'customer', 
-  'idea': 'idea',
-  'product': 'product',
-  'feature': 'feature',
-  'job': 'job',
-  'pain': 'pain',
-  'gain': 'gain',
-  'journey': 'customerJourney',
-  'step': 'customerJourneyStep'
+  'problem': RESOURCE_TYPES.PROBLEM,
+  'customer': RESOURCE_TYPES.CUSTOMER, 
+  'idea': RESOURCE_TYPES.IDEA,
+  'product': RESOURCE_TYPES.PRODUCT,
+  'feature': RESOURCE_TYPES.FEATURE,
+  'job': RESOURCE_TYPES.JOB,
+  'pain': RESOURCE_TYPES.PAIN,
+  'gain': RESOURCE_TYPES.GAIN,
+  'journey': RESOURCE_TYPES.CUSTOMER_JOURNEY,
+  'step': RESOURCE_TYPES.CUSTOMER_JOURNEY_STEP
 } as const
 
 export type EntityPrefix = keyof typeof ENTITY_PREFIXES
@@ -25,7 +26,7 @@ export interface ParsedEntity {
 }
 
 export const useEntityParser = () => {
-  const entitiesStore = useEntitiesStore()
+  const resourcesStore = useResourcesStore()
 
   // Parse text for entity prefixes
   const parseEntityText = (text: string): ParsedEntity | null => {
@@ -60,11 +61,11 @@ export const useEntityParser = () => {
     }
 
     switch (parsed.type) {
-      case 'problem':
-        return entitiesStore.createProblem(baseData)
+      case RESOURCE_TYPES.PROBLEM:
+        return resourcesStore.createProblem(baseData)
       
-      case 'customer':
-        return entitiesStore.createCustomer({
+      case RESOURCE_TYPES.CUSTOMER:
+        return resourcesStore.createCustomer({
           ...baseData,
           givenName: '',
           familyName: '',
@@ -72,34 +73,34 @@ export const useEntityParser = () => {
           organization: ''
         })
       
-      case 'idea':
-        const idea = entitiesStore.createIdea(baseData)
+      case RESOURCE_TYPES.IDEA:
+        const idea = resourcesStore.createIdea(baseData)
         // Set as current idea if none is set
-        if (!entitiesStore.currentIdea) {
-          entitiesStore.setCurrentIdea(idea)
+        if (!resourcesStore.currentIdea) {
+          resourcesStore.setCurrentIdea(idea.toJSON())
         }
         return idea
       
-      case 'product':
-        return entitiesStore.createProduct(baseData)
+      case RESOURCE_TYPES.PRODUCT:
+        return resourcesStore.createProduct(baseData)
       
-      case 'feature':
-        return entitiesStore.createFeature(baseData)
+      case RESOURCE_TYPES.FEATURE:
+        return resourcesStore.createFeature(baseData)
       
-      case 'job':
-        return entitiesStore.createJob(baseData)
+      case RESOURCE_TYPES.JOB:
+        return resourcesStore.createJob(baseData)
       
-      case 'pain':
-        return entitiesStore.createPain(baseData)
+      case RESOURCE_TYPES.PAIN:
+        return resourcesStore.createPain(baseData)
       
-      case 'gain':
-        return entitiesStore.createGain(baseData)
+      case RESOURCE_TYPES.GAIN:
+        return resourcesStore.createGain(baseData)
       
-      case 'customerJourney':
-        return entitiesStore.createCustomerJourney(baseData)
+      case RESOURCE_TYPES.CUSTOMER_JOURNEY:
+        return resourcesStore.createCustomerJourney(baseData)
       
-      case 'customerJourneyStep':
-        return entitiesStore.createCustomerJourneyStep(baseData)
+      case RESOURCE_TYPES.CUSTOMER_JOURNEY_STEP:
+        return resourcesStore.createCustomerJourneyStep(baseData)
       
       default:
         console.warn(`Unknown entity type: ${parsed.type}`)
@@ -109,10 +110,9 @@ export const useEntityParser = () => {
 
   // Auto-create relationships for new entities with smart linking
   const createAutoRelationships = (entity: any, entityType: EntityType, targetNodeId?: string): void => {
-    const currentIdea = entitiesStore.currentIdea
-    const currentUser = entitiesStore.currentUser
+    const currentIdea = resourcesStore.currentIdea
 
-    if (!currentIdea || !currentUser) return
+    if (!currentIdea) return
 
     // If a specific target node is provided, create relationship to it
     if (targetNodeId) {
@@ -122,59 +122,59 @@ export const useEntityParser = () => {
 
     // Default relationships based on entity type and current context
     switch (entityType) {
-      case 'problem':
+      case RESOURCE_TYPES.PROBLEM:
         // Link problem to current idea
-        entitiesStore.createRelationship({
-          sourceId: entity.id,
-          targetId: currentIdea.id,
+        resourcesStore.createRelationship({
+          sourceId: entity['@id'],
+          targetId: currentIdea['@id'],
           relationshipType: 'belongs'
         })
         break
 
-      case 'customer':
+      case RESOURCE_TYPES.CUSTOMER:
         // Link customer to current idea
-        entitiesStore.createRelationship({
-          sourceId: entity.id,
-          targetId: currentIdea.id,
+        resourcesStore.createRelationship({
+          sourceId: entity['@id'],
+          targetId: currentIdea['@id'],
           relationshipType: 'belongs'
         })
         break
 
-      case 'product':
+      case RESOURCE_TYPES.PRODUCT:
         // Link product to current idea as MVP
-        entitiesStore.createRelationship({
-          sourceId: currentIdea.id,
-          targetId: entity.id,
+        resourcesStore.createRelationship({
+          sourceId: currentIdea['@id'],
+          targetId: entity['@id'],
           relationshipType: 'mvp'
         })
         break
 
-      case 'feature':
+      case RESOURCE_TYPES.FEATURE:
         // Link feature to products of current idea
-        const currentProducts = entitiesStore.currentIdeaProducts
+        const currentProducts = resourcesStore.currentIdeaProducts
         if (currentProducts.length > 0) {
           // Link to first product (or could be more sophisticated)
-          entitiesStore.createRelationship({
-            sourceId: entity.id,
-            targetId: currentProducts[0].id,
+          resourcesStore.createRelationship({
+            sourceId: entity['@id'],
+            targetId: currentProducts[0]['@id'],
             relationshipType: 'belongs'
           })
         }
         break
 
-      case 'job':
-      case 'pain':
-      case 'gain':
+      case RESOURCE_TYPES.JOB:
+      case RESOURCE_TYPES.PAIN:
+      case RESOURCE_TYPES.GAIN:
         // Link to customers of current idea
-        const currentCustomers = entitiesStore.currentIdeaCustomers
+        const currentCustomers = resourcesStore.currentIdeaCustomers
         if (currentCustomers.length > 0) {
-          const relationshipType = entityType === 'job' ? 'performs' : 
-                                  entityType === 'pain' ? 'experiences' : 'desires'
+          const relationshipType = entityType === RESOURCE_TYPES.JOB ? 'performs' : 
+                                  entityType === RESOURCE_TYPES.PAIN ? 'experiences' : 'desires'
           
           // Link to first customer (could be more sophisticated)
-          entitiesStore.createRelationship({
-            sourceId: currentCustomers[0].id,
-            targetId: entity.id,
+          resourcesStore.createRelationship({
+            sourceId: currentCustomers[0]['@id'],
+            targetId: entity['@id'],
             relationshipType
           })
         }
@@ -189,39 +189,39 @@ export const useEntityParser = () => {
     if (!targetEntity) return
 
     let relationshipType = 'related'
-    let sourceId = entity.id
+    let sourceId = entity['@id']
     let targetId = targetNodeId
 
     // Define specific relationship patterns based on entity types
-    if (entityType === 'problem' && targetEntity.type === 'idea') {
+    if (entityType === RESOURCE_TYPES.PROBLEM && targetEntity.type === RESOURCE_TYPES.IDEA) {
       relationshipType = 'belongs'
-    } else if (entityType === 'customer' && targetEntity.type === 'idea') {
+    } else if (entityType === RESOURCE_TYPES.CUSTOMER && targetEntity.type === RESOURCE_TYPES.IDEA) {
       relationshipType = 'belongs'
-    } else if (entityType === 'product' && targetEntity.type === 'idea') {
+    } else if (entityType === RESOURCE_TYPES.PRODUCT && targetEntity.type === RESOURCE_TYPES.IDEA) {
       relationshipType = 'mvp'
       sourceId = targetNodeId
-      targetId = entity.id
-    } else if (entityType === 'feature' && targetEntity.type === 'solution') {
+      targetId = entity['@id']
+    } else if (entityType === RESOURCE_TYPES.FEATURE && targetEntity.type === RESOURCE_TYPES.PRODUCT) {
       relationshipType = 'belongs'
-    } else if (entityType === 'job' && targetEntity.type === 'customer') {
+    } else if (entityType === RESOURCE_TYPES.JOB && targetEntity.type === RESOURCE_TYPES.CUSTOMER) {
       relationshipType = 'performs'
       sourceId = targetNodeId
-      targetId = entity.id
-    } else if (entityType === 'pain' && targetEntity.type === 'customer') {
+      targetId = entity['@id']
+    } else if (entityType === RESOURCE_TYPES.PAIN && targetEntity.type === RESOURCE_TYPES.CUSTOMER) {
       relationshipType = 'experiences'
       sourceId = targetNodeId
-      targetId = entity.id
-    } else if (entityType === 'gain' && targetEntity.type === 'customer') {
+      targetId = entity['@id']
+    } else if (entityType === RESOURCE_TYPES.GAIN && targetEntity.type === RESOURCE_TYPES.CUSTOMER) {
       relationshipType = 'desires'
       sourceId = targetNodeId
-      targetId = entity.id
-    } else if (entityType === 'feature' && targetEntity.type === 'pain') {
+      targetId = entity['@id']
+    } else if (entityType === RESOURCE_TYPES.FEATURE && targetEntity.type === RESOURCE_TYPES.PAIN) {
       relationshipType = 'relieves'
-    } else if (entityType === 'feature' && targetEntity.type === 'gain') {
+    } else if (entityType === RESOURCE_TYPES.FEATURE && targetEntity.type === RESOURCE_TYPES.GAIN) {
       relationshipType = 'creates'
     }
 
-    entitiesStore.createRelationship({
+    resourcesStore.createRelationship({
       sourceId,
       targetId,
       relationshipType
@@ -230,39 +230,7 @@ export const useEntityParser = () => {
 
   // Helper to find entity by ID across all collections
   const findEntityById = (entityId: string): { type: string, entity: any } | null => {
-    // Check ideas
-    const idea = entitiesStore.ideas.find(i => i.id === entityId)
-    if (idea) return { type: 'idea', entity: idea }
-
-    // Check problems
-    const problem = entitiesStore.problems.find(p => p.id === entityId)
-    if (problem) return { type: 'problem', entity: problem }
-
-    // Check customers
-    const customer = entitiesStore.customers.find(c => c.id === entityId)
-    if (customer) return { type: 'customer', entity: customer }
-
-    // Check products
-    const product = entitiesStore.products.find(p => p.id === entityId)
-    if (product) return { type: 'solution', entity: product }
-
-    // Check features
-    const feature = entitiesStore.features.find(f => f.id === entityId)
-    if (feature) return { type: 'feature', entity: feature }
-
-    // Check jobs
-    const job = entitiesStore.jobs.find(j => j.id === entityId)
-    if (job) return { type: 'job', entity: job }
-
-    // Check pains
-    const pain = entitiesStore.pains.find(p => p.id === entityId)
-    if (pain) return { type: 'pain', entity: pain }
-
-    // Check gains
-    const gain = entitiesStore.gains.find(g => g.id === entityId)
-    if (gain) return { type: 'gain', entity: gain }
-
-    return null
+    return resourcesStore.findResourceById(entityId)
   }
 
   // Main function to process entity text with target node support
@@ -282,9 +250,9 @@ export const useEntityParser = () => {
       
       if (entity) {
         // Create auto-relationships with target node support
-        createAutoRelationships(entity, parsed.type, targetNodeId)
+        createAutoRelationships(entity.toJSON(), parsed.type, targetNodeId)
         
-        return { entity, parsed, wasCreated: true }
+        return { entity: entity.toJSON(), parsed, wasCreated: true }
       }
     } catch (error) {
       console.error('Failed to create entity:', error)
