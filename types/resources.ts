@@ -1,5 +1,3 @@
-import KSUID from 'ksuid'
-
 // Base resource interface - all entities and relationships are resources
 export interface BaseResource {
   '@id': string
@@ -173,7 +171,11 @@ export const RELATIONSHIP_TYPES = {
 
 // Utility functions
 export function generateKSUID(): string {
-  return KSUID.randomSync().string
+  // Browser-compatible unique ID generation
+  const timestamp = Date.now().toString(36)
+  const randomPart = Math.random().toString(36).substring(2, 15)
+  const additionalRandom = Math.random().toString(36).substring(2, 15)
+  return `${timestamp}${randomPart}${additionalRandom}`
 }
 
 export function generateResourceId(type: string): string {
