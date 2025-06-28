@@ -1,3 +1,5 @@
+import ksuid from 'ksuid'
+
 // Base resource interface - all entities and relationships are resources
 export interface BaseResource {
   '@id': string
@@ -182,15 +184,13 @@ export const RELATIONSHIP_TYPES = {
 
 // Utility functions
 export function generateKSUID(): string {
-  // Import ksuid for proper unique ID generation
-  const ksuid = require('ksuid')
   return ksuid.randomSync().string
 }
 
 export function generateResourceId(type: string): string {
-  const ksuid = generateKSUID()
+  const ksuidValue = generateKSUID()
   const path = RESOURCE_PATHS[type as keyof typeof RESOURCE_PATHS]
-  return `${path}/${ksuid}`
+  return `${path}/${ksuidValue}`
 }
 
 export function extractKSUIDFromId(id: string): string {
