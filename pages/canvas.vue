@@ -230,7 +230,7 @@ import LinkModal from '~/components/molecules/LinkModal.vue'
 import { ExportDataBuilder } from '~/services/export/ExportDataBuilder'
 import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormatter'
 import { ExportType } from '~/types/export'
-import  ChatMessage from '~/components/molecules/ChatMessage.vue'
+import ChatMessage from '~/components/molecules/ChatMessage.vue'
 
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
@@ -687,58 +687,138 @@ const handleChatMessage = async () => {
   showQuickSuggestions.value = false
   showEntityHelp.value = false
 
-  const res = await fetch('/api/message/stream', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    message: message
-  }),
-})
+  // Check if we need to create an idea first
+  if (!entitiesStore.currentIdea) {
+    // This is the idea name
+    chatStore.addMessage({
+      type: 'user',
+      content: message
+    })
 
-const reader = res.body?.getReader()
-const decoder = new TextDecoder()
-
-while (true) {
-  const { done, value } = await reader.read()
-  if (done) break
-  const chunkString = decoder.decode(value, { stream: true })
-  try {
-    console.log(chunkString)
-    // Pass the selected node for context
-    const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
-    await chatStore.sendMessage(chunkString, targetNodeId)
-    nextTick(() => scrollToBottom())
-  } catch (error) {
-    console.log(chunkString)
-    console.error('Error parsing chunk:', error)
-  }
-  
-}
-
-  
-  // Check if this is a load idea command
-  // const loadMatch = message.match(/^load idea (\d+)$/i)
-  // if (loadMatch) {
-  //   const ideaNumber = parseInt(loadMatch[1]) - 1
-  //   const savedIdeas = (window as any).savedIdeas
+    // Create the idea
+    const idea = entitiesStore.createIdea({
+      title: message,
+      description: `Startup idea: ${message}`
+    })
     
-  //   if (savedIdeas && savedIdeas[ideaNumber]) {
-  //     await loadSpecificIdea(savedIdeas[ideaNumber].key)
-  //     return
-  //   } else {
-  //     chatStore.addMessage({
-  //       type: 'ai',
-  //       content: `❌ Idea number ${ideaNumber + 1} not found. Please use "Load from Storage" to see available ideas first.`
-  //     })
-  //     nextTick(() => scrollToBottom())
-  //     return
-  //   }
-  // }
-  
-  
-  
-  // Scroll to bottom after message is sent
-  // nextTick(() => scrollToBottom())
+    entitiesStore.setCurrentIdea(idea)
+
+    // Add AI response
+    chatStore.addMessage({
+      type: 'ai',
+      content: `Perfect! I've created your idea "${message}". Now let's start building it out. You can create entities by typing things like:
+
+• problem: describe a problem your idea solves
+• customer: describe your target customers  
+• feature: describe a key feature
+• pain: describe customer pain points
+• gain: describe customer gains
+
+What would you like to add first?`,
+      entityCreated: {
+        type: 'idea',
+        title: message,
+        id: idea.id
+      }
+    })
+
+    nextTick(() => scrollToBottom())
+    return
+  }
+
+  // Add user message first
+  chatStore.addMessage({
+    type: 'user',
+    content: message
+  })
+
+  // Set typing indicator
+  chatStore.setTyping(true)
+
+  try {
+    // Stream response from AI
+    const response = await fetch('/api/message/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: message,
+        context: {
+          currentIdea: entitiesStore.currentIdea?.title,
+          selectedNode: selectedNodeIds.value.length === 1 ? getNodeTitle(selectedNodeIds.value[0]) : null,
+          entityCounts: {
+            problems: entitiesStore.problems.length,
+            customers: entitiesStore.customers.length,
+            features: entitiesStore.features.length,
+            products: entitiesStore.products.length
+          }
+        }
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('No reader available')
+    }
+
+    const decoder = new TextDecoder()
+    let aiMessageContent = ''
+    let aiMessageId: string | null = null
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      
+      const chunk = decoder.decode(value, { stream: true })
+      aiMessageContent += chunk
+
+      // Update or create AI message
+      if (!aiMessageId) {
+        // Create new AI message
+        const aiMessage = {
+          type: 'ai' as const,
+          content: aiMessageContent
+        }
+        chatStore.addMessage(aiMessage)
+        aiMessageId = chatStore.messages[chatStore.messages.length - 1].id
+      } else {
+        // Update existing AI message
+        chatStore.updateMessage(aiMessageId, { content: aiMessageContent })
+      }
+
+      // Scroll to bottom as content updates
+      nextTick(() => scrollToBottom())
+    }
+
+    // Process the complete AI response for entity creation
+    const { processEntityText } = useEntityParser()
+    const targetNodeId = selectedNodeIds.value.length === 1 ? selectedNodeIds.value[0] : undefined
+    const entityResult = processEntityText(aiMessageContent, targetNodeId)
+    
+    if (entityResult.wasCreated && entityResult.entity && entityResult.parsed) {
+      // Update the AI message to include entity creation info
+      chatStore.updateMessage(aiMessageId!, {
+        entityCreated: {
+          type: entityResult.parsed.type,
+          title: entityResult.parsed.title,
+          id: entityResult.entity.id
+        }
+      })
+    }
+
+  } catch (error) {
+    console.error('Error streaming AI response:', error)
+    chatStore.addMessage({
+      type: 'ai',
+      content: 'Sorry, I encountered an error while processing your message. Please try again.'
+    })
+  } finally {
+    chatStore.setTyping(false)
+    nextTick(() => scrollToBottom())
+  }
 }
 
 const handleSuggestionApply = (suggestion: any) => {

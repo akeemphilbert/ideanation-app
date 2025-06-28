@@ -32,6 +32,18 @@ export const useChatStore = defineStore('chat', () => {
       timestamp: new Date()
     }
     messages.value.push(newMessage)
+    return newMessage
+  }
+
+  const updateMessage = (messageId: string, updates: Partial<ChatMessage>) => {
+    const messageIndex = messages.value.findIndex(m => m.id === messageId)
+    if (messageIndex !== -1) {
+      messages.value[messageIndex] = { ...messages.value[messageIndex], ...updates }
+    }
+  }
+
+  const setTyping = (typing: boolean) => {
+    isTyping.value = typing
   }
 
   const sendMessage = async (content: string, selectedNodeId?: string) => {
@@ -290,6 +302,8 @@ What would you like to add first?`,
     isTyping: readonly(isTyping),
     sendMessage,
     addMessage,
+    updateMessage,
+    setTyping,
     clearMessages
   }
 })
