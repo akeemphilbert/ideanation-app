@@ -14,13 +14,13 @@
               <line x1="22" y1="11" x2="18" y2="21" stroke="#6b7280" stroke-width="1.5"/>
             </svg>
           </div>
-          <span class="brand-name handwritten">Ideanation</span>
+          <span class="brand-name">Ideanation</span>
         </div>
 
         <div class="nav-links">
-          <a href="#features" class="nav-link handwritten">Features</a>
-          <a href="#how-it-works" class="nav-link handwritten">How it works</a>
-          <a href="#pricing" class="nav-link handwritten">Pricing</a>
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#how-it-works" class="nav-link">How it works</a>
+          <a href="#pricing" class="nav-link">Pricing</a>
         </div>
 
         <div class="nav-actions">
@@ -38,7 +38,7 @@
                     {{ getUserInitials() }}
                   </div>
                 </div>
-                <span class="user-name handwritten">{{ profile?.full_name || user.email }}</span>
+                <span class="user-name">{{ profile?.full_name || user.email }}</span>
                 <svg class="chevron" :class="{ 'chevron-open': showUserMenu }" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M4.427 9.573L8 6l3.573 3.573a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708z"/>
                 </svg>
@@ -47,20 +47,20 @@
               <div v-if="showUserMenu" class="user-dropdown">
                 <div class="dropdown-header">
                   <div class="user-info">
-                    <div class="user-name-full handwritten">{{ profile?.full_name || 'User' }}</div>
+                    <div class="user-name-full">{{ profile?.full_name || 'User' }}</div>
                     <div class="user-email">{{ user.email }}</div>
                   </div>
                 </div>
                 <div class="dropdown-divider"></div>
                 <div class="dropdown-items">
-                  <button class="dropdown-item handwritten" @click="goToCanvas">
+                  <button class="dropdown-item" @click="goToCanvas">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
                       <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                     </svg>
                     Go to Canvas
                   </button>
-                  <button class="dropdown-item handwritten" @click="handleSignOut">
+                  <button class="dropdown-item" @click="handleSignOut">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
                       <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
@@ -72,8 +72,8 @@
             </div>
           </template>
           <template v-else>
-            <NuxtLink to="/login" class="btn-sketch">Sign in</NuxtLink>
-            <NuxtLink to="/login" class="btn-sketch btn-primary">Get started</NuxtLink>
+            <NuxtLink to="/login" class="btn-secondary">Sign in</NuxtLink>
+            <NuxtLink to="/login" class="btn-primary">Get started</NuxtLink>
           </template>
         </div>
 
@@ -90,18 +90,18 @@
       <!-- Mobile menu -->
       <div v-if="showMobileMenu" class="mobile-menu">
         <div class="mobile-nav-links">
-          <a href="#features" class="mobile-nav-link handwritten" @click="closeMobileMenu">Features</a>
-          <a href="#how-it-works" class="mobile-nav-link handwritten" @click="closeMobileMenu">How it works</a>
-          <a href="#pricing" class="mobile-nav-link handwritten" @click="closeMobileMenu">Pricing</a>
+          <a href="#features" class="mobile-nav-link" @click="closeMobileMenu">Features</a>
+          <a href="#how-it-works" class="mobile-nav-link" @click="closeMobileMenu">How it works</a>
+          <a href="#pricing" class="mobile-nav-link" @click="closeMobileMenu">Pricing</a>
         </div>
         <div class="mobile-nav-actions">
           <template v-if="user">
-            <button class="mobile-nav-button handwritten" @click="goToCanvas">Go to Canvas</button>
-            <button class="mobile-nav-button secondary handwritten" @click="handleSignOut">Sign out</button>
+            <button class="mobile-nav-button" @click="goToCanvas">Go to Canvas</button>
+            <button class="mobile-nav-button secondary" @click="handleSignOut">Sign out</button>
           </template>
           <template v-else>
-            <NuxtLink to="/login" class="mobile-nav-button secondary handwritten" @click="closeMobileMenu">Sign in</NuxtLink>
-            <NuxtLink to="/login" class="mobile-nav-button handwritten" @click="closeMobileMenu">Get started</NuxtLink>
+            <NuxtLink to="/login" class="mobile-nav-button secondary" @click="closeMobileMenu">Sign in</NuxtLink>
+            <NuxtLink to="/login" class="mobile-nav-button" @click="closeMobileMenu">Get started</NuxtLink>
           </template>
         </div>
       </div>
@@ -112,43 +112,43 @@
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">
-            <span class="badge-text handwritten">Transform ideas into structured insights</span>
+            <span class="badge-text">Transform ideas into structured insights</span>
           </div>
           
-          <h1 class="hero-title title-sketch">
+          <h1 class="hero-title">
             Turn scattered thoughts into 
             <span class="gradient-text">structured startup ideas</span>
           </h1>
           
-          <p class="hero-description handwritten">
+          <p class="hero-description">
             Ideanation helps entrepreneurs organize their ideas using proven frameworks, 
             AI-powered insights, and visual knowledge graphs. Stop losing great ideas in scattered notes.
           </p>
           
           <div class="hero-actions">
-            <NuxtLink to="/login" class="btn-sketch btn-large">
+            <NuxtLink to="/login" class="btn-primary btn-large">
               Start building for free
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
               </svg>
             </NuxtLink>
-            <button class="btn-sketch btn-large" @click="scrollToDemo">
+            <button class="btn-secondary btn-large" @click="scrollToDemo">
               See how it works
             </button>
           </div>
 
           <div class="hero-stats">
             <div class="stat">
-              <div class="stat-number title-sketch">10x</div>
-              <div class="stat-label handwritten">Faster idea structuring</div>
+              <div class="stat-number">10x</div>
+              <div class="stat-label">Faster idea structuring</div>
             </div>
             <div class="stat">
-              <div class="stat-number title-sketch">50+</div>
-              <div class="stat-label handwritten">Business frameworks</div>
+              <div class="stat-number">50+</div>
+              <div class="stat-label">Business frameworks</div>
             </div>
             <div class="stat">
-              <div class="stat-number title-sketch">AI</div>
-              <div class="stat-label handwritten">Powered insights</div>
+              <div class="stat-number">AI</div>
+              <div class="stat-label">Powered insights</div>
             </div>
           </div>
         </div>
@@ -185,11 +185,11 @@
                 
                 <!-- Labels -->
                 <g class="labels">
-                  <text x="100" y="85" text-anchor="middle" class="node-label handwritten" font-size="10" fill="#374151">Problem</text>
-                  <text x="300" y="85" text-anchor="middle" class="node-label handwritten" font-size="10" fill="#374151">Customer</text>
-                  <text x="200" y="185" text-anchor="middle" class="node-label handwritten" font-size="10" fill="#374151">Solution</text>
-                  <text x="120" y="225" text-anchor="middle" class="node-label handwritten" font-size="8" fill="#374151">Pain</text>
-                  <text x="280" y="225" text-anchor="middle" class="node-label handwritten" font-size="8" fill="#374151">Gain</text>
+                  <text x="100" y="85" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Problem</text>
+                  <text x="300" y="85" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Customer</text>
+                  <text x="200" y="185" text-anchor="middle" class="node-label" font-size="10" fill="#374151">Solution</text>
+                  <text x="120" y="225" text-anchor="middle" class="node-label" font-size="8" fill="#374151">Pain</text>
+                  <text x="280" y="225" text-anchor="middle" class="node-label" font-size="8" fill="#374151">Gain</text>
                 </g>
               </svg>
             </div>
@@ -197,15 +197,15 @@
             <div class="floating-cards">
               <div class="floating-card card-1">
                 <div class="card-icon">💡</div>
-                <div class="card-text handwritten">AI suggests connections</div>
+                <div class="card-text">AI suggests connections</div>
               </div>
               <div class="floating-card card-2">
                 <div class="card-icon">📊</div>
-                <div class="card-text handwritten">Export to frameworks</div>
+                <div class="card-text">Export to frameworks</div>
               </div>
               <div class="floating-card card-3">
                 <div class="card-icon">🎯</div>
-                <div class="card-text handwritten">Focus on MVP</div>
+                <div class="card-text">Focus on MVP</div>
               </div>
             </div>
           </div>
@@ -217,15 +217,15 @@
     <section id="features" class="features-section">
       <div class="section-container">
         <div class="section-header">
-          <h2 class="section-title title-sketch">Everything you need to structure your startup idea</h2>
-          <p class="section-description handwritten">
+          <h2 class="section-title">Everything you need to structure your startup idea</h2>
+          <p class="section-description">
             From scattered thoughts to structured insights, Ideanation provides the tools 
             and frameworks used by successful entrepreneurs.
           </p>
         </div>
 
         <div class="features-grid">
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -233,14 +233,14 @@
                 <path d="M2 12l10 5 10-5"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">Atomic Components</h3>
+            <h3 class="feature-title">Atomic Components</h3>
             <p class="feature-description">
               Break down complex ideas into manageable atomic pieces: problems, customers, 
               jobs-to-be-done, pains, gains, and solutions.
             </p>
           </div>
 
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"/>
@@ -248,14 +248,14 @@
                 <path d="M1 12h6m6 0h6"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">Visual Knowledge Graph</h3>
+            <h3 class="feature-title">Visual Knowledge Graph</h3>
             <p class="feature-description">
               See how different components of your idea connect and influence each other 
               through an interactive force-directed graph.
             </p>
           </div>
 
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 12l2 2 4-4"/>
@@ -264,14 +264,14 @@
                 <path d="M3 12h6m6 0h6"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">AI-Powered Insights</h3>
+            <h3 class="feature-title">AI-Powered Insights</h3>
             <p class="feature-description">
               Get intelligent suggestions for missing components, potential connections, 
               and framework-based recommendations.
             </p>
           </div>
 
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -281,14 +281,14 @@
                 <polyline points="10,9 9,9 8,9"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">Export to Frameworks</h3>
+            <h3 class="feature-title">Export to Frameworks</h3>
             <p class="feature-description">
               Generate business model canvases, pitch decks, SWOT analyses, and other 
               artifacts directly from your structured idea.
             </p>
           </div>
 
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -296,14 +296,14 @@
                 <path d="M8 13h6"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">Conversational Interface</h3>
+            <h3 class="feature-title">Conversational Interface</h3>
             <p class="feature-description">
               Build your idea naturally through conversation. Just type "problem: users can't find..." 
               and watch your graph grow.
             </p>
           </div>
 
-          <div class="feature-card sketch-border">
+          <div class="feature-card">
             <div class="feature-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -312,7 +312,7 @@
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             </div>
-            <h3 class="feature-title handwritten">Collaboration Ready</h3>
+            <h3 class="feature-title">Collaboration Ready</h3>
             <p class="feature-description">
               Share your structured ideas with co-founders, mentors, and investors. 
               Export to formats they understand and love.
@@ -326,8 +326,8 @@
     <section id="how-it-works" class="how-it-works-section">
       <div class="section-container">
         <div class="section-header">
-          <h2 class="section-title title-sketch">How Ideanation works</h2>
-          <p class="section-description handwritten">
+          <h2 class="section-title">How Ideanation works</h2>
+          <p class="section-description">
             From scattered thoughts to structured startup ideas in three simple steps.
           </p>
         </div>
@@ -336,17 +336,17 @@
           <div class="step">
             <div class="step-number">1</div>
             <div class="step-content">
-              <h3 class="step-title handwritten">Capture your thoughts</h3>
+              <h3 class="step-title">Capture your thoughts</h3>
               <p class="step-description">
                 Start by chatting with our AI. Type naturally about your idea: 
                 "problem: people struggle to find reliable pet sitters"
               </p>
               <div class="step-visual">
-                <div class="chat-example sketch-border">
-                  <div class="chat-bubble user handwritten">
+                <div class="chat-example">
+                  <div class="chat-bubble user">
                     problem: people struggle to find reliable pet sitters
                   </div>
-                  <div class="chat-bubble ai handwritten">
+                  <div class="chat-bubble ai">
                     Great! I've added that problem to your idea. Who would benefit most from solving this?
                   </div>
                 </div>
@@ -357,16 +357,16 @@
           <div class="step">
             <div class="step-number">2</div>
             <div class="step-content">
-              <h3 class="step-title handwritten">Watch your idea take shape</h3>
+              <h3 class="step-title">Watch your idea take shape</h3>
               <p class="step-description">
                 As you add components, see them automatically organized in a visual knowledge graph 
                 with intelligent connections.
               </p>
               <div class="step-visual">
-                <div class="mini-graph sketch-border">
-                  <div class="mini-node problem handwritten">Problem</div>
-                  <div class="mini-node customer handwritten">Customer</div>
-                  <div class="mini-node solution handwritten">Solution</div>
+                <div class="mini-graph">
+                  <div class="mini-node problem">Problem</div>
+                  <div class="mini-node customer">Customer</div>
+                  <div class="mini-node solution">Solution</div>
                   <div class="connection-line line-1"></div>
                   <div class="connection-line line-2"></div>
                 </div>
@@ -377,16 +377,16 @@
           <div class="step">
             <div class="step-number">3</div>
             <div class="step-content">
-              <h3 class="step-title handwritten">Export and share</h3>
+              <h3 class="step-title">Export and share</h3>
               <p class="step-description">
                 Generate professional artifacts: business model canvases, pitch decks, 
                 and SWOT analyses ready for investors and stakeholders.
               </p>
               <div class="step-visual">
-                <div class="export-options sketch-border">
-                  <div class="export-item handwritten">📊 Business Model Canvas</div>
-                  <div class="export-item handwritten">📈 Pitch Deck</div>
-                  <div class="export-item handwritten">🎯 SWOT Analysis</div>
+                <div class="export-options">
+                  <div class="export-item">📊 Business Model Canvas</div>
+                  <div class="export-item">📈 Pitch Deck</div>
+                  <div class="export-item">🎯 SWOT Analysis</div>
                 </div>
               </div>
             </div>
@@ -399,19 +399,19 @@
     <section id="pricing" class="pricing-section">
       <div class="section-container">
         <div class="section-header">
-          <h2 class="section-title title-sketch">Simple, transparent pricing</h2>
-          <p class="section-description handwritten">
+          <h2 class="section-title">Simple, transparent pricing</h2>
+          <p class="section-description">
             Start free and upgrade as your ideas grow into successful startups.
           </p>
         </div>
 
         <div class="pricing-grid">
-          <div class="pricing-card sketch-border">
+          <div class="pricing-card">
             <div class="pricing-header">
-              <h3 class="pricing-title handwritten">Free</h3>
+              <h3 class="pricing-title">Free</h3>
               <div class="pricing-price">
-                <span class="price-amount title-sketch">$0</span>
-                <span class="price-period handwritten">/month</span>
+                <span class="price-amount">$0</span>
+                <span class="price-period">/month</span>
               </div>
               <p class="pricing-description">Perfect for exploring and validating your first idea</p>
             </div>
@@ -441,16 +441,16 @@
                 Basic export (Markdown)
               </div>
             </div>
-            <NuxtLink to="/login" class="btn-sketch pricing-button">Get started</NuxtLink>
+            <NuxtLink to="/login" class="btn-secondary pricing-button">Get started</NuxtLink>
           </div>
 
-          <div class="pricing-card featured sketch-border">
-            <div class="pricing-badge handwritten">Most popular</div>
+          <div class="pricing-card featured">
+            <div class="pricing-badge">Most popular</div>
             <div class="pricing-header">
-              <h3 class="pricing-title handwritten">Solo Pro</h3>
+              <h3 class="pricing-title">Solo Pro</h3>
               <div class="pricing-price">
-                <span class="price-amount title-sketch">$10</span>
-                <span class="price-period handwritten">/month</span>
+                <span class="price-amount">$10</span>
+                <span class="price-period">/month</span>
               </div>
               <p class="pricing-description">For serious entrepreneurs building multiple ideas</p>
             </div>
@@ -486,15 +486,15 @@
                 Priority support
               </div>
             </div>
-            <NuxtLink to="/login" class="btn-sketch btn-primary pricing-button">Start free trial</NuxtLink>
+            <NuxtLink to="/login" class="btn-primary pricing-button">Start free trial</NuxtLink>
           </div>
 
-          <div class="pricing-card sketch-border">
+          <div class="pricing-card">
             <div class="pricing-header">
-              <h3 class="pricing-title handwritten">Team</h3>
+              <h3 class="pricing-title">Team</h3>
               <div class="pricing-price">
-                <span class="price-amount title-sketch">$25</span>
-                <span class="price-period handwritten">/month</span>
+                <span class="price-amount">$25</span>
+                <span class="price-period">/month</span>
               </div>
               <p class="pricing-description">For teams and agencies building multiple startups</p>
             </div>
@@ -530,7 +530,7 @@
                 White-label options
               </div>
             </div>
-            <NuxtLink to="/login" class="btn-sketch pricing-button">Contact sales</NuxtLink>
+            <NuxtLink to="/login" class="btn-secondary pricing-button">Contact sales</NuxtLink>
           </div>
         </div>
       </div>
@@ -540,12 +540,12 @@
     <section class="cta-section">
       <div class="section-container">
         <div class="cta-content">
-          <h2 class="cta-title title-sketch">Ready to structure your next big idea?</h2>
-          <p class="cta-description handwritten">
+          <h2 class="cta-title">Ready to structure your next big idea?</h2>
+          <p class="cta-description">
             Join thousands of entrepreneurs who've transformed scattered thoughts into structured startup success.
           </p>
           <div class="cta-actions">
-            <NuxtLink to="/login" class="btn-sketch btn-large">
+            <NuxtLink to="/login" class="btn-primary btn-large">
               Start building for free
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -571,26 +571,26 @@
                 <line x1="22" y1="11" x2="18" y2="21" stroke="#6b7280" stroke-width="1.5"/>
               </svg>
             </div>
-            <span class="brand-name handwritten">Ideanation</span>
+            <span class="brand-name">Ideanation</span>
           </div>
           
           <div class="footer-links">
             <div class="footer-section">
-              <h4 class="footer-title handwritten">Product</h4>
+              <h4 class="footer-title">Product</h4>
               <a href="#features" class="footer-link">Features</a>
               <a href="#pricing" class="footer-link">Pricing</a>
               <a href="#" class="footer-link">Changelog</a>
             </div>
             
             <div class="footer-section">
-              <h4 class="footer-title handwritten">Company</h4>
+              <h4 class="footer-title">Company</h4>
               <a href="#" class="footer-link">About</a>
               <a href="#" class="footer-link">Blog</a>
               <a href="#" class="footer-link">Careers</a>
             </div>
             
             <div class="footer-section">
-              <h4 class="footer-title handwritten">Support</h4>
+              <h4 class="footer-title">Support</h4>
               <a href="#" class="footer-link">Help Center</a>
               <a href="#" class="footer-link">Contact</a>
               <a href="#" class="footer-link">Status</a>
@@ -684,10 +684,11 @@ useHead({
 </script>
 
 <style scoped>
-/* Keep all the existing styles but restore handwritten font usage */
+/* Base styles with professional typography */
 .landing-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Navigation Styles */
@@ -752,6 +753,56 @@ useHead({
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Button Styles - Professional colored buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #e2e8f0;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-secondary:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+  padding: 16px 32px;
+  font-size: 16px;
 }
 
 .user-menu {
@@ -1141,14 +1192,17 @@ useHead({
 }
 
 .feature-card {
-  padding: 32px;
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
+  padding: 32px;
   transition: all 0.3s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-4px) rotate(0deg);
+  transform: translateY(-4px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border-color: #6366f1;
 }
 
 .feature-icon {
@@ -1235,6 +1289,7 @@ useHead({
 
 .chat-example {
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -1263,6 +1318,7 @@ useHead({
   position: relative;
   height: 120px;
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -1324,6 +1380,7 @@ useHead({
 
 .export-options {
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -1355,6 +1412,7 @@ useHead({
 
 .pricing-card {
   background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 32px;
   position: relative;
@@ -1362,12 +1420,14 @@ useHead({
 }
 
 .pricing-card:hover {
-  transform: translateY(-4px) rotate(0deg);
+  transform: translateY(-4px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border-color: #6366f1;
 }
 
 .pricing-card.featured {
-  transform: scale(1.05) rotate(-0.5deg);
+  border-color: #6366f1;
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.1);
 }
 
 .pricing-badge {
@@ -1474,12 +1534,12 @@ useHead({
   justify-content: center;
 }
 
-.cta-actions .btn-sketch {
+.cta-actions .btn-primary {
   background: white;
   color: #6366f1;
 }
 
-.cta-actions .btn-sketch:hover {
+.cta-actions .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
 }
@@ -1651,10 +1711,6 @@ useHead({
   
   .pricing-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .pricing-card.featured {
-    transform: none;
   }
   
   .footer-links {
