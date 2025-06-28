@@ -26,11 +26,31 @@
           
           <button 
             class="btn-sketch btn-secondary" 
-            @click="showWorkspaceSelector = true"
-            v-if="resourcesStore.workspaces.length > 0"
+            @click="learnMore"
           >
-            Open Existing Workspace
+            Learn More
           </button>
+        </div>
+
+        <!-- Recent Workspaces -->
+        <div v-if="recentWorkspaces.length > 0" class="recent-workspaces">
+          <h3 class="handwritten">Recent Workspaces</h3>
+          <div class="workspace-list">
+            <div 
+              v-for="workspace in recentWorkspaces" 
+              :key="workspace.id"
+              class="workspace-item sketch-border"
+              @click="openWorkspace(workspace)"
+            >
+              <div class="workspace-info">
+                <h4 class="handwritten">{{ workspace.title }}</h4>
+                <p class="workspace-description">{{ workspace.description }}</p>
+                <div class="workspace-meta">
+                  <span class="workspace-date">{{ formatDate(workspace.updated) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -50,58 +70,12 @@
         </div>
       </div>
     </div>
-
-    <!-- Workspace Selector Modal -->
-    <div v-if="showWorkspaceSelector" class="modal-overlay" @click="showWorkspaceSelector = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3 class="handwritten">Select Workspace</h3>
-          <button class="close-button" @click="showWorkspaceSelector = false">×</button>
-        </div>
-        
-        <div class="workspace-list">
-          <div 
-            v-for="workspace in resourcesStore.workspaces" 
-            :key="workspace['@id']"
-            class="workspace-item"
-            @click="openWorkspace(workspace)"
-          >
-            <div class="workspace-icon">🚀</div>
-            <div class="workspace-info">
-              <h4 class="workspace-title">{{ workspace.title }}</h4>
-              <p class="workspace-description">{{ workspace.description }}</p>
-              <div class="workspace-stats">
-                <span class="stat">{{ getWorkspaceStats(workspace['@id']).ideas }} ideas</span>
-                <span class="stat">{{ getWorkspaceStats(workspace['@id']).entities }} entities</span>
-                <span class="stat">Updated {{ formatDate(workspace.updated) }}</span>
-              </div>
-            </div>
-            <div class="workspace-actions">
-              <button class="btn-sketch btn-small" @click.stop="deleteWorkspace(workspace['@id'])">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-actions">
-          <button class="btn-sketch" @click="showWorkspaceSelector = false">
-            Cancel
-          </button>
-          <button class="btn-sketch btn-primary" @click="startNewIdea">
-            Create New Workspace
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const router = useRouter()
 const resourcesStore = useResourcesStore()
-
-const showWorkspaceSelector = ref(false)
 
 const features = [
   {
@@ -118,15 +92,22 @@ const features = [
   }
 ]
 
+const recentWorkspaces = computed(() => {
+  return resourcesStore.workspaces
+    .slice()
+    .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
+    .slice(0, 3)
+})
+
 const startNewIdea = () => {
   // Create a new workspace
   const workspace = resourcesStore.createWorkspace({
-    title: `New Workspace ${new Date().toLocaleDateString()}`,
+    title: 'New Workspace',
     description: 'A new workspace for your startup idea'
   })
   
   // Set as current workspace
-  resourcesStore.setCurrentWorkspace(workspace.toJSON())
+  resourcesStore.setCurrentWorkspace(workspace)
   
   // Navigate to canvas
   router.push('/canvas')
@@ -134,31 +115,20 @@ const startNewIdea = () => {
 
 const openWorkspace = (workspace: any) => {
   resourcesStore.setCurrentWorkspace(workspace)
-  showWorkspaceSelector.value = false
   router.push('/canvas')
 }
 
-const deleteWorkspace = (workspaceId: string) => {
-  if (confirm('Are you sure you want to delete this workspace? This action cannot be undone.')) {
-    resourcesStore.deleteWorkspace(workspaceId)
-  }
+const learnMore = () => {
+  // Scroll to features or show modal
+  console.log('Learn more clicked')
 }
 
-const getWorkspaceStats = (workspaceId: string) => {
-  const ideas = resourcesStore.getIdeasForWorkspace(workspaceId)
-  const problems = resourcesStore.getProblemsForWorkspace(workspaceId)
-  const customers = resourcesStore.getCustomersForWorkspace(workspaceId)
-  const products = resourcesStore.getProductsForWorkspace(workspaceId)
-  const features = resourcesStore.getFeaturesForWorkspace(workspaceId)
-  
-  return {
-    ideas: ideas.length,
-    entities: problems.length + customers.length + products.length + features.length
-  }
-}
-
-const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString()
+const formatDate = (date: Date): string => {
+  return new Date(date).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  })
 }
 
 // SEO
@@ -241,6 +211,7 @@ useHead({
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 2rem;
 }
 
 .btn-primary {
@@ -255,6 +226,62 @@ useHead({
 .btn-secondary {
   background: white;
   color: var(--color-primary);
+}
+
+.recent-workspaces {
+  margin-top: 2rem;
+}
+
+.recent-workspaces h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: var(--color-primary);
+}
+
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.workspace-item {
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  transform: rotate(0.1deg);
+}
+
+.workspace-item:nth-child(even) {
+  transform: rotate(-0.1deg);
+}
+
+.workspace-item:hover {
+  transform: rotate(0deg) scale(1.02);
+}
+
+.workspace-info h4 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1rem;
+  color: var(--color-primary);
+}
+
+.workspace-description {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  line-height: 1.3;
+}
+
+.workspace-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workspace-date {
+  font-size: 0.7rem;
+  color: var(--color-secondary);
+  font-family: var(--font-handwritten);
 }
 
 .hero-visual {
@@ -293,150 +320,6 @@ useHead({
   fill: var(--color-primary);
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  background: white;
-  border: 3px solid var(--color-primary);
-  border-radius: 8px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  transform: rotate(-0.3deg);
-  box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 2px solid var(--color-primary);
-  background: #f9f9f9;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.3rem;
-  color: var(--color-primary);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--color-secondary);
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background: #f0f0f0;
-  color: var(--color-primary);
-}
-
-.workspace-list {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.workspace-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  transform: rotate(0.1deg);
-}
-
-.workspace-item:hover {
-  border-color: var(--color-primary);
-  transform: rotate(0deg) scale(1.02);
-  box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
-}
-
-.workspace-item:nth-child(even) {
-  transform: rotate(-0.1deg);
-}
-
-.workspace-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.workspace-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.workspace-title {
-  margin: 0 0 4px 0;
-  font-size: 1.1rem;
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
-  font-weight: 700;
-}
-
-.workspace-description {
-  margin: 0 0 8px 0;
-  font-size: 0.9rem;
-  color: var(--color-secondary);
-  line-height: 1.4;
-}
-
-.workspace-stats {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.stat {
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  background: #f0f0f0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.workspace-actions {
-  flex-shrink: 0;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding: 20px;
-  border-top: 1px solid #eee;
-}
-
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-5px); }
@@ -458,15 +341,6 @@ useHead({
   }
   
   .hero-actions {
-    justify-content: center;
-  }
-  
-  .workspace-item {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .workspace-stats {
     justify-content: center;
   }
 }
