@@ -18,11 +18,11 @@ export default defineNuxtConfig({
   
   // Build configuration
   build: {
-    transpile: ['dayjs']
+    transpile: ['dayjs', 'ant-design-vue']
   },
   
-  // SSR configuration - disable for Ant Design Vue
-  ssr: true,
+  // SSR configuration - disable for Ant Design Vue compatibility
+  ssr: false,
   
   // Environment variables
   runtimeConfig: {
