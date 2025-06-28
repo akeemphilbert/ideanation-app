@@ -730,10 +730,13 @@ What would you like to add first?`,
   chatStore.setTyping(true)
 
   try {
-    // Stream response from AI
+    // Stream response from AI using the /api/message/stream endpoint
     const response = await fetch('/api/message/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
       body: JSON.stringify({
         message: message,
         context: {
@@ -762,6 +765,7 @@ What would you like to add first?`,
     let aiMessageContent = ''
     let aiMessageId: string | null = null
 
+    // Read the stream chunk by chunk
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -779,7 +783,7 @@ What would you like to add first?`,
         chatStore.addMessage(aiMessage)
         aiMessageId = chatStore.messages[chatStore.messages.length - 1].id
       } else {
-        // Update existing AI message
+        // Update existing AI message with new content
         chatStore.updateMessage(aiMessageId, { content: aiMessageContent })
       }
 
