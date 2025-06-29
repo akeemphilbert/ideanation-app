@@ -8,9 +8,8 @@
       v-if="hoveredNode" 
       class="node-hover-menu"
       :style="{ 
-        left: hoveredNode.x + 'px', 
-        top: hoveredNode.y + 'px',
-        transform: 'translate(-50%, -120%)'
+        left: hoveredNode.cursorX + 'px', 
+        top: hoveredNode.cursorY + 'px'
       }"
     >
       <div class="menu-content">
@@ -119,7 +118,7 @@ const emit = defineEmits(['node-click', 'node-hover', 'node-select', 'node-edit'
 
 const container = ref<HTMLElement>()
 const svgRef = ref<SVGElement>()
-const hoveredNode = ref<(Node & { x: number, y: number }) | null>(null)
+const hoveredNode = ref<(Node & { cursorX: number, cursorY: number }) | null>(null)
 const hoverTimeout = ref<NodeJS.Timeout | null>(null)
 
 let simulation: d3.Simulation<Node, Link> | null = null
@@ -245,13 +244,11 @@ const updateGraph = () => {
       
       // Set timeout to show menu after brief delay
       hoverTimeout.value = setTimeout(() => {
-        const containerRect = container.value?.getBoundingClientRect()
-        if (containerRect) {
-          hoveredNode.value = {
-            ...d,
-            x: (d.x || 0) + containerRect.left,
-            y: (d.y || 0) + containerRect.top
-          }
+        // Position menu at cursor location (10px right, 10px above)
+        hoveredNode.value = {
+          ...d,
+          cursorX: event.clientX + 10,
+          cursorY: event.clientY - 10
         }
         emit('node-hover', d)
       }, 300) // 300ms delay before showing menu
@@ -526,7 +523,7 @@ onUnmounted(() => {
   cursor: grabbing;
 }
 
-/* Node Hover Menu */
+/* Node Hover Menu - Fixed positioning at cursor location */
 .node-hover-menu {
   position: fixed;
   z-index: 1000;
@@ -701,11 +698,11 @@ onUnmounted(() => {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translate(-50%, -100%) translateY(10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -120%) translateY(0);
+    transform: translateY(0);
   }
 }
 
