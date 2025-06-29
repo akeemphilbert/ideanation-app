@@ -2,8 +2,18 @@
   <div class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h3 class="handwritten">Create Relationship</h3>
-        <button class="close-button" @click="closeModal">×</button>
+        <div class="header-content">
+          <h3>Create Relationship</h3>
+          <div class="relationship-status">
+            <span class="status-dot status-dot--active"></span>
+            Ready to link
+          </div>
+        </div>
+        <button class="close-button" @click="closeModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
       </div>
       
       <div class="modal-body">
@@ -32,7 +42,7 @@
         
         <form @submit.prevent="saveRelationship" class="relationship-form">
           <div class="form-group">
-            <label class="handwritten">Relationship Type</label>
+            <label class="form-label">Relationship Type</label>
             <select v-model="formData.relationshipType" class="form-input" required>
               <option value="">Select relationship...</option>
               <option 
@@ -46,7 +56,7 @@
           </div>
           
           <div class="form-group" v-if="formData.relationshipType">
-            <label class="handwritten">Description (Optional)</label>
+            <label class="form-label">Description (Optional)</label>
             <textarea
               v-model="formData.description"
               class="form-input form-textarea"
@@ -56,18 +66,28 @@
           </div>
           
           <div class="relationship-preview" v-if="formData.relationshipType">
-            <div class="preview-text">
-              <strong>{{ sourceNode?.title }}</strong> 
-              <em>{{ getRelationshipLabel(formData.relationshipType) }}</em> 
-              <strong>{{ targetNode?.title }}</strong>
+            <div class="preview-content">
+              <div class="preview-icon">🔗</div>
+              <div class="preview-text">
+                <strong>{{ sourceNode?.title }}</strong> 
+                <em>{{ getRelationshipLabel(formData.relationshipType) }}</em> 
+                <strong>{{ targetNode?.title }}</strong>
+              </div>
             </div>
           </div>
           
           <div class="form-actions">
-            <button type="button" class="btn-sketch" @click="closeModal">
+            <button type="button" class="action-button action-button--secondary" @click="closeModal">
               Cancel
             </button>
-            <button type="submit" class="btn-sketch btn-primary" :disabled="!formData.relationshipType">
+            <button 
+              type="submit" 
+              class="action-button action-button--primary" 
+              :disabled="!formData.relationshipType"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+              </svg>
               Create Link
             </button>
           </div>
@@ -241,81 +261,116 @@ watch(() => availableRelationships.value, (newRelationships) => {
 </script>
 
 <style scoped>
+/* Professional black theme matching tools section */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: white;
-  border: 3px solid var(--color-primary);
-  border-radius: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  transform: rotate(-0.3deg);
-  box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  animation: modalSlideIn 0.3s ease-out;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 2px solid var(--color-primary);
-  background: #f9f9f9;
+  padding: 20px 24px;
+  background: #000;
+  border-bottom: 1px solid #333;
+  border-radius: 12px 12px 0 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  margin-right: 16px;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.3rem;
-  color: var(--color-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.relationship-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+  transition: background-color 0.2s ease;
+}
+
+.status-dot--active {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .close-button {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 1.5rem;
+  color: #888;
   cursor: pointer;
-  color: var(--color-secondary);
-  padding: 0;
-  width: 30px;
-  height: 30px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
 }
 
 .close-button:hover {
-  background: #f0f0f0;
-  color: var(--color-primary);
+  background: #2a2a2a;
+  color: #fff;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
 .nodes-preview {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 12px;
 }
 
 .node-preview {
@@ -327,29 +382,38 @@ watch(() => availableRelationships.value, (newRelationships) => {
 }
 
 .node-icon {
-  font-size: 1.5rem;
+  font-size: 20px;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #4f46e5;
+  border-radius: 8px;
 }
 
 .node-info {
   min-width: 0;
+  flex: 1;
 }
 
 .node-title {
   font-weight: 600;
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
-  font-size: 1rem;
+  color: #fff;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
 
 .node-type {
-  font-size: 0.8rem;
-  color: var(--color-secondary);
+  font-size: 12px;
+  color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 .relationship-arrow {
@@ -357,24 +421,26 @@ watch(() => availableRelationships.value, (newRelationships) => {
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  color: var(--color-secondary);
+  color: #888;
 }
 
 .arrow-line {
   width: 30px;
-  height: 1px;
-  background: var(--color-secondary);
+  height: 2px;
+  background: #888;
+  border-radius: 1px;
 }
 
 .arrow-head {
-  font-size: 1.2rem;
+  font-size: 16px;
   font-weight: bold;
+  color: #4f46e5;
 }
 
 .relationship-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .form-group {
@@ -383,63 +449,85 @@ watch(() => availableRelationships.value, (newRelationships) => {
   gap: 8px;
 }
 
-.form-group label {
-  font-size: 0.9rem;
-  color: var(--color-primary);
+.form-label {
+  font-size: 14px;
+  color: #fff;
   font-weight: 600;
+  letter-spacing: 0.25px;
 }
 
 .form-input {
   width: 100%;
-  padding: 10px 12px;
-  border: 2px solid var(--color-primary);
-  border-radius: 4px;
-  font-family: var(--font-handwritten);
-  font-size: 0.9rem;
-  color: var(--color-primary);
-  background: white;
+  padding: 12px 16px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #fff;
+  background: #2a2a2a;
   transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-input::placeholder {
+  color: #666;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1);
-  transform: rotate(0deg);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: #333;
 }
 
 .form-textarea {
   resize: vertical;
   min-height: 80px;
-  font-family: inherit;
+  line-height: 1.5;
 }
 
 select.form-input {
   cursor: pointer;
 }
 
+select.form-input option {
+  background: #2a2a2a;
+  color: #fff;
+  padding: 8px;
+}
+
 .relationship-preview {
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
-  border-radius: 6px;
-  padding: 12px;
+  background: #2a2a2a;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 16px;
   margin: 16px 0;
 }
 
+.preview-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
 .preview-text {
-  font-family: var(--font-handwritten);
-  font-size: 1rem;
-  color: var(--color-primary);
-  text-align: center;
+  font-size: 14px;
+  color: #fff;
   line-height: 1.4;
+  flex: 1;
 }
 
 .preview-text strong {
-  color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
 }
 
 .preview-text em {
-  color: var(--color-secondary);
+  color: #10b981;
   font-style: normal;
   font-weight: 600;
   margin: 0 8px;
@@ -449,29 +537,123 @@ select.form-input {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #333;
 }
 
-.btn-primary {
-  background: var(--color-primary);
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: transparent;
+  letter-spacing: 0.25px;
+}
+
+.action-button--primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-accent);
+.action-button--primary:hover:not(:disabled) {
+  background: #4338ca;
+  border-color: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
 }
 
-.btn-primary:disabled {
-  opacity: 0.5;
+.action-button--primary:disabled {
+  background: #333;
+  border-color: #333;
+  color: #666;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+.action-button--secondary {
+  background: #2a2a2a;
+  border-color: #333;
+  color: #ccc;
+}
+
+.action-button--secondary:hover {
+  background: #333;
+  border-color: #444;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.action-button svg {
+  flex-shrink: 0;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Custom scrollbar */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 16px;
+  }
+  
+  .modal-content {
+    max-width: none;
+    border-radius: 8px;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
   .nodes-preview {
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    padding: 16px;
   }
   
   .relationship-arrow {
@@ -484,6 +666,44 @@ select.form-input {
   
   .form-actions {
     flex-direction: column;
+  }
+  
+  .action-button {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+  
+  .modal-header {
+    padding: 12px 16px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .nodes-preview {
+    padding: 12px;
+  }
+  
+  .node-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  
+  .form-input {
+    padding: 10px 14px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .action-button {
+    padding: 10px 16px;
+    font-size: 14px;
   }
 }
 </style>
