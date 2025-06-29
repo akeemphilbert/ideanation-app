@@ -5,7 +5,7 @@
     </div>
     
     <div class="chat-message__content">
-      <div class="chat-message__text handwritten">
+      <div class="chat-message__text">
         {{ message.content }}
       </div>
       
@@ -24,7 +24,7 @@
           <button
             v-for="suggestion in message.suggestions"
             :key="suggestion.id"
-            class="suggestion-item btn-sketch"
+            class="suggestion-item"
             @click="$emit('apply-suggestion', suggestion)"
           >
             {{ suggestion.title }}
@@ -108,10 +108,11 @@ const formatEntityType = (entityType: string): string => {
 </script>
 
 <style scoped>
+/* Clean message styling without borders */
 .chat-message {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   align-items: flex-start;
 }
 
@@ -126,15 +127,14 @@ const formatEntityType = (entityType: string): string => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 2px solid var(--color-primary);
-  font-size: 0.9rem;
+  background: #f1f3f4;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .chat-message__content {
   flex: 1;
-  max-width: 70%;
+  max-width: 80%;
 }
 
 .chat-message--user .chat-message__content {
@@ -142,39 +142,25 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message__text {
-  background: white;
-  border: 2px solid var(--color-primary);
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  background: #f8f9fa;
+  border-radius: 18px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #495057;
   position: relative;
-  transform: rotate(0.2deg);
+  word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .chat-message--user .chat-message__text {
-  transform: rotate(-0.2deg);
-  background: #f8f8f8;
+  background: #000000;
+  color: white;
 }
 
-.chat-message__text::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 8px solid transparent;
-}
-
-.chat-message--ai .chat-message__text::before {
-  left: -16px;
-  top: 12px;
-  border-right-color: var(--color-primary);
-}
-
-.chat-message--user .chat-message__text::before {
-  right: -16px;
-  top: 12px;
-  border-left-color: var(--color-primary);
+.chat-message--ai .chat-message__text {
+  background: #f8f9fa;
+  color: #495057;
 }
 
 .entity-created {
@@ -185,32 +171,27 @@ const formatEntityType = (entityType: string): string => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  transform: rotate(-0.1deg);
-}
-
-.chat-message--user .entity-badge {
-  transform: rotate(0.1deg);
+  background: #10b981;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .entity-icon {
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 .entity-title {
   font-weight: 600;
-  color: var(--color-primary);
 }
 
 .entity-type {
-  color: var(--color-secondary);
-  font-size: 0.7rem;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
 .chat-message__suggestions {
@@ -219,38 +200,65 @@ const formatEntityType = (entityType: string): string => {
 
 .chat-message__suggestions h5 {
   margin: 0 0 8px 0;
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  font-family: var(--font-handwritten);
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 600;
 }
 
 .suggestions-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .suggestion-item {
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 8px 12px;
+  font-size: 13px;
   text-align: left;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .suggestion-item:hover {
-  background: white;
-  border-color: var(--color-primary);
+  background: #f8f9fa;
+  border-color: #4f46e5;
+  color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
 }
 
 .chat-message__timestamp {
-  font-size: 0.7rem;
-  color: var(--color-secondary);
-  margin-top: 4px;
-  font-family: var(--font-handwritten);
+  font-size: 11px;
+  color: #adb5bd;
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 .chat-message--user .chat-message__timestamp {
   text-align: right;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chat-message__content {
+    max-width: 85%;
+  }
+  
+  .chat-message__text {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 16px;
+  }
+  
+  .entity-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
 }
 </style>

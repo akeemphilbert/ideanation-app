@@ -1,17 +1,49 @@
 <template>
   <div class="chat-interface">
     <div class="chat-header">
-      <h3 class="handwritten">AI Assistant</h3>
-      <div class="chat-status">
-        <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
-        {{ isOnline ? 'Online' : 'Offline' }}
+      <div class="header-main">
+        <h3>AI Assistant</h3>
+        <div class="chat-status">
+          <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
+          {{ isOnline ? 'Online' : 'Offline' }}
+        </div>
+      </div>
+      
+      <!-- Workspace Dropdown Row - Only show if workspaces exist -->
+      <div class="workspace-selector">
+        <select 
+          id="workspace-select"
+          v-model="selectedWorkspaceId" 
+          @change="handleWorkspaceChange"
+          class="workspace-dropdown"
+        >
+          <option value="">Select workspace...</option>
+          <option 
+            v-for="workspace in availableWorkspaces" 
+            :key="workspace.id"
+            :value="workspace.id"
+          >
+            {{ workspace.title }}
+          </option>
+        </select>
+        <div class="workspace-selector-actions">
+          <button 
+            class="workspace-selector-action"
+            @click="handleAddWorkspace"
+            title="Add new workspace"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
     
     <div class="chat-messages" ref="messagesContainer">
       <div v-if="messages.length === 0" class="chat-welcome">
         <div class="welcome-message">
-          <p class="handwritten">👋 Hi! Let's start building your startup idea.</p>
+          <p>👋 Hi! Let's start building your startup idea.</p>
           <p v-if="!hasWorkspace"><strong>First, what's your idea called?</strong></p>
           <p v-else>Great! Now you can create entities by typing:</p>
           <ul v-if="hasWorkspace">
@@ -38,7 +70,7 @@
           <span></span>
           <span></span>
         </div>
-        <span class="typing-text handwritten">AI is thinking...</span>
+        <span class="typing-text">AI is thinking...</span>
       </div>
     </div>
     
@@ -48,17 +80,19 @@
           v-model="chatMessage"
           type="text"
           :placeholder="getInputPlaceholder()"
-          class="message-input handwritten"
+          class="message-input"
           :disabled="isTyping"
           @focus="showQuickSuggestions = true"
           @blur="hideQuickSuggestions"
         />
         <button
           type="submit"
-          class="btn-sketch send-button"
+          class="send-button"
           :disabled="!chatMessage.trim() || isTyping"
         >
-          Send
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
         </button>
       </form>
       
@@ -118,6 +152,7 @@ const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
 const isOnline = ref(true)
+const selectedWorkspaceId = ref('')
 
 const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
 const entityPrefixes = getAvailablePrefixes()
@@ -133,6 +168,36 @@ const quickSuggestions = [
 // Computed properties
 const messages = computed(() => chatStore.messages)
 const isTyping = computed(() => chatStore.isTyping)
+
+const availableWorkspaces = computed(() => resourcesStore.workspaces)
+
+// Watch for current workspace changes
+watch(() => resourcesStore.currentWorkspace, (newWorkspace) => {
+  if (newWorkspace) {
+    selectedWorkspaceId.value = newWorkspace.id
+  } else {
+    selectedWorkspaceId.value = ''
+  }
+}, { immediate: true })
+
+const handleWorkspaceChange = () => {
+  if (selectedWorkspaceId.value) {
+    const workspace = availableWorkspaces.value.find(w => w.id === selectedWorkspaceId.value)
+    if (workspace) {
+      resourcesStore.setCurrentWorkspace(workspace)
+      
+      // Add a message to chat about workspace switch
+      chatStore.addMessage({
+        type: 'ai',
+        content: `Switched to workspace "${workspace.title}". You can now work on this idea!`
+      })
+      
+      nextTick(() => scrollToBottom())
+    }
+  } else {
+    resourcesStore.setCurrentWorkspace(null)
+  }
+}
 
 const getInputPlaceholder = () => {
   if (!props.hasWorkspace) {
@@ -344,110 +409,226 @@ watch(chatMessage, (newValue) => {
   }
 })
 
+const handleAddWorkspace = () => {
+  const workspaceName = prompt('Enter workspace name:')
+  if (workspaceName && workspaceName.trim()) {
+    const newWorkspace = {
+      '@id': `/workspaces/${Date.now()}`,
+      '@type': 'ideanation:Workspace' as const,
+      id: `workspace-${Date.now()}`,
+      title: workspaceName.trim(),
+      description: `Workspace for ${workspaceName.trim()}`,
+      identifier: workspaceName.trim().toLowerCase().replace(/\s+/g, '-'),
+      created: new Date(),
+      updated: new Date()
+    }
+    
+    resourcesStore.createWorkspace(newWorkspace)
+    resourcesStore.setCurrentWorkspace(newWorkspace)
+    selectedWorkspaceId.value = newWorkspace.id
+    
+    // Add a message to chat about the new workspace
+    chatStore.addMessage({
+      type: 'ai',
+      content: `Created new workspace "${newWorkspace.title}". You can now start building your idea!`
+    })
+    
+    nextTick(() => scrollToBottom())
+  }
+}
+
 onMounted(() => {
   scrollToBottom()
 })
 </script>
 
 <style scoped>
+/* Professional black theme for chat interface with white messages area */
 .chat-interface {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: white;
-  border: 2px solid var(--color-primary);
-  border-radius: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .chat-header {
+  background: #000;
+  border-bottom: 1px solid #333;
+}
+
+.header-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 2px solid var(--color-primary);
-  background: #f9f9f9;
+  padding: 16px 20px;
 }
 
-.chat-header h3 {
+.header-main h3 {
   margin: 0;
-  font-size: 1.2rem;
-  color: var(--color-primary);
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
 }
 
 .chat-status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  font-family: var(--font-handwritten);
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ccc;
+  background: #666;
+  transition: background-color 0.2s ease;
 }
 
 .status-dot--online {
-  background: #4caf50;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
+/* Workspace Selector Row */
+.workspace-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid #333;
+  background: #111;
+}
+
+.workspace-label {
+  font-size: 13px;
+  color: #ccc;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.workspace-dropdown {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.workspace-dropdown:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.workspace-dropdown option {
+  background: #2a2a2a;
+  color: #fff;
+  padding: 8px;
+}
+
+.workspace-selector-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.workspace-selector-action {
+  padding: 8px;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.workspace-selector-action:hover {
+  background: #1a1a1a;
+  border-color: #444;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.workspace-selector-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* WHITE MESSAGES AREA */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
   min-height: 0;
+  background: #ffffff; /* White background */
 }
 
 .chat-welcome {
   text-align: center;
-  padding: 20px;
-  color: var(--color-secondary);
+  padding: 20px 0;
 }
 
 .welcome-message {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
-  transform: rotate(-0.3deg);
+  background: #f8f9fa; /* Light gray background for welcome message */
+  border-radius: 12px;
+  padding: 20px;
+  color: #495057; /* Dark gray text */
+  line-height: 1.5;
 }
 
 .welcome-message p {
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
+  font-size: 14px;
 }
 
 .welcome-message ul {
   text-align: left;
-  margin: 8px 0;
+  margin: 12px 0;
   padding-left: 20px;
+  color: #6c757d;
 }
 
 .welcome-message li {
-  margin-bottom: 4px;
-  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-size: 13px;
 }
 
 .welcome-message strong {
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
+  color: #212529;
+  font-weight: 600;
 }
 
 .help-note {
   font-style: italic;
-  color: var(--color-secondary);
-  font-size: 0.9rem;
+  color: #6c757d;
+  font-size: 13px;
+  margin-top: 8px;
 }
 
 .typing-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  color: var(--color-secondary);
+  gap: 12px;
+  padding: 12px 0;
+  color: #6c757d; /* Gray for white background */
 }
 
 .typing-dots {
@@ -459,7 +640,7 @@ onMounted(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-secondary);
+  background: #adb5bd; /* Gray for white background */
   animation: typing-bounce 1.4s infinite ease-in-out;
 }
 
@@ -468,113 +649,137 @@ onMounted(() => {
 .typing-dots span:nth-child(3) { animation-delay: 0; }
 
 .typing-text {
-  font-size: 0.8rem;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .chat-input {
-  border-top: 2px solid var(--color-primary);
-  padding: 16px;
-  background: #f9f9f9;
+  border-top: 1px solid #333;
+  padding: 16px 20px;
+  background: #000;
 }
 
 .input-form {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  align-items: center;
 }
 
 .message-input {
   flex: 1;
-  padding: 10px 12px;
-  border: 2px solid var(--color-primary);
-  border-radius: 4px;
-  font-family: var(--font-handwritten);
-  font-size: 0.9rem;
-  background: white;
-  color: var(--color-primary);
+  padding: 12px 16px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #2a2a2a;
+  color: #fff;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.message-input::placeholder {
+  color: #666;
 }
 
 .message-input:focus {
   outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1);
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: #333;
 }
 
 .message-input:disabled {
-  background: #f5f5f5;
-  color: #ccc;
+  background: #1a1a1a;
+  color: #555;
+  cursor: not-allowed;
 }
 
 .send-button {
-  padding: 10px 16px;
-  white-space: nowrap;
+  padding: 12px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .send-button:disabled {
-  opacity: 0.5;
+  background: #333;
+  color: #666;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .quick-suggestions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .suggestion-chip {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-size: 0.8rem;
-  font-family: var(--font-handwritten);
-  color: var(--color-secondary);
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #ccc;
   cursor: pointer;
   transition: all 0.2s ease;
-  transform: rotate(0.1deg);
   text-align: left;
+  font-family: inherit;
 }
 
 .suggestion-chip:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  transform: rotate(0deg);
-  background: #f0f0f0;
-}
-
-.suggestion-chip:nth-child(even) {
-  transform: rotate(-0.1deg);
+  border-color: #4f46e5;
+  background: #333;
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .entity-help {
-  margin-top: 8px;
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
-  border-radius: 4px;
-  padding: 8px;
+  margin-top: 12px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
 }
 
 .help-content h4 {
-  margin: 0 0 6px 0;
-  font-size: 0.8rem;
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #fff;
+  font-weight: 600;
 }
 
 .entity-examples {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .prefix-example {
-  background: white;
-  border: 1px solid #4caf50;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  font-family: monospace;
-  color: var(--color-primary);
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  color: #4f46e5;
+  font-weight: 500;
 }
 
 @keyframes typing-bounce {
@@ -588,21 +793,66 @@ onMounted(() => {
   }
 }
 
-/* Scrollbar styling */
+/* Custom scrollbar for white background */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f8f9fa;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: #dee2e6;
   border-radius: 3px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: #adb5bd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-main {
+    padding: 12px 16px;
+  }
+  
+  .workspace-selector {
+    padding: 10px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .workspace-label {
+    font-size: 12px;
+  }
+  
+  .workspace-dropdown {
+    font-size: 14px; /* Prevent zoom on iOS */
+  }
+  
+  .chat-messages {
+    padding: 16px;
+  }
+  
+  .chat-input {
+    padding: 12px 16px;
+  }
+  
+  .input-form {
+    gap: 8px;
+  }
+  
+  .message-input {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .send-button {
+    min-width: 40px;
+    height: 40px;
+    padding: 10px;
+  }
 }
 </style>
