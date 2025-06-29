@@ -20,6 +20,7 @@
         <div class="nav-links">
           <a href="#features" class="nav-link">Features</a>
           <a href="#how-it-works" class="nav-link">How it works</a>
+          <a href="#about" class="nav-link">About</a>
           <a href="#pricing" class="nav-link">Pricing</a>
         </div>
 
@@ -92,6 +93,7 @@
         <div class="mobile-nav-links">
           <a href="#features" class="mobile-nav-link" @click="closeMobileMenu">Features</a>
           <a href="#how-it-works" class="mobile-nav-link" @click="closeMobileMenu">How it works</a>
+          <a href="#about" class="mobile-nav-link" @click="closeMobileMenu">About</a>
           <a href="#pricing" class="mobile-nav-link" @click="closeMobileMenu">Pricing</a>
         </div>
         <div class="mobile-nav-actions">
@@ -112,17 +114,18 @@
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">
-            <span class="badge-text">Transform ideas into structured insights</span>
+            <span class="badge-text">Make your dreams a reality</span>
           </div>
           
           <h1 class="hero-title">
-            Turn scattered thoughts into 
-            <span class="gradient-text">structured startup ideas</span>
+            Everyone has great ideas
+            <span class="gradient-text">build yours</span>
           </h1>
           
           <p class="hero-description">
             Ideanation helps entrepreneurs organize their ideas using proven frameworks, 
-            AI-powered insights, and visual knowledge graphs. Stop losing great ideas in scattered notes.
+            AI-powered insights, and visual knowledge graphs. By structuring your idea 
+            you can share with others or build with Bolt. Build your idea with confidence.
           </p>
           
           <div class="hero-actions">
@@ -143,7 +146,7 @@
               <div class="stat-label">Faster idea structuring</div>
             </div>
             <div class="stat">
-              <div class="stat-number">50+</div>
+              <div class="stat-number">5+</div>
               <div class="stat-label">Business frameworks</div>
             </div>
             <div class="stat">
@@ -287,10 +290,9 @@
                 <polyline points="10,9 9,9 8,9"/>
               </svg>
             </div>
-            <h3 class="feature-title">Export to Frameworks</h3>
+            <h3 class="feature-title">Leverage Tools</h3>
             <p class="feature-description">
-              Generate business model canvases, pitch decks, SWOT analyses, and other 
-              artifacts directly from your structured idea.
+              Generate business model canvases, pitch decks, prompts you can use in Bolt and other artifacts directly from your structured idea.
             </p>
           </div>
 
@@ -304,7 +306,7 @@
             </div>
             <h3 class="feature-title">Conversational Interface</h3>
             <p class="feature-description">
-              Build your idea naturally through conversation. Just type "problem: users can't find..." 
+              Build your idea naturally through conversation. Just type "users can't find..." 
               and watch your graph grow.
             </p>
           </div>
@@ -345,12 +347,12 @@
               <h3 class="step-title">Capture your thoughts</h3>
               <p class="step-description">
                 Start by chatting with our AI. Type naturally about your idea: 
-                "problem: people struggle to find reliable pet sitters"
+                "people struggle to find reliable pet sitters"
               </p>
               <div class="step-visual">
                 <div class="chat-example">
                   <div class="chat-bubble user">
-                    problem: people struggle to find reliable pet sitters
+                    people struggle to find reliable pet sitters
                   </div>
                   <div class="chat-bubble ai">
                     Great! I've added that problem to your idea. Who would benefit most from solving this?
@@ -385,14 +387,108 @@
             <div class="step-content">
               <h3 class="step-title">Export and share</h3>
               <p class="step-description">
-                Generate professional artifacts: business model canvases, pitch decks, 
-                and SWOT analyses ready for investors and stakeholders.
+                Generate AI prompts for Bolt and professional artifacts: business model canvases, pitch decks, 
+                and SWOT analyses so you can be ready for investors and stakeholders.
               </p>
               <div class="step-visual">
                 <div class="export-options">
                   <div class="export-item">📊 Business Model Canvas</div>
                   <div class="export-item">📈 Pitch Deck</div>
                   <div class="export-item">🎯 SWOT Analysis</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+      <div class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">About the Creator</h2>
+          <p class="section-description">
+            Meet the developer behind Ideanation and learn about the passion that drives this project.
+          </p>
+        </div>
+
+        <div class="about-content">
+          <div class="about-story">
+            <div class="story-points">
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">20 Years of Development</h3>
+                  <p class="point-description">
+                    I've been a developer for 20 years, working across different technologies, 
+                    platforms, and industries. From startups to enterprise, I've seen what works 
+                    and what doesn't when it comes to building great products.
+                  </p>
+                </div>
+              </div>
+
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">Passionate About Entrepreneurs</h3>
+                  <p class="point-description">
+                    I really enjoy working with entrepreneurs because they have this incredible 
+                    energy and vision. There's something magical about helping turn a crazy idea 
+                    into something real that can change the world.
+                  </p>
+                </div>
+              </div>
+
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">Technology as a Vehicle</h3>
+                  <p class="point-description">
+                    Technology is the vehicle, not the destination. It's not about the latest 
+                    framework or the coolest tech stack—it's about solving real problems for 
+                    real people. That's what drives me every day.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-video">
+            <div class="video-container">
+              <div class="video-placeholder">
+                <div class="video-embed">
+                  <!-- YouTube video will be embedded here -->
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                    title="My Story - Why I Built Ideanation" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                  ></iframe>
+                </div>
+                <div class="video-caption">
+                  <p>Watch my story and learn why I created Ideanation</p>
                 </div>
               </div>
             </div>
@@ -414,7 +510,7 @@
         <div class="pricing-grid">
           <div class="pricing-card">
             <div class="pricing-header">
-              <h3 class="pricing-title">Free</h3>
+              <h3 class="pricing-title">Playground</h3>
               <div class="pricing-price">
                 <span class="price-amount">$0</span>
                 <span class="price-period">/month</span>
@@ -453,12 +549,12 @@
           <div class="pricing-card featured">
             <div class="pricing-badge">Most popular</div>
             <div class="pricing-header">
-              <h3 class="pricing-title">Solo Pro</h3>
+              <h3 class="pricing-title">Workshop</h3>
               <div class="pricing-price">
-                <span class="price-amount">$10</span>
+                <span class="price-amount">$15</span>
                 <span class="price-period">/month</span>
               </div>
-              <p class="pricing-description">For serious entrepreneurs building multiple ideas</p>
+              <p class="pricing-description">For refining ideas and collaborating to validate them</p>
             </div>
             <div class="pricing-features">
               <div class="feature-item">
@@ -477,19 +573,19 @@
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                All export formats
+                Prompts to build with Bolt
               </div>
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Competitor analysis
+                Access to all tools
               </div>
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Priority support
+                Share workspace (soon)
               </div>
             </div>
             <NuxtLink to="/login" class="btn-primary pricing-button">Start free trial</NuxtLink>
@@ -497,46 +593,40 @@
 
           <div class="pricing-card">
             <div class="pricing-header">
-              <h3 class="pricing-title">Team</h3>
+              <h3 class="pricing-title">Launchpad</h3>
               <div class="pricing-price">
-                <span class="price-amount">$25</span>
+                <span class="price-amount">$199</span>
                 <span class="price-period">/month</span>
               </div>
-              <p class="pricing-description">For teams and agencies building multiple startups</p>
+              <p class="pricing-description">For serious founders ready to take off with expert support</p>
             </div>
             <div class="pricing-features">
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Everything in Solo Pro
+                Everything in Workshop
               </div>
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Team collaboration
+                3 hours technical support
               </div>
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Client portal access
+                Premium support access
               </div>
               <div class="feature-item">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
                 </svg>
-                Advanced analytics
-              </div>
-              <div class="feature-item">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-                </svg>
-                White-label options
+                Early access to new features
               </div>
             </div>
-            <NuxtLink to="/login" class="btn-secondary pricing-button">Contact sales</NuxtLink>
+            <NuxtLink to="/login" class="btn-secondary pricing-button">Get Started</NuxtLink>
           </div>
         </div>
       </div>
@@ -547,9 +637,9 @@
       <div class="section-container">
         <div class="cta-content">
           <h2 class="cta-title">Ready to structure your next big idea?</h2>
-          <p class="cta-description">
+          <!-- <p class="cta-description">
             Join thousands of entrepreneurs who've transformed scattered thoughts into structured startup success.
-          </p>
+          </p> -->
           <div class="cta-actions">
             <NuxtLink to="/login" class="btn-primary btn-large">
               Start building for free
@@ -585,28 +675,28 @@
               <h4 class="footer-title">Product</h4>
               <a href="#features" class="footer-link">Features</a>
               <a href="#pricing" class="footer-link">Pricing</a>
-              <a href="#" class="footer-link">Changelog</a>
+              <!-- <a href="#" class="footer-link">Changelog</a> -->
             </div>
             
             <div class="footer-section">
               <h4 class="footer-title">Company</h4>
-              <a href="#" class="footer-link">About</a>
-              <a href="#" class="footer-link">Blog</a>
-              <a href="#" class="footer-link">Careers</a>
+              <a href="#about" class="footer-link">About</a>
+              <!-- <a href="#" class="footer-link">Blog</a>
+              <a href="#" class="footer-link">Careers</a> -->
             </div>
             
-            <div class="footer-section">
+            <!-- <div class="footer-section">
               <h4 class="footer-title">Support</h4>
               <a href="#" class="footer-link">Help Center</a>
               <a href="#" class="footer-link">Contact</a>
               <a href="#" class="footer-link">Status</a>
-            </div>
+            </div> -->
           </div>
         </div>
         
         <div class="footer-bottom">
           <p class="footer-copyright">
-            © 2024 Ideanation. All rights reserved.
+            © 2025 Wepala. All rights reserved.
           </p>
           <div class="footer-legal">
             <a href="#" class="footer-link">Privacy</a>
@@ -1444,10 +1534,116 @@ useHead({
   color: #374151;
 }
 
+/* About Section */
+.about-section {
+  padding: 80px 24px;
+  background: white;
+}
+
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.about-story {
+  max-width: 500px;
+}
+
+.story-points {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.story-point {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.point-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.point-content {
+  flex: 1;
+}
+
+.point-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.point-description {
+  color: #64748b;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.about-video {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.video-placeholder {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.video-embed {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-caption {
+  padding: 16px 20px;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.video-caption p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Pricing Section */
 .pricing-section {
   padding: 80px 24px;
-  background: white;
+  background: #f8fafc;
 }
 
 .pricing-grid {
@@ -1701,6 +1897,12 @@ useHead({
   
   .hero-title {
     font-size: 36px;
+  }
+  
+  .about-content {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    text-align: center;
   }
   
   .step-content {
