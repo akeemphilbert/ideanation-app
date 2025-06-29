@@ -114,6 +114,10 @@
               @node-click="handleNodeClick"
               @node-hover="handleNodeHover"
               @node-select="handleNodeSelect"
+              @node-edit="handleNodeEdit"
+              @node-duplicate="handleNodeDuplicate"
+              @node-link="handleNodeLink"
+              @node-delete="handleNodeDelete"
             />
           </client-only>
         </div>
@@ -129,12 +133,21 @@
       @save="handleLinkSave"
       @close="showLinkModal = false"
     />
+
+    <!-- Component Edit Modal -->
+    <ComponentModal
+      v-if="showComponentModal"
+      :component="selectedComponent"
+      @save="handleComponentSave"
+      @close="showComponentModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
+import ComponentModal from '~/components/molecules/ComponentModal.vue'
 import ChatInterface from '~/components/organisms/ChatInterface.vue'
 import ToolsPanel from '~/components/organisms/ToolsPanel.vue'
 
@@ -149,6 +162,8 @@ const resourcesStore = useResourcesStore()
 const graphContainer = ref<HTMLElement>()
 
 const showLinkModal = ref(false)
+const showComponentModal = ref(false)
+const selectedComponent = ref<any>(null)
 const selectedNodeIds = ref<string[]>([])
 
 // Convert entities to graph format - EXCLUDE workspace from nodes
@@ -280,38 +295,29 @@ const clearSelection = () => {
   selectedNodeIds.value = []
 }
 
-const handleNodeClick = (node: any) => {
-  // Find the actual entity from the store
-  let entity = null
-  
+const findEntityByNode = (node: any) => {
   switch (node.type) {
-    case 'problem':
-      entity = entitiesStore.problems.find(p => p.id === node.id)
-      break
+    case 'ideanation:Problem':
+      return entitiesStore.problems.find(p => p.id === node.id)
     case 'customer':
-      entity = entitiesStore.customers.find(c => c.id === node.id)
-      break
+      return entitiesStore.customers.find(c => c.id === node.id)
     case 'feature':
-      entity = entitiesStore.features.find(f => f.id === node.id)
-      break
+      return entitiesStore.features.find(f => f.id === node.id)
     case 'solution':
-      entity = entitiesStore.products.find(p => p.id === node.id)
-      break
+      return entitiesStore.products.find(p => p.id === node.id)
     case 'job':
-      entity = entitiesStore.jobs.find(j => j.id === node.id)
-      break
-    case 'pain':
-      entity = entitiesStore.pains.find(p => p.id === node.id)
-      break
-    case 'gain':
-      entity = entitiesStore.gains.find(g => g.id === node.id)
-      break
+      return entitiesStore.jobs.find(j => j.id === node.id)
+    case 'ideanation:Pain':
+      return entitiesStore.pains.find(p => p.id === node.id)
+    case 'ideanation:Gain':
+      return entitiesStore.gains.find(g => g.id === node.id)
+    default:
+      return null
   }
-  
-  if (entity) {
-    console.log('Node clicked:', entity)
-    // Additional logic for node click if needed
-  }
+}
+
+const handleNodeClick = (node: any) => {
+  console.log('Node clicked:', node)
 }
 
 const handleNodeSelect = (nodeId: string | null, isMultiSelect: boolean = false) => {
@@ -350,6 +356,140 @@ const handleNodeHover = (node: any) => {
   console.log('Hovering node:', node)
 }
 
+const handleNodeEdit = (node: any) => {
+  const entity = findEntityByNode(node)
+  if (entity) {
+    let description = ''
+    
+    // Handle different entity types and their description properties
+    if (node.type === 'customer') {
+      const customer = entity as any
+      description = `${customer.role} at ${customer.organization}`
+    } else {
+      description = entity.description || ''
+    }
+    
+    selectedComponent.value = {
+      id: entity.id,
+      type: node.type === 'solution' ? 'product' : node.type.replace('ideanation:', '').toLowerCase(),
+      title: entity.title,
+      description: description,
+      tags: []
+    }
+    showComponentModal.value = true
+  }
+}
+
+const handleNodeDuplicate = (node: any) => {
+  const entity = findEntityByNode(node)
+  if (entity) {
+    const duplicateData = {
+      title: `${entity.title} (Copy)`,
+      description: entity.description || '',
+    }
+    
+    let newEntity = null
+    
+    switch (node.type) {
+      case 'ideanation:Problem':
+        newEntity = entitiesStore.createProblem(duplicateData)
+        break
+      case 'customer':
+        const customer = entity as any
+        newEntity = entitiesStore.createCustomer({
+          ...duplicateData,
+          givenName: customer.givenName,
+          familyName: customer.familyName,
+          role: customer.role,
+          organization: customer.organization
+        })
+        break
+      case 'feature':
+        const feature = entity as any
+        newEntity = entitiesStore.createFeature({
+          ...duplicateData,
+          type: feature.type,
+          status: feature.status
+        })
+        break
+      case 'solution':
+        newEntity = entitiesStore.createProduct(duplicateData)
+        break
+      case 'job':
+        newEntity = entitiesStore.createJob(duplicateData)
+        break
+      case 'ideanation:Pain':
+        newEntity = entitiesStore.createPain(duplicateData)
+        break
+      case 'ideanation:Gain':
+        newEntity = entitiesStore.createGain(duplicateData)
+        break
+    }
+    
+    if (newEntity) {
+      chatStore.addMessage({
+        type: 'ai',
+        content: `✅ Duplicated "${entity.title}" successfully! The copy has been added to your canvas.`
+      })
+    }
+  }
+}
+
+const handleNodeLink = (node: any) => {
+  // Add the node to selection for linking
+  if (!selectedNodeIds.value.includes(node.id)) {
+    if (selectedNodeIds.value.length === 0) {
+      selectedNodeIds.value = [node.id]
+      chatStore.addMessage({
+        type: 'ai',
+        content: `Selected "${node.title}" for linking. Now select another node to create a relationship.`
+      })
+    } else if (selectedNodeIds.value.length === 1) {
+      selectedNodeIds.value.push(node.id)
+      showLinkModal.value = true
+    }
+  }
+}
+
+const handleNodeDelete = (node: any) => {
+  if (confirm(`Are you sure you want to delete "${node.title}"? This action cannot be undone.`)) {
+    const entity = findEntityByNode(node)
+    if (entity) {
+      switch (node.type) {
+        case 'ideanation:Problem':
+          entitiesStore.deleteProblem(entity.id)
+          break
+        case 'customer':
+          entitiesStore.deleteCustomer(entity.id)
+          break
+        case 'feature':
+          entitiesStore.deleteFeature(entity.id)
+          break
+        case 'solution':
+          entitiesStore.deleteProduct(entity.id)
+          break
+        case 'job':
+          entitiesStore.deleteJob(entity.id)
+          break
+        case 'ideanation:Pain':
+          entitiesStore.deletePain(entity.id)
+          break
+        case 'ideanation:Gain':
+          entitiesStore.deleteGain(entity.id)
+          break
+      }
+      
+      // Remove from selection if it was selected
+      selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== node.id)
+      
+      chatStore.addMessage({
+        type: 'ai',
+        content: `🗑️ Deleted "${node.title}" and all its relationships from your canvas.`
+      })
+    }
+  }
+}
+
 const handleLinkSave = (linkData: { relationshipType: string, description?: string }) => {
   if (selectedNodeIds.value.length !== 2) return
   
@@ -376,20 +516,63 @@ const handleLinkSave = (linkData: { relationshipType: string, description?: stri
   showLinkModal.value = false
 }
 
+const handleComponentSave = (component: any) => {
+  let updatedEntity = null
+  
+  // Update the entity in the appropriate store
+  switch (component.type) {
+    case 'problem':
+      entitiesStore.updateProblem(component.id, component)
+      updatedEntity = entitiesStore.problems.find(p => p.id === component.id)
+      break
+    case 'customer':
+      entitiesStore.updateCustomer(component.id, component)
+      updatedEntity = entitiesStore.customers.find(c => c.id === component.id)
+      break
+    case 'feature':
+      entitiesStore.updateFeature(component.id, component)
+      updatedEntity = entitiesStore.features.find(f => f.id === component.id)
+      break
+    case 'product':
+      entitiesStore.updateProduct(component.id, component)
+      updatedEntity = entitiesStore.products.find(p => p.id === component.id)
+      break
+    case 'job':
+      entitiesStore.updateJob(component.id, component)
+      updatedEntity = entitiesStore.jobs.find(j => j.id === component.id)
+      break
+    case 'pain':
+      entitiesStore.updatePain(component.id, component)
+      updatedEntity = entitiesStore.pains.find(p => p.id === component.id)
+      break
+    case 'gain':
+      entitiesStore.updateGain(component.id, component)
+      updatedEntity = entitiesStore.gains.find(g => g.id === component.id)
+      break
+  }
+  
+  if (updatedEntity) {
+    chatStore.addMessage({
+      type: 'ai',
+      content: `✅ Updated "${component.title}" successfully!`
+    })
+  }
+  
+  showComponentModal.value = false
+  selectedComponent.value = null
+}
+
 // Event handlers for ChatInterface emissions
 const handleEntityCreated = (entity: any) => {
   console.log('Entity created:', entity)
-  // Additional logic if needed
 }
 
 const handleWorkspaceCreated = (workspace: any) => {
   console.log('Workspace created:', workspace)
-  // Additional logic if needed
 }
 
 const handleRelationshipCreated = (relationship: any) => {
   console.log('Relationship created:', relationship)
-  // Additional logic if needed
 }
 
 // SEO
