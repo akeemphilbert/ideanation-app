@@ -19,7 +19,7 @@ export interface WorkspaceResource extends BaseResource {
 export interface IdeaResource extends BaseResource {
   '@type': 'ideanation:Idea'
   title: string
-  description: string
+  description?: string
   identifier: string
 }
 
@@ -267,7 +267,7 @@ export class WorkspaceResourceModel extends BaseResourceModel implements Workspa
 export class IdeaResourceModel extends BaseResourceModel implements IdeaResource {
   '@type': 'ideanation:Idea' = RESOURCE_TYPES.IDEA
   title: string
-  description: string
+  description?: string
   identifier: string
 
   constructor(data: Partial<IdeaResource> = {}) {

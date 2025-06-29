@@ -10,7 +10,8 @@ import type {
   JobResource,
   PainResource,
   GainResource,
-  RelationshipResource
+  RelationshipResource,
+  BaseResource
 } from '~/types/resources'
 
 /**
@@ -30,8 +31,8 @@ export const WorkspaceState = Annotation.Root({
     default: () => null,
   }),
   
-  currentIdea: Annotation<IdeaResource | null>({
-    reducer: (x: IdeaResource | null, y: IdeaResource | null) => y, // Latest value wins
+  currentResource: Annotation<BaseResource | null>({
+    reducer: (x: BaseResource | null, y: BaseResource | null) => y, // Latest value wins
     default: () => null,
   }),
   

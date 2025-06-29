@@ -6,7 +6,18 @@ import { StateGraph, END, START , interrupt} from "@langchain/langgraph";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
 import type { WorkspaceResource, IdeaResource, ProblemResource } from "~/types/resources";
 import ExportDialog from "~/components/ExportDialog.vue";
+import { RELATIONSHIP_TYPES } from "~/types/relationships";
+import { z } from "zod";
 
+// Helper function to slugify text
+const slugify = (text: string): string => {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
 
 const config = useRuntimeConfig()
 
@@ -72,20 +83,50 @@ export default defineEventHandler(async (event) => {
                 input: state.messages[state.messages.length - 1]?.content
             })
 
+            // Generate a unique identifier
+            const identifier = 'WS-001'
+            const idFromIdentifier = identifier.toLowerCase()
+            const uri = `/workspaces/${idFromIdentifier}`
+            
             // Create workspace (mock - in real app this would use the store)
             const workspace: WorkspaceResource = {
-                '@id': '/workspaces/new-workspace',
+                '@id': uri,
                 '@type': 'ideanation:Workspace' as const,
-                id: 'new-workspace',
+                id: uri,
                 title: String(result.content) || 'New Workspace',
                 description: 'A new workspace for your startup idea',
-                identifier: 'WS-001',
+                identifier: identifier,
+                created: new Date(),
+                updated: new Date()
+            }
+
+            //create the first idea as well 
+            // Generate identifier from slugified title
+            const ideaIdentifier = slugify(workspace.title)
+            const ideaURI = `/ideas/${ideaIdentifier}`
+            
+            // Create idea (mock - in real app this would use the store)
+            const idea: IdeaResource = {
+                '@id': ideaURI,
+                '@type': 'ideanation:Idea' as const,
+                id: ideaURI,
+                title: workspace.title,
+                identifier: ideaIdentifier,
                 created: new Date(),
                 updated: new Date()
             }
 
             return {
                 workspace,
+                relationships: [
+                    {
+                        sourceId: idea.id,
+                        targetId: workspace.id,
+                        relationshipType: RELATIONSHIP_TYPES.BELONGS
+                    }
+                ],
+                ideas: [idea],
+                currentResource: idea,
                 lastAction: "workspace_created"
             }
         }
@@ -113,20 +154,24 @@ export default defineEventHandler(async (event) => {
                 ideaTitle = String(result.content) || "New Startup Idea"
             }
 
+            // Generate identifier from slugified title
+            const identifier = slugify(ideaTitle)
+            const uri = `/ideas/${identifier}`
+            
             // Create idea (mock - in real app this would use the store)
             const idea: IdeaResource = {
-                '@id': '/ideas/new-idea',
+                '@id': uri,
                 '@type': 'ideanation:Idea' as const,
-                id: 'new-idea',
+                id: uri,
                 title: ideaTitle,
                 description: 'A new startup idea',
-                identifier: 'IDEA-001',
+                identifier: identifier,
                 created: new Date(),
                 updated: new Date()
             }
 
             return {
-                ideas: [...state.ideas, idea],
+                ideas: [idea],
                 currentIdea: idea,
                 lastAction: "idea_created"
             }
@@ -156,12 +201,19 @@ export default defineEventHandler(async (event) => {
             if (userMessage && userMessage.content) {
                 const prompt = ChatPromptTemplate.fromMessages([
                     ["system", `You are helping create a problem description for a startup idea. 
-                    The user has described a problem their idea solves. Extract a clear, concise problem title from their input.
-                    Respond with just the problem title, nothing else.`],
+                    The user has described a problem their idea solves. Extract a clear, concise problem title from their input along with a detailed description of the problem.
+                `],
                     ["user", "{input}"],
                 ])
 
-                const chain = prompt.pipe(llm)
+                const zodSchema = z.object({
+                    title: z.string(),
+                    description: z.string()
+                })
+
+                const llmWithStructuredOutput = llm.withStructuredOutput(zodSchema)
+
+                const chain = prompt.pipe(llmWithStructuredOutput)
                 const result = await chain.invoke({
                     input: userMessage.content
                 })
@@ -169,14 +221,19 @@ export default defineEventHandler(async (event) => {
                 problemTitle = String(result.content) || "New Problem"
             }
 
+            // Generate a unique identifier
+            const identifier = slugify(problemTitle)
+            const idFromIdentifier = identifier.toLowerCase()
+            const uri = `/problems/${idFromIdentifier}`
+            
             // Create problem (mock - in real app this would use the store)
             const problem: ProblemResource = {
-                '@id': '/problems/new-problem',
+                '@id': uri,
                 '@type': 'ideanation:Problem' as const,
-                id: 'new-problem',
+                id: uri,
                 title: problemTitle,
                 description: 'A problem that the startup idea solves',
-                identifier: 'PROB-001',
+                identifier: identifier,
                 created: new Date(),
                 updated: new Date()
             }
@@ -195,7 +252,7 @@ export default defineEventHandler(async (event) => {
                 The workspace is ready with an idea. Now help the user with their request.
                 
                 Current workspace: ${state.workspace?.title}
-                Current idea: ${state.currentIdea?.title}
+                Current idea: ${state.currentResource?.title}
                 
                 Provide helpful advice and suggestions for building out their startup idea.`],
                 ["user", "{input}"],
@@ -233,7 +290,7 @@ export default defineEventHandler(async (event) => {
             if (state.lastAction === "workspace_created") {
                 responseMessage = `Great! I've created your workspace "${state.workspace?.title}". Now, what's your startup idea? Please tell me about the main concept you want to work on.`
             } else if (state.lastAction === "idea_created") {
-                responseMessage = `Perfect! I've created your idea "${state.currentIdea?.title}" in the workspace "${state.workspace?.title}". 
+                responseMessage = `Perfect! I've created your idea "${state.currentResource?.title}" in the workspace "${state.workspace?.title}". 
 
 Now let's start building it out. First, what problems does your idea solve? Please describe the main problems or pain points your startup addresses.`
             } else if (state.lastAction === "problem_created") {
