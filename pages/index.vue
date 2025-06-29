@@ -109,14 +109,6 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
-      <!-- Built with Bolt Badge - Floating in top right -->
-      <div class="bolt-badge-floating">
-        <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" class="bolt-badge-link">
-          <img src="/black_circle_360x360.png" alt="Built with Bolt" class="bolt-logo" />
-          <span class="bolt-text">Built with Bolt</span>
-        </a>
-      </div>
-
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">
@@ -218,6 +210,12 @@
             </div>
           </div>
         </div>
+      </div>
+      <!-- Built with Bolt Badge - Floating in top right -->
+      <div class="bolt-badge-floating">
+        <a href="https://bolt.new" target="_blank" rel="noopener noreferrer">
+          <img src="/black_circle_360x360.png" alt="Built with Bolt" class="bolt-logo"/>
+        </a>
       </div>
     </section>
 
@@ -766,7 +764,7 @@ useHead({
 /* Floating Bolt Badge Styles */
 .bolt-badge-floating {
   position: absolute;
-  top: 20px;
+  top: 100px;
   right: 20px;
   z-index: 100;
 }
@@ -795,10 +793,8 @@ useHead({
 }
 
 .bolt-logo {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  filter: brightness(1.1);
+  width: 100px;
+  height: 100px;
 }
 
 .bolt-text {
@@ -1735,8 +1731,8 @@ useHead({
   }
 
   .bolt-logo {
-    width: 20px;
-    height: 20px;
+    width: 80px;
+    height: 80px;
   }
 }
 
@@ -1799,8 +1795,8 @@ useHead({
   }
 
   .bolt-logo {
-    width: 18px;
-    height: 18px;
+    width: 90px;
+    height: 90px;
   }
 }
 
@@ -1831,8 +1827,8 @@ useHead({
 
   /* Bolt badge very small screens */
   .bolt-badge-floating {
-    top: 60px;
-    right: 8px;
+    top: 80px;
+    right: -70px;
   }
 
   .bolt-badge-link {
@@ -1842,8 +1838,8 @@ useHead({
   }
 
   .bolt-logo {
-    width: 16px;
-    height: 16px;
+    width: 60px;
+    height: 60px;
   }
 }
 </style>
