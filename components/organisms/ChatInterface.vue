@@ -1,31 +1,9 @@
 <template>
   <div class="chat-interface">
     <div class="chat-header">
-      <div class="header-main">
+      <div class="header-left">
         <h3 class="chat-title">AI Assistant</h3>
-        <div class="header-right">
-          <div class="chat-status">
-            <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
-            {{ isOnline ? 'Online' : 'Offline' }}
-          </div>
-          <button 
-            v-if="workspaces.length > 0"
-            @click="showCreateWorkspace = !showCreateWorkspace"
-            class="new-workspace-btn"
-            title="Create new workspace"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Workspace Selector Row -->
-      <div class="workspace-row" v-if="workspaces.length > 0">
-        <div class="workspace-selector">
-          <label class="workspace-label">Workspace:</label>
+        <div class="workspace-selector" v-if="workspaces.length > 0">
           <select 
             v-model="selectedWorkspaceId" 
             @change="handleWorkspaceChange"
@@ -41,6 +19,23 @@
             </option>
           </select>
         </div>
+      </div>
+      <div class="header-right">
+        <div class="chat-status">
+          <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
+          {{ isOnline ? 'Online' : 'Offline' }}
+        </div>
+        <button 
+          v-if="workspaces.length > 0"
+          @click="showCreateWorkspace = !showCreateWorkspace"
+          class="new-workspace-btn"
+          title="Create new workspace"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -267,15 +262,20 @@ onMounted(() => {
 }
 
 .chat-header {
-  border-bottom: 1px solid #e5e7eb;
-  background: #000000;
-}
-
-.header-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #000000;
+  min-height: 64px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .header-right {
@@ -291,23 +291,9 @@ onMounted(() => {
   color: white;
 }
 
-.workspace-row {
-  padding: 12px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-}
-
 .workspace-selector {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.workspace-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  white-space: nowrap;
 }
 
 .workspace-select {
@@ -315,10 +301,9 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   color: white;
-  font-size: 14px;
-  padding: 8px 12px;
-  flex: 1;
-  max-width: 250px;
+  font-size: 12px;
+  padding: 4px 8px;
+  min-width: 160px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -638,22 +623,26 @@ onMounted(() => {
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .header-main {
-    padding: 12px 16px;
-  }
-  
-  .workspace-row {
-    padding: 12px 16px;
-  }
-  
-  .workspace-selector {
+  .chat-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .header-left {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .header-right {
+    justify-content: space-between;
   }
   
   .workspace-select {
-    max-width: none;
+    min-width: 120px;
+    font-size: 11px;
   }
   
   .chat-messages {
