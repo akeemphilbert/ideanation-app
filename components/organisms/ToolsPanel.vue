@@ -1,14 +1,27 @@
 <template>
   <div class="tools-panel">
-    <div class="tools-header">
-      <h3>Tools</h3>
-      <div class="tools-status">
-        <span class="status-dot status-dot--ready"></span>
-        Ready
+    <div class="tools-header" @click="toggleCollapsed">
+      <div class="header-content">
+        <h3>Tools</h3>
+        <div class="tools-status">
+          <span class="status-dot status-dot--ready"></span>
+          Ready
+        </div>
+      </div>
+      <div class="collapse-toggle">
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="currentColor"
+          :class="{ 'rotated': !isCollapsed }"
+        >
+          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+        </svg>
       </div>
     </div>
     
-    <div class="tools-content">
+    <div class="tools-content" v-show="!isCollapsed">
       <div class="tools-grid">
         <button 
           class="tool-button"
@@ -108,9 +121,14 @@ const chatStore = useChatStore()
 const resourcesStore = useResourcesStore()
 const entitiesStore = useEntitiesStore()
 
+const isCollapsed = ref(false)
 const isExporting = ref(false)
 const exportProgress = ref(0)
 const exportStatusText = ref('')
+
+const toggleCollapsed = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 
 const exportBusinessModelCanvas = async () => {
   if (!props.hasWorkspace) return
@@ -456,6 +474,19 @@ Please create a fully functional web application that addresses these requiremen
   padding: 16px 20px;
   background: #000;
   border-bottom: 1px solid #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tools-header:hover {
+  background: #111;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
 }
 
 .tools-header h3 {
@@ -488,8 +519,27 @@ Please create a fully functional web application that addresses these requiremen
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
+.collapse-toggle {
+  margin-left: 12px;
+  color: #888;
+  transition: all 0.2s ease;
+}
+
+.collapse-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.collapse-toggle svg.rotated {
+  transform: rotate(180deg);
+}
+
+.tools-header:hover .collapse-toggle {
+  color: #fff;
+}
+
 .tools-content {
   padding: 20px;
+  transition: all 0.3s ease;
 }
 
 .tools-grid {
