@@ -23,7 +23,10 @@
             </div>
              <!-- Tools Panel - Expanded to fill remaining width -->
              <div class="tools-section" v-if="resourcesStore.currentWorkspace">
-                <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
+                <ToolsPanel 
+                  :has-workspace="!!resourcesStore.currentWorkspace" 
+                  @show-business-model-canvas="showBusinessModelCanvas = true"
+                />
               </div>
           </div>
           
@@ -207,9 +210,24 @@
             </div>
           </div>
           
+          <!-- Business Model Canvas View -->
+          <div v-if="showBusinessModelCanvas" class="bmc-overlay">
+            <div class="bmc-modal">
+              <div class="bmc-modal-header">
+                <h3>Business Model Canvas</h3>
+                <button class="close-bmc" @click="showBusinessModelCanvas = false">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              </div>
+              <BusinessModelCanvas />
+            </div>
+          </div>
+          
           <client-only>
             <GraphVisualization
-              v-if="resourcesStore.currentWorkspace && graphNodes.length > 0"
+              v-if="resourcesStore.currentWorkspace && graphNodes.length > 0 && !showBusinessModelCanvas"
               :nodes="graphNodes"
               :edges="graphEdges"
               :selectedNodeIds="selectedNodeIds"
@@ -256,6 +274,7 @@
 
 <script setup lang="ts">
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
+import BusinessModelCanvas from '~/components/organisms/BusinessModelCanvas.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
 import ComponentModal from '~/components/molecules/ComponentModal.vue'
 import EntityCreateModal from '~/components/molecules/EntityCreateModal.vue'
@@ -275,6 +294,7 @@ const graphContainer = ref<HTMLElement>()
 const showLinkModal = ref(false)
 const showComponentModal = ref(false)
 const showCreateModal = ref(false)
+const showBusinessModelCanvas = ref(false)
 const selectedComponent = ref<any>(null)
 const selectedNodeIds = ref<string[]>([])
 const createEntityType = ref('')
@@ -994,6 +1014,71 @@ useHead({
   box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
 }
 
+/* Business Model Canvas Overlay */
+.bmc-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.bmc-modal {
+  background: white;
+  border: 2px solid var(--color-primary);
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: rotate(-0.1deg);
+  box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+}
+
+.bmc-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--color-primary);
+  color: white;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.bmc-modal-header h3 {
+  margin: 0;
+  font-family: var(--font-handwritten);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.close-bmc {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-bmc:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
 /* Selection Panel - Top Left of Graph Area */
 .selection-panel {
   position: absolute;
@@ -1291,6 +1376,14 @@ useHead({
     min-width: 260px;
     max-width: 320px;
   }
+  
+  .bmc-overlay {
+    padding: 10px;
+  }
+  
+  .bmc-modal {
+    max-height: 95vh;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1343,6 +1436,18 @@ useHead({
   
   .action-button {
     justify-content: center;
+  }
+  
+  .bmc-overlay {
+    padding: 5px;
+  }
+  
+  .bmc-modal {
+    max-height: 98vh;
+  }
+  
+  .bmc-modal-header {
+    padding: 12px 16px;
   }
 }
 </style>
