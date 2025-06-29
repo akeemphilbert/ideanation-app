@@ -1086,8 +1086,8 @@ useHead({
 
 .bolt-badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -20px;
+  right: -20px;
   z-index: 10;
 }
 
