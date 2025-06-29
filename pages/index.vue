@@ -154,6 +154,16 @@
         </div>
         
         <div class="hero-visual">
+          <!-- Built with Bolt Badge -->
+          <div class="bolt-badge">
+            <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" class="bolt-badge-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="bolt-icon">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              <span>Built with Bolt</span>
+            </a>
+          </div>
+          
           <div class="visual-container">
             <div class="graph-preview">
               <svg width="400" height="300" viewBox="0 0 400 300" class="preview-svg">
@@ -1071,6 +1081,44 @@ useHead({
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+.bolt-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+}
+
+.bolt-badge-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bolt-badge-link:hover {
+  color: #6366f1;
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.bolt-icon {
+  width: 14px;
+  height: 14px;
+  color: #f59e0b;
 }
 
 .visual-container {
@@ -1716,6 +1764,21 @@ useHead({
   .footer-links {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  .bolt-badge {
+    top: -10px;
+    right: -10px;
+  }
+
+  .bolt-badge-link {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .bolt-icon {
+    width: 12px;
+    height: 12px;
   }
 }
 
