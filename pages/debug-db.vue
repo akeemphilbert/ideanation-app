@@ -64,7 +64,7 @@ const loading = ref(false)
 const debugResults = ref('')
 
 const supabaseUrl = config.public.supabaseUrl
-const hasAnonKey = !!config.public.supabaseAnonKey
+const hasAnonKey = config.public.supabaseAnonKey
 
 const runDebug = async () => {
   loading.value = true
@@ -106,10 +106,9 @@ const runDebug = async () => {
     // Test 2: Check if we can query any table - using correct schema specification
     try {
       const { data, error } = await supabase
-        .schema('information_schema')
-        .from('tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
+        .schema('public')
+        .from('profiles')
+        .select('*')
         .limit(1)
       
       results.tests.basicQuery = {
@@ -127,6 +126,7 @@ const runDebug = async () => {
     // Test 3: Check profiles table specifically
     try {
       const { data, error } = await supabase
+        .schema('public')
         .from('profiles')
         .select('count')
         .limit(1)
@@ -146,7 +146,7 @@ const runDebug = async () => {
     // Test 4: Try to list all tables - using correct schema specification
     try {
       const { data, error } = await supabase
-        .schema('information_schema')
+        .schema('public')
         .from('tables')
         .select('table_name')
         .eq('table_schema', 'public')
