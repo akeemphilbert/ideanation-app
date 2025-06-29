@@ -15,10 +15,15 @@
       <!-- Main Graph Section on Right -->
       <div class="graph-section">
         <div class="graph-header">
-          <h2 class="handwritten">
+          <h2 class="workspace-title">
             {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
           </h2>
           <div class="graph-controls" v-if="resourcesStore.currentWorkspace">
+            <!-- Tools Panel -->
+            <div class="tools-section">
+              <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
+            </div>
+            
             <!-- Selection Info -->
             <div class="selection-info" v-if="selectedNodeIds.length > 0">
               <div class="selected-nodes">
@@ -70,12 +75,6 @@
             <div class="action-buttons">
               <button class="btn-sketch" @click="addNewComponent">
                 Add Component
-              </button>
-              <button class="btn-sketch" @click="saveIdea">
-                Export Canvas
-              </button>
-              <button class="btn-sketch" @click="exportAllEntities">
-                Export All Entities
               </button>
               <button class="btn-sketch" @click="saveToLocalStorage">
                 Save to Storage
@@ -145,8 +144,9 @@
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
 import ChatInterface from '~/components/organisms/ChatInterface.vue'
+import ToolsPanel from '~/components/organisms/ToolsPanel.vue'
 import { ExportDataBuilder } from '~/services/export/ExportDataBuilder'
-import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormatter'
+import { JSONFormatter } from '~/services/export/ExportFormatter'
 import { ExportType } from '~/types/export'
 
 // Protect this route with authentication
@@ -442,86 +442,6 @@ const handleRelationshipCreated = (relationship: any) => {
   // Additional logic if needed
 }
 
-const saveIdea = async () => {
-  try {
-    // Build the business model canvas export data
-    const exportBuilder = new ExportDataBuilder()
-    const exportData = await exportBuilder.buildExportData(ExportType.BUSINESS_MODEL_CANVAS)
-    
-    // Format as markdown
-    const markdownFormatter = new MarkdownFormatter()
-    const formattedContent = await markdownFormatter.format(exportData)
-    
-    // Create and download the file
-    const blob = new Blob([formattedContent.content as string], { 
-      type: formattedContent.mimeType 
-    })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = formattedContent.filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    
-    // Show success message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `✅ Your business model canvas for "${resourcesStore.currentWorkspace?.title}" has been exported to markdown and downloaded! The file contains ${entitiesStore.problems.length} problems, ${entitiesStore.customers.length} customers, ${entitiesStore.features.length} features, and ${entitiesStore.relationships.length} relationships.`
-    })
-    
-  } catch (error) {
-    console.error('Export failed:', error)
-    
-    // Show error message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `❌ Sorry, there was an error exporting your business model canvas. Please try again.`
-    })
-  }
-}
-
-const exportAllEntities = async () => {
-  try {
-    // Build the all entities export data
-    const exportBuilder = new ExportDataBuilder()
-    const exportData = await exportBuilder.buildExportData(ExportType.ALL_ENTITIES)
-    
-    // Format as markdown
-    const markdownFormatter = new MarkdownFormatter()
-    const formattedContent = await markdownFormatter.format(exportData)
-    
-    // Create and download the file
-    const blob = new Blob([formattedContent.content as string], { 
-      type: formattedContent.mimeType 
-    })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = formattedContent.filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    
-    // Show success message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `✅ All entities for "${resourcesStore.currentWorkspace?.title}" have been exported to markdown and downloaded! The file contains all ${entitiesStore.ideas.length + entitiesStore.problems.length + entitiesStore.customers.length + entitiesStore.features.length + entitiesStore.products.length + entitiesStore.jobs.length + entitiesStore.pains.length + entitiesStore.gains.length} entities and ${entitiesStore.relationships.length} relationships.`
-    })
-    
-  } catch (error) {
-    console.error('Export failed:', error)
-    
-    // Show error message
-    chatStore.addMessage({
-      type: 'ai',
-      content: `❌ Sorry, there was an error exporting all entities. Please try again.`
-    })
-  }
-}
-
 const saveToLocalStorage = async () => {
   try {
     // Build the all entities export data
@@ -809,19 +729,28 @@ useHead({
   gap: 15px;
 }
 
-.graph-header h2 {
+/* Professional workspace title - NOT handwritten */
+.workspace-title {
   margin: 0;
   font-size: 1.8rem;
   color: var(--color-primary);
   flex-shrink: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 .graph-controls {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   flex: 1;
   min-width: 0;
+}
+
+/* Tools Section */
+.tools-section {
+  margin-bottom: 8px;
 }
 
 /* Selection Info Styles */
