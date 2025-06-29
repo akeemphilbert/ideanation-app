@@ -24,14 +24,6 @@
         </div>
 
         <div class="nav-actions">
-          <!-- Built with Bolt Badge -->
-          <div class="bolt-badge">
-            <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" class="bolt-badge-link">
-              <img src="/black_circle_360x360.png" alt="Bolt" class="bolt-logo" />
-              <span>Built with Bolt</span>
-            </a>
-          </div>
-
           <template v-if="user">
             <div class="user-menu" ref="userMenuRef">
               <button class="user-button" @click="toggleUserMenu">
@@ -117,6 +109,14 @@
 
     <!-- Hero Section -->
     <section class="hero-section">
+      <!-- Built with Bolt Badge - Floating in top right -->
+      <div class="bolt-badge-floating">
+        <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" class="bolt-badge-link">
+          <img src="/black_circle_360x360.png" alt="Built with Bolt" class="bolt-logo" />
+          <span class="bolt-text">Built with Bolt</span>
+        </a>
+      </div>
+
       <div class="hero-container">
         <div class="hero-content">
           <div class="hero-badge">
@@ -763,40 +763,47 @@ useHead({
   gap: 16px;
 }
 
-/* Bolt Badge Styles */
-.bolt-badge {
-  display: flex;
-  align-items: center;
+/* Floating Bolt Badge Styles */
+.bolt-badge-floating {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
 }
 
 .bolt-badge-link {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 50px;
   text-decoration: none;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .bolt-badge-link:hover {
-  color: #0f172a;
-  border-color: #6366f1;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.95);
 }
 
 .bolt-logo {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  filter: brightness(1.1);
+}
+
+.bolt-text {
+  white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 
 /* Button Styles - Professional colored buttons */
@@ -1030,6 +1037,7 @@ useHead({
   min-height: 100vh;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .hero-container {
@@ -1115,7 +1123,6 @@ useHead({
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
 }
 
 .visual-container {
@@ -1715,6 +1722,22 @@ useHead({
     gap: 16px;
     text-align: center;
   }
+
+  /* Bolt badge responsive */
+  .bolt-badge-floating {
+    top: 80px;
+    right: 16px;
+  }
+
+  .bolt-badge-link {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .bolt-logo {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1763,12 +1786,21 @@ useHead({
     gap: 24px;
   }
 
-  .bolt-badge {
-    order: -1;
+  /* Bolt badge mobile */
+  .bolt-badge-floating {
+    top: 70px;
+    right: 12px;
   }
 
-  .nav-actions {
-    flex-wrap: wrap;
+  .bolt-badge-link {
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .bolt-logo {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -1797,14 +1829,21 @@ useHead({
     font-size: 28px;
   }
 
+  /* Bolt badge very small screens */
+  .bolt-badge-floating {
+    top: 60px;
+    right: 8px;
+  }
+
   .bolt-badge-link {
-    padding: 4px 8px;
+    padding: 6px 10px;
     font-size: 11px;
+    gap: 6px;
   }
 
   .bolt-logo {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 }
 </style>
