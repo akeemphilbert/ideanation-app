@@ -1,0 +1,6 @@
+server/*
+stores/*
+docs/*
+plugins/*
+services/*
+states/*
