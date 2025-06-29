@@ -1,10 +1,32 @@
 <template>
   <div class="chat-interface">
     <div class="chat-header">
-      <h3>AI Assistant</h3>
-      <div class="chat-status">
-        <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
-        {{ isOnline ? 'Online' : 'Offline' }}
+      <div class="header-main">
+        <h3>AI Assistant</h3>
+        <div class="chat-status">
+          <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
+          {{ isOnline ? 'Online' : 'Offline' }}
+        </div>
+      </div>
+      
+      <!-- Workspace Dropdown Row - Only show if workspaces exist -->
+      <div v-if="availableWorkspaces.length > 0" class="workspace-selector">
+        <label for="workspace-select" class="workspace-label">Workspace:</label>
+        <select 
+          id="workspace-select"
+          v-model="selectedWorkspaceId" 
+          @change="handleWorkspaceChange"
+          class="workspace-dropdown"
+        >
+          <option value="">Select workspace...</option>
+          <option 
+            v-for="workspace in availableWorkspaces" 
+            :key="workspace.id"
+            :value="workspace.id"
+          >
+            {{ workspace.title }}
+          </option>
+        </select>
       </div>
     </div>
     
@@ -120,6 +142,7 @@ const chatMessage = ref('')
 const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
 const isOnline = ref(true)
+const selectedWorkspaceId = ref('')
 
 const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
 const entityPrefixes = getAvailablePrefixes()
@@ -135,6 +158,36 @@ const quickSuggestions = [
 // Computed properties
 const messages = computed(() => chatStore.messages)
 const isTyping = computed(() => chatStore.isTyping)
+
+const availableWorkspaces = computed(() => resourcesStore.workspaces)
+
+// Watch for current workspace changes
+watch(() => resourcesStore.currentWorkspace, (newWorkspace) => {
+  if (newWorkspace) {
+    selectedWorkspaceId.value = newWorkspace.id
+  } else {
+    selectedWorkspaceId.value = ''
+  }
+}, { immediate: true })
+
+const handleWorkspaceChange = () => {
+  if (selectedWorkspaceId.value) {
+    const workspace = availableWorkspaces.value.find(w => w.id === selectedWorkspaceId.value)
+    if (workspace) {
+      resourcesStore.setCurrentWorkspace(workspace)
+      
+      // Add a message to chat about workspace switch
+      chatStore.addMessage({
+        type: 'ai',
+        content: `Switched to workspace "${workspace.title}". You can now work on this idea!`
+      })
+      
+      nextTick(() => scrollToBottom())
+    }
+  } else {
+    resourcesStore.setCurrentWorkspace(null)
+  }
+}
 
 const getInputPlaceholder = () => {
   if (!props.hasWorkspace) {
@@ -366,15 +419,18 @@ onMounted(() => {
 }
 
 .chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
   background: #000;
   border-bottom: 1px solid #333;
 }
 
-.chat-header h3 {
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+}
+
+.header-main h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
@@ -404,13 +460,55 @@ onMounted(() => {
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
+/* Workspace Selector Row */
+.workspace-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid #333;
+  background: #111;
+}
+
+.workspace-label {
+  font-size: 13px;
+  color: #ccc;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.workspace-dropdown {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.workspace-dropdown:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.workspace-dropdown option {
+  background: #2a2a2a;
+  color: #fff;
+  padding: 8px;
+}
+
 /* WHITE MESSAGES AREA */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
   min-height: 0;
-  background: #ffffff; /* Changed to white */
+  background: #ffffff; /* White background */
 }
 
 .chat-welcome {
@@ -420,7 +518,6 @@ onMounted(() => {
 
 .welcome-message {
   background: #f8f9fa; /* Light gray background for welcome message */
-  border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 20px;
   color: #495057; /* Dark gray text */
@@ -461,7 +558,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-  color: #6c757d; /* Changed to gray for white background */
+  color: #6c757d; /* Gray for white background */
 }
 
 .typing-dots {
@@ -473,7 +570,7 @@ onMounted(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #adb5bd; /* Changed to gray for white background */
+  background: #adb5bd; /* Gray for white background */
   animation: typing-bounce 1.4s infinite ease-in-out;
 }
 
@@ -646,8 +743,23 @@ onMounted(() => {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .chat-header {
+  .header-main {
     padding: 12px 16px;
+  }
+  
+  .workspace-selector {
+    padding: 10px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .workspace-label {
+    font-size: 12px;
+  }
+  
+  .workspace-dropdown {
+    font-size: 14px; /* Prevent zoom on iOS */
   }
   
   .chat-messages {

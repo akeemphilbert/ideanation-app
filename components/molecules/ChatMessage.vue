@@ -108,7 +108,7 @@ const formatEntityType = (entityType: string): string => {
 </script>
 
 <style scoped>
-/* Updated styles for white background */
+/* Clean message styling without borders */
 .chat-message {
   display: flex;
   gap: 12px;
@@ -127,8 +127,7 @@ const formatEntityType = (entityType: string): string => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: #f1f3f4;
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -144,25 +143,23 @@ const formatEntityType = (entityType: string): string => {
 
 .chat-message__text {
   background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;
   color: #495057;
   position: relative;
   word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .chat-message--user .chat-message__text {
   background: #4f46e5;
-  border-color: #4338ca;
   color: white;
 }
 
 .chat-message--ai .chat-message__text {
   background: #f8f9fa;
-  border-color: #e9ecef;
   color: #495057;
 }
 
@@ -175,11 +172,11 @@ const formatEntityType = (entityType: string): string => {
   align-items: center;
   gap: 6px;
   background: #10b981;
-  border: 1px solid #059669;
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 12px;
+  padding: 6px 12px;
   font-size: 12px;
   color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .entity-icon {
@@ -219,8 +216,8 @@ const formatEntityType = (entityType: string): string => {
   font-size: 13px;
   text-align: left;
   background: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   color: #495057;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -231,6 +228,8 @@ const formatEntityType = (entityType: string): string => {
   background: #f8f9fa;
   border-color: #4f46e5;
   color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
 }
 
 .chat-message__timestamp {
@@ -251,13 +250,15 @@ const formatEntityType = (entityType: string): string => {
   }
   
   .chat-message__text {
-    padding: 10px 12px;
+    padding: 10px 14px;
     font-size: 13px;
+    border-radius: 16px;
   }
   
   .entity-badge {
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 11px;
+    border-radius: 10px;
   }
 }
 </style>
