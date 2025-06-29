@@ -7,7 +7,6 @@
           <button 
             class="carousel-button prev-button" 
             @click="scrollLeft"
-            :disabled="scrollPosition <= 0"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
@@ -166,17 +165,6 @@
             </svg>
           </button>
         </div>
-        
-        <!-- Carousel Indicators -->
-        <div class="carousel-indicators">
-          <div 
-            v-for="(_, index) in Math.ceil(totalItems / visibleItems)" 
-            :key="index"
-            class="indicator"
-            :class="{ 'active': currentPage === index }"
-            @click="goToPage(index)"
-          ></div>
-        </div>
       </div>
 
       <!-- Export Progress -->
@@ -187,10 +175,6 @@
         <div class="progress-text">{{ exportStatusText }}</div>
       </div>
       
-      <!-- Manage Tools Link -->
-      <div class="manage-tools-link">
-        <a href="#" @click.prevent="showToolsManager">Manage tools</a>
-      </div>
     </div>
     
     <!-- Tools Manager Modal -->
@@ -1188,28 +1172,6 @@ watch(() => carouselRef.value?.scrollLeft, (newScrollLeft) => {
   color: #ccc;
   text-align: center;
   font-weight: 500;
-}
-
-/* Manage Tools Link */
-.manage-tools-link {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.manage-tools-link a {
-  color: #4f46e5;
-  font-size: 14px;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.manage-tools-link a:hover {
-  color: #6366f1;
-  text-decoration: underline;
-  background: rgba(79, 70, 229, 0.1);
 }
 
 /* Tools Manager Modal */

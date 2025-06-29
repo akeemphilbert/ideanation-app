@@ -20,6 +20,57 @@
               <h2 class="workspace-title">
                 {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
               </h2>
+              <button v-if="resourcesStore.currentWorkspace" class="share-button" @click="showShareOptions">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                  </svg>
+                </button>
+                <!-- User Menu -->
+              <div class="user-menu" ref="userMenuRef">
+                <button class="user-button" @click="toggleUserMenu">
+                  <div class="user-avatar">
+                    <img 
+                      v-if="profile?.avatar_url" 
+                      :src="profile.avatar_url" 
+                      :alt="profile?.full_name || user?.email || 'User'"
+                      class="avatar-image"
+                    />
+                    <div v-else class="avatar-initials">
+                      {{ getUserInitials() }}
+                    </div>
+                  </div>
+                </button>
+                
+                <div v-if="showUserMenu" class="user-dropdown">
+                  <div class="dropdown-header">
+                    <div class="user-info">
+                      <div class="user-name-full">{{ profile?.full_name || 'User' }}</div>
+                      <div class="user-email">{{ user?.email }}</div>
+                    </div>
+                  </div>
+                  <div class="dropdown-divider"></div>
+                  <div class="dropdown-items">
+                    <button class="dropdown-item" @click="manageSubscription">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                      </svg>
+                      Manage Subscription
+                    </button>
+                    <button class="dropdown-item" @click="manageTools">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                      </svg>
+                      Manage Tools
+                    </button>
+                    <button class="dropdown-item" @click="handleSignOut">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 22H5a2 2 0 01-2-2V4a2 2 0 012-2h5v2H5v16h5v2zm7-10l-4-4v3H7v2h6v3l4-4z"/>
+                      </svg>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
              <!-- Tools Panel - Expanded to fill remaining width -->
              <div class="tools-section" v-if="resourcesStore.currentWorkspace">
@@ -269,10 +320,73 @@
       @save="handleEntityCreate"
       @close="showCreateModal = false"
     />
+
+
+    <!-- Share Options Modal -->
+    <div v-if="showShareModal" class="modal-overlay" @click="closeShareModal">
+      <div class="share-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Share Workspace</h3>
+          <button class="close-button" @click="closeShareModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="share-options">
+            <div class="share-option">
+              <h4>Share Link</h4>
+              <div class="share-link-container">
+                <input 
+                  type="text" 
+                  class="share-link-input" 
+                  :value="shareLink" 
+                  readonly
+                  ref="shareLinkInput"
+                />
+                <button class="copy-link-button" @click="copyShareLink">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div v-if="linkCopied" class="copy-confirmation">Link copied to clipboard!</div>
+            </div>
+            
+            <div class="share-divider"></div>
+            
+            <div class="share-option">
+              <h4>Email Invite</h4>
+              <div class="email-invite-form">
+                <input 
+                  type="email" 
+                  class="email-input" 
+                  v-model="inviteEmail" 
+                  placeholder="Enter email address"
+                />
+                <select v-model="invitePermission" class="permission-select">
+                  <option value="view">Can view</option>
+                  <option value="edit">Can edit</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button class="send-invite-button" @click="sendEmailInvite" :disabled="!isValidEmail">
+                  Send Invite
+                </button>
+              </div>
+              <div v-if="inviteSent" class="invite-confirmation">Invitation sent successfully!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onClickOutside } from '@vueuse/core'
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 import BusinessModelCanvas from '~/components/organisms/BusinessModelCanvas.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
@@ -295,9 +409,27 @@ const showLinkModal = ref(false)
 const showComponentModal = ref(false)
 const showCreateModal = ref(false)
 const showBusinessModelCanvas = ref(false)
+const showShareModal = ref(false)
+const showUserMenu = ref(false)
 const selectedComponent = ref<any>(null)
 const selectedNodeIds = ref<string[]>([])
 const createEntityType = ref('')
+
+const userMenuRef = ref<HTMLElement>()
+  const router = useRouter()
+  const { user, profile, signOut } = useAuth()
+
+// Share modal state
+const shareLink = ref('')
+const linkCopied = ref(false)
+const inviteEmail = ref('')
+const invitePermission = ref('view')
+const inviteSent = ref(false)
+
+// Close user menu when clicking outside
+onClickOutside(userMenuRef, () => {
+  showUserMenu.value = false
+})
 
 // Convert entities to graph format - EXCLUDE workspace from nodes
 const graphNodes = computed(() => {
@@ -402,6 +534,12 @@ const graphEdges = computed(() => {
       target: rel.targetId,
       relationship: rel.relationshipType
     }))
+})
+
+// Computed property for email validation
+const isValidEmail = computed(() => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(inviteEmail.value)
 })
 
 onMounted(() => {
@@ -838,6 +976,98 @@ const handleRelationshipCreated = (relationship: any) => {
   console.log('Relationship created:', relationship)
 }
 
+// User menu functions
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+const getUserInitials = () => {
+  if (profile.value?.full_name) {
+    return profile.value.full_name
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+  if (user.value?.email) {
+    return user.value.email.charAt(0).toUpperCase()
+  }
+  return 'U'
+}
+
+const handleSignOut = async () => {
+  showUserMenu.value = false
+  await signOut()
+  router.push('/')
+}
+
+const manageSubscription = () => {
+  showUserMenu.value = false
+  chatStore.addMessage({
+    type: 'ai',
+    content: `💳 To manage your subscription, please visit our pricing page. You can upgrade to Pro to unlock all premium features!`
+  })
+}
+
+const manageTools = () => {
+  showUserMenu.value = false
+  // Trigger the tools manager modal in ToolsPanel
+  const toolsPanel = document.querySelector('.tools-panel')
+  if (toolsPanel) {
+    const manageToolsLink = toolsPanel.querySelector('.manage-tools-link a')
+    if (manageToolsLink) {
+      (manageToolsLink as HTMLElement).click()
+    }
+  }
+}
+
+// Share functions
+const showShareOptions = () => {
+  // Generate share link
+  const workspaceId = resourcesStore.currentWorkspace?.id
+  shareLink.value = `${window.location.origin}/canvas?workspace=${workspaceId}`
+  
+  // Reset state
+  linkCopied.value = false
+  inviteEmail.value = ''
+  invitePermission.value = 'view'
+  inviteSent.value = false
+  
+  // Show modal
+  showShareModal.value = true
+}
+
+const closeShareModal = () => {
+  showShareModal.value = false
+}
+
+const copyShareLink = async () => {
+  try {
+    await navigator.clipboard.writeText(shareLink.value)
+    linkCopied.value = true
+    setTimeout(() => {
+      linkCopied.value = false
+    }, 3000)
+  } catch (error) {
+    console.error('Failed to copy link:', error)
+  }
+}
+
+const sendEmailInvite = () => {
+  if (!isValidEmail.value) return
+  
+  // In a real app, this would send an API request
+  console.log('Sending invite to:', inviteEmail.value, 'with permission:', invitePermission.value)
+  
+  // Show success message
+  inviteSent.value = true
+  setTimeout(() => {
+    inviteSent.value = false
+    inviteEmail.value = ''
+  }, 3000)
+}
+
 // SEO
 useHead({
   title: 'Canvas - Ideanation',
@@ -845,6 +1075,8 @@ useHead({
     { name: 'description', content: 'Interactive canvas for structuring and visualizing your startup idea components.' }
   ]
 })
+
+
 </script>
 
 <style scoped>
@@ -1449,5 +1681,363 @@ useHead({
   .bmc-modal-header {
     padding: 12px 16px;
   }
+
+  .share-link-container {
+    flex-direction: column;
+  }
+  
+  .copy-link-button {
+    justify-content: center;
+  }
+}
+
+/* User Menu */
+.user-menu {
+  position: relative;
+  margin-left: 16px;
+}
+
+.user-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  border: 2px solid #444;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.user-button:hover .user-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: #4f46e5;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  width: 220px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+.dropdown-header {
+  padding: 16px;
+  background: #000;
+  border-bottom: 1px solid #333;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name-full {
+  font-weight: 600;
+  color: white;
+  font-size: 14px;
+}
+
+.user-email {
+  color: #888;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #333;
+}
+
+.dropdown-items {
+  padding: 8px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.dropdown-item:hover {
+  background: #2a2a2a;
+  color: white;
+}
+
+.dropdown-item svg {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.dropdown-item:hover svg {
+  color: #4f46e5;
+}
+
+/* Share button */
+.share-button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.share-button:hover {
+  background: #4338ca;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Share Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.share-modal {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #000;
+  border-bottom: 1px solid #333;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.close-button:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-option h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.share-link-container {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.copy-link-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.copy-link-button:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.copy-link-button svg {
+  flex-shrink: 0;
+}
+
+.copy-confirmation {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.share-divider {
+  height: 1px;
+  background: #333;
+  margin: 8px 0;
+}
+
+.email-invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.email-input {
+  padding: 12px 16px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.permission-select {
+  padding: 12px 16px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.send-invite-button {
+  padding: 12px 16px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.send-invite-button:hover:not(:disabled) {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.send-invite-button:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.invite-confirmation {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 500;
 }
 </style>
