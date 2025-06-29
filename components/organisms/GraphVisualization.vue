@@ -3,65 +3,6 @@
     <svg ref="svgRef" class="graph-svg">
     </svg>
     
-    <!-- Node Hover Menu -->
-    <div 
-      v-if="hoveredNode" 
-      class="node-hover-menu"
-      :style="{ 
-        left: 100 + 'px', 
-        top: 100 + 'px'
-      }"
-    >
-      <div class="menu-content">
-        <div class="menu-header">
-          <span class="node-icon">{{ getNodeIcon(hoveredNode.type) }}</span>
-          <span class="node-title">{{ hoveredNode.title }}</span>
-        </div>
-        <div class="menu-actions">
-          <button 
-            class="menu-action"
-            @click="editNode(hoveredNode)"
-            title="Edit this node"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-            </svg>
-            Edit
-          </button>
-          <button 
-            class="menu-action"
-            @click="duplicateNode(hoveredNode)"
-            title="Duplicate this node"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-            </svg>
-            Copy
-          </button>
-          <button 
-            class="menu-action"
-            @click="linkNode(hoveredNode)"
-            title="Create link from this node"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-            </svg>
-            Link
-          </button>
-          <button 
-            class="menu-action menu-action--danger"
-            @click="deleteNode(hoveredNode)"
-            title="Delete this node"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-            </svg>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-    
     <!-- Zoom controls -->
     <div class="zoom-controls">
       <button class="btn-sketch btn-small" @click="zoomIn">+</button>
@@ -72,7 +13,7 @@
     <!-- Selection Instructions -->
     <div class="selection-instructions" v-if="selectedNodeIds.length === 0">
       <div class="instruction-text">
-        💡 <strong>Hover</strong> for tools • <strong>Click</strong> to select • <strong>Ctrl+Click</strong> for multi-select
+        💡 <strong>Click</strong> to select • <strong>Ctrl+Click</strong> for multi-select
       </div>
     </div>
     
@@ -118,8 +59,6 @@ const emit = defineEmits(['node-click', 'node-hover', 'node-select', 'node-edit'
 
 const container = ref<HTMLElement>()
 const svgRef = ref<SVGElement>()
-const hoveredNode = ref<(Node & { cursorX: number, cursorY: number }) | null>(null)
-const hoverTimeout = ref<NodeJS.Timeout | null>(null)
 
 let simulation: d3.Simulation<Node, Link> | null = null
 let svg: d3.Selection<SVGElement, unknown, null, undefined> | null = null
@@ -228,7 +167,7 @@ const updateGraph = () => {
       
       // Handle double-click for editing
       if (event.detail === 2) {
-        emit('node-click', d)
+        emit('node-edit', d)
         return
       }
       
@@ -236,36 +175,7 @@ const updateGraph = () => {
       emit('node-select', d.id, isMultiSelect)
     })
     .on('mouseenter', (event, d) => {
-      // Clear any existing timeout
-      if (hoverTimeout.value) {
-        clearTimeout(hoverTimeout.value)
-        hoverTimeout.value = null
-      }
-      
-      // Set timeout to show menu after brief delay
-      hoverTimeout.value = setTimeout(() => {
-        // Position menu at cursor location (10px right, 10px above)
-        hoveredNode.value = {
-          ...d,
-          cursorX: event.clientX + 10,
-          cursorY: event.clientY - 10
-        }
-        emit('node-hover', d)
-      }, 300) // 300ms delay before showing menu
-    })
-    .on('mouseleave', (event, d) => {
-      // Clear timeout if mouse leaves before delay
-      if (hoverTimeout.value) {
-        clearTimeout(hoverTimeout.value)
-        hoverTimeout.value = null
-      }
-      
-      // Hide menu after short delay to allow moving to menu
-      setTimeout(() => {
-        if (!isMouseOverMenu()) {
-          hoveredNode.value = null
-        }
-      }, 100)
+      emit('node-hover', d)
     })
 
   // Add circles to nodes
@@ -316,7 +226,6 @@ const updateGraph = () => {
   // Add click handler to svg background to clear selection
   svg.on('click', () => {
     emit('node-select', null, false)
-    hoveredNode.value = null
   })
 
   // Update selection state
@@ -424,49 +333,6 @@ const getNodeIcon = (type: string): string => {
   return icons[type] || '📝'
 }
 
-// Menu action handlers
-const editNode = (node: Node) => {
-  hoveredNode.value = null
-  emit('node-edit', node)
-}
-
-const duplicateNode = (node: Node) => {
-  hoveredNode.value = null
-  emit('node-duplicate', node)
-}
-
-const linkNode = (node: Node) => {
-  hoveredNode.value = null
-  emit('node-link', node)
-}
-
-const deleteNode = (node: Node) => {
-  hoveredNode.value = null
-  emit('node-delete', node)
-}
-
-// Check if mouse is over the hover menu
-const isMouseOverMenu = (): boolean => {
-  const menuElement = document.querySelector('.node-hover-menu')
-  if (!menuElement) return false
-  
-  const rect = menuElement.getBoundingClientRect()
-  const mouseX = event?.clientX || 0
-  const mouseY = event?.clientY || 0
-  
-  return mouseX >= rect.left && mouseX <= rect.right && 
-         mouseY >= rect.top && mouseY <= rect.bottom
-}
-
-// Hide menu when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-  const menuElement = document.querySelector('.node-hover-menu')
-  if (menuElement && !menuElement.contains(event.target as Node)) {
-    hoveredNode.value = null
-  }
-}
-
-// Zoom controls
 const zoomIn = () => {
   if (zoomBehavior && svg) {
     svg.transition().call(zoomBehavior.scaleBy, 1.5)
@@ -485,17 +351,9 @@ const resetZoom = () => {
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
   if (simulation) {
     simulation.stop()
-  }
-  if (hoverTimeout.value) {
-    clearTimeout(hoverTimeout.value)
   }
 })
 </script>
@@ -523,92 +381,6 @@ onUnmounted(() => {
   cursor: grabbing;
 }
 
-/* Node Hover Menu - Fixed positioning at cursor location */
-.node-hover-menu {
-  position: fixed;
-  z-index: 1000;
-  pointer-events: auto;
-  animation: fadeInUp 0.2s ease-out;
-}
-
-.menu-content {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  min-width: 200px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-.menu-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #000;
-  border-bottom: 1px solid #333;
-}
-
-.node-icon {
-  font-size: 16px;
-}
-
-.node-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
-}
-
-.menu-actions {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.menu-action {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: #ccc;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  font-family: inherit;
-  width: 100%;
-}
-
-.menu-action:hover {
-  background: #2a2a2a;
-  color: #fff;
-  transform: translateX(2px);
-}
-
-.menu-action--danger {
-  color: #ff6b6b;
-}
-
-.menu-action--danger:hover {
-  background: #ff6b6b;
-  color: white;
-}
-
-.menu-action svg {
-  flex-shrink: 0;
-}
-
-/* Graph node styles */
 :deep(.graph-node) {
   transition: all 0.2s ease;
 }
@@ -695,17 +467,6 @@ onUnmounted(() => {
   color: var(--color-primary);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes dash-rotate {
   to {
     stroke-dashoffset: -8;
@@ -723,19 +484,6 @@ onUnmounted(() => {
   .instruction-text {
     white-space: normal;
     line-height: 1.3;
-  }
-  
-  .menu-content {
-    min-width: 180px;
-  }
-  
-  .node-title {
-    max-width: 120px;
-  }
-  
-  .menu-action {
-    padding: 10px 12px;
-    font-size: 14px;
   }
 }
 </style>

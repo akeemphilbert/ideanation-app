@@ -28,34 +28,6 @@
           </div>
           
           <div class="graph-controls" v-if="resourcesStore.currentWorkspace">
-            <!-- Selection Info -->
-            <div class="selection-info" v-if="selectedNodeIds.length > 0">
-              <div class="selected-nodes">
-                <span class="selection-label">Selected:</span>
-                <div class="selected-list">
-                  <span 
-                    v-for="nodeId in selectedNodeIds" 
-                    :key="nodeId"
-                    class="selected-node"
-                  >
-                    {{ getNodeTitle(nodeId) }}
-                  </span>
-                </div>
-              </div>
-              <div class="selection-actions">
-                <button 
-                  v-if="selectedNodeIds.length === 2" 
-                  class="btn-sketch btn-link"
-                  @click="showLinkModal = true"
-                >
-                  🔗 Link Nodes
-                </button>
-                <button class="btn-sketch btn-small" @click="clearSelection">
-                  Clear
-                </button>
-              </div>
-            </div>
-            
             <!-- Entity Stats -->
             <div class="entity-stats">
               <span class="stat-item">
@@ -78,6 +50,78 @@
         </div>
         
         <div class="graph-container" ref="graphContainer">
+          <!-- Selection Panel - Top Left of Graph Area -->
+          <div v-if="selectedNodeIds.length > 0" class="selection-panel">
+            <div class="selection-panel-header">
+              <div class="selection-title">
+                <span class="selection-icon">🎯</span>
+                <span>Selected {{ selectedNodeIds.length === 1 ? 'Node' : 'Nodes' }}</span>
+              </div>
+              <button class="close-selection" @click="clearSelection" title="Clear selection">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="selection-content">
+              <div v-for="nodeId in selectedNodeIds" :key="nodeId" class="selected-node-info">
+                <div class="node-header">
+                  <span class="node-type-icon">{{ getNodeIcon(nodeId) }}</span>
+                  <div class="node-details">
+                    <div class="node-title">{{ getNodeTitle(nodeId) }}</div>
+                    <div class="node-type">{{ getNodeType(nodeId) }}</div>
+                  </div>
+                </div>
+                <div class="node-description">
+                  {{ getNodeDescription(nodeId) }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="selection-actions">
+              <button 
+                v-if="selectedNodeIds.length === 1" 
+                class="action-button action-button--primary"
+                @click="handleEditSelectedNode"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                Edit
+              </button>
+              <button 
+                v-if="selectedNodeIds.length === 2" 
+                class="action-button action-button--primary"
+                @click="showLinkModal = true"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                </svg>
+                Link Nodes
+              </button>
+              <button 
+                v-if="selectedNodeIds.length === 1" 
+                class="action-button action-button--secondary"
+                @click="handleDuplicateSelectedNode"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+                Duplicate
+              </button>
+              <button 
+                class="action-button action-button--danger"
+                @click="handleDeleteSelectedNodes"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+
           <div v-if="!resourcesStore.currentWorkspace" class="empty-graph">
             <div class="empty-message">
               <h3 class="handwritten">Welcome to Ideanation!</h3>
@@ -286,6 +330,47 @@ const getNodeTitle = (nodeId: string) => {
   return node ? node.title : ''
 }
 
+const getNodeType = (nodeId: string) => {
+  const node = graphNodes.value.find(n => n.id === nodeId)
+  if (!node) return ''
+  
+  const typeNames: Record<string, string> = {
+    'ideanation:Problem': 'Problem',
+    'ideanation:Idea': 'Idea',
+    'customer': 'Customer',
+    'feature': 'Feature',
+    'solution': 'Product',
+    'job': 'Job',
+    'ideanation:Pain': 'Pain',
+    'ideanation:Gain': 'Gain'
+  }
+  
+  return typeNames[node.type] || node.type
+}
+
+const getNodeDescription = (nodeId: string) => {
+  const node = graphNodes.value.find(n => n.id === nodeId)
+  return node ? node.description : ''
+}
+
+const getNodeIcon = (nodeId: string) => {
+  const node = graphNodes.value.find(n => n.id === nodeId)
+  if (!node) return '📝'
+  
+  const icons: Record<string, string> = {
+    'ideanation:Problem': '⚠️',
+    'ideanation:Idea': '💡',
+    'customer': '👤',
+    'feature': '⚙️',
+    'solution': '📦',
+    'job': '⚡',
+    'ideanation:Pain': '😤',
+    'ideanation:Gain': '📈'
+  }
+  
+  return icons[node.type] || '📝'
+}
+
 const getNodeById = (nodeId: string) => {
   return graphNodes.value.find(n => n.id === nodeId) || null
 }
@@ -353,6 +438,45 @@ const handleNodeSelect = (nodeId: string | null, isMultiSelect: boolean = false)
 
 const handleNodeHover = (node: any) => {
   console.log('Hovering node:', node)
+}
+
+const handleEditSelectedNode = () => {
+  if (selectedNodeIds.value.length !== 1) return
+  
+  const nodeId = selectedNodeIds.value[0]
+  const node = getNodeById(nodeId)
+  if (node) {
+    handleNodeEdit(node)
+  }
+}
+
+const handleDuplicateSelectedNode = () => {
+  if (selectedNodeIds.value.length !== 1) return
+  
+  const nodeId = selectedNodeIds.value[0]
+  const node = getNodeById(nodeId)
+  if (node) {
+    handleNodeDuplicate(node)
+  }
+}
+
+const handleDeleteSelectedNodes = () => {
+  if (selectedNodeIds.value.length === 0) return
+  
+  const nodeNames = selectedNodeIds.value.map(id => getNodeTitle(id)).join(', ')
+  const confirmMessage = selectedNodeIds.value.length === 1 
+    ? `Are you sure you want to delete "${nodeNames}"?`
+    : `Are you sure you want to delete these ${selectedNodeIds.value.length} nodes: ${nodeNames}?`
+  
+  if (confirm(confirmMessage + ' This action cannot be undone.')) {
+    selectedNodeIds.value.forEach(nodeId => {
+      const node = getNodeById(nodeId)
+      if (node) {
+        handleNodeDelete(node)
+      }
+    })
+    selectedNodeIds.value = []
+  }
 }
 
 const handleNodeEdit = (node: any) => {
@@ -451,41 +575,39 @@ const handleNodeLink = (node: any) => {
 }
 
 const handleNodeDelete = (node: any) => {
-  if (confirm(`Are you sure you want to delete "${node.title}"? This action cannot be undone.`)) {
-    const entity = findEntityByNode(node)
-    if (entity) {
-      switch (node.type) {
-        case 'ideanation:Problem':
-          entitiesStore.deleteProblem(entity.id)
-          break
-        case 'customer':
-          entitiesStore.deleteCustomer(entity.id)
-          break
-        case 'feature':
-          entitiesStore.deleteFeature(entity.id)
-          break
-        case 'solution':
-          entitiesStore.deleteProduct(entity.id)
-          break
-        case 'job':
-          entitiesStore.deleteJob(entity.id)
-          break
-        case 'ideanation:Pain':
-          entitiesStore.deletePain(entity.id)
-          break
-        case 'ideanation:Gain':
-          entitiesStore.deleteGain(entity.id)
-          break
-      }
-      
-      // Remove from selection if it was selected
-      selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== node.id)
-      
-      chatStore.addMessage({
-        type: 'ai',
-        content: `🗑️ Deleted "${node.title}" and all its relationships from your canvas.`
-      })
+  const entity = findEntityByNode(node)
+  if (entity) {
+    switch (node.type) {
+      case 'ideanation:Problem':
+        entitiesStore.deleteProblem(entity.id)
+        break
+      case 'customer':
+        entitiesStore.deleteCustomer(entity.id)
+        break
+      case 'feature':
+        entitiesStore.deleteFeature(entity.id)
+        break
+      case 'solution':
+        entitiesStore.deleteProduct(entity.id)
+        break
+      case 'job':
+        entitiesStore.deleteJob(entity.id)
+        break
+      case 'ideanation:Pain':
+        entitiesStore.deletePain(entity.id)
+        break
+      case 'ideanation:Gain':
+        entitiesStore.deleteGain(entity.id)
+        break
     }
+    
+    // Remove from selection if it was selected
+    selectedNodeIds.value = selectedNodeIds.value.filter(id => id !== node.id)
+    
+    chatStore.addMessage({
+      type: 'ai',
+      content: `🗑️ Deleted "${node.title}" and all its relationships from your canvas.`
+    })
   }
 }
 
@@ -656,63 +778,6 @@ useHead({
   gap: 16px;
 }
 
-/* Selection Info Styles */
-.selection-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
-  border-radius: 4px;
-  padding: 8px;
-}
-
-.selected-nodes {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.selection-label {
-  font-size: 0.8rem;
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
-  font-weight: 600;
-}
-
-.selected-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.selected-node {
-  background: white;
-  border: 1px solid #4caf50;
-  border-radius: 3px;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  color: var(--color-primary);
-  font-family: var(--font-handwritten);
-}
-
-.selection-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.btn-link {
-  background: #4caf50;
-  color: white;
-  border-color: #4caf50;
-}
-
-.btn-link:hover {
-  background: #45a049;
-  border-color: #45a049;
-}
-
 /* Professional Entity Stats - matching header design */
 .entity-stats {
   display: flex;
@@ -751,6 +816,187 @@ useHead({
   border-radius: 8px;
   transform: rotate(0.2deg);
   box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+}
+
+/* Selection Panel - Top Left of Graph Area */
+.selection-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  min-width: 280px;
+  max-width: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.selection-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #000;
+  border-bottom: 1px solid #333;
+  border-radius: 12px 12px 0 0;
+}
+
+.selection-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.selection-icon {
+  font-size: 16px;
+}
+
+.close-selection {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-selection:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.selection-content {
+  padding: 16px 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.selected-node-info {
+  margin-bottom: 16px;
+}
+
+.selected-node-info:last-child {
+  margin-bottom: 0;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.node-type-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.node-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-type {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.node-description {
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.4;
+  margin-left: 30px;
+  padding-left: 12px;
+  border-left: 2px solid #333;
+}
+
+.selection-actions {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid #333;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  background: transparent;
+}
+
+.action-button--primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: white;
+}
+
+.action-button--primary:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.action-button--secondary {
+  background: #2a2a2a;
+  border-color: #333;
+  color: #ccc;
+}
+
+.action-button--secondary:hover {
+  background: #333;
+  border-color: #444;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.action-button--danger {
+  background: transparent;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.action-button--danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.action-button svg {
+  flex-shrink: 0;
 }
 
 .empty-graph {
@@ -814,6 +1060,36 @@ useHead({
   transform: rotate(-0.2deg);
 }
 
+/* Animations */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Custom scrollbar for selection panel */
+.selection-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.selection-content::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.selection-content::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+
+.selection-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .canvas-layout {
@@ -833,6 +1109,11 @@ useHead({
   
   .tools-section {
     width: 100%;
+  }
+  
+  .selection-panel {
+    min-width: 260px;
+    max-width: 320px;
   }
 }
 
@@ -870,6 +1151,22 @@ useHead({
   
   .stat-item {
     text-align: center;
+  }
+  
+  .selection-panel {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .selection-actions {
+    flex-direction: column;
+  }
+  
+  .action-button {
+    justify-content: center;
   }
 }
 </style>
