@@ -21,7 +21,7 @@
                 {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
               </h2>
               
-              <!-- Tools Panel - To the right of title -->
+              <!-- Tools Panel - Expanded to fill remaining width -->
               <div class="tools-section" v-if="resourcesStore.currentWorkspace">
                 <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
               </div>
@@ -441,12 +441,12 @@ useHead({
   margin-bottom: 20px;
 }
 
-/* Title and Tools Layout */
+/* Title and Tools Layout - EXPANDED TOOLS */
 .title-and-tools {
   display: flex;
   align-items: flex-start;
   gap: 20px;
-  justify-content: space-between;
+  width: 100%;
 }
 
 /* Professional workspace title - NOT handwritten */
@@ -458,12 +458,14 @@ useHead({
   font-weight: 600;
   letter-spacing: -0.025em;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-/* Tools Section - positioned to the right */
+/* Tools Section - EXPANDED TO FILL REMAINING WIDTH */
 .tools-section {
-  flex-shrink: 0;
+  flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 .graph-controls {
@@ -644,6 +646,11 @@ useHead({
   
   .workspace-title {
     font-size: 1.6rem;
+    white-space: normal;
+  }
+  
+  .tools-section {
+    width: 100%;
   }
 }
 

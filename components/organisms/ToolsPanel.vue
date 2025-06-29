@@ -506,7 +506,7 @@ Please create a fully functional web application that addresses these requiremen
 </script>
 
 <style scoped>
-/* Professional black theme matching chat interface */
+/* Professional black theme matching chat interface - FULL WIDTH */
 .tools-panel {
   background: #1a1a1a;
   border: 1px solid #333;
@@ -514,7 +514,7 @@ Please create a fully functional web application that addresses these requiremen
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  min-width: 200px;
+  width: 100%;
 }
 
 .tools-header {
@@ -587,28 +587,31 @@ Please create a fully functional web application that addresses these requiremen
   color: #fff;
 }
 
-/* Collapsed State - Icons Only */
+/* Collapsed State - Icons Only - FULL WIDTH */
 .tools-icons {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 16px 20px;
   background: #111;
   border-top: 1px solid #333;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .tool-icon-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   background: #2a2a2a;
   border: 1px solid #333;
   border-radius: 8px;
   color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex-shrink: 0;
+  flex: 1;
+  max-width: 60px;
 }
 
 .tool-icon-button:hover:not(:disabled) {
@@ -627,17 +630,19 @@ Please create a fully functional web application that addresses these requiremen
   box-shadow: none;
 }
 
-/* Expanded State - Full Content */
+/* Expanded State - Full Content - FULL WIDTH */
 .tools-content {
   padding: 20px;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
+  width: 100%;
 }
 
 .tool-button {
@@ -654,6 +659,7 @@ Please create a fully functional web application that addresses these requiremen
   text-align: left;
   font-family: inherit;
   min-height: 80px;
+  width: 100%;
 }
 
 .tool-button:hover:not(:disabled) {
@@ -722,6 +728,7 @@ Please create a fully functional web application that addresses these requiremen
   border-radius: 8px;
   padding: 16px;
   margin-top: 16px;
+  width: 100%;
 }
 
 .progress-bar {
@@ -749,12 +756,8 @@ Please create a fully functional web application that addresses these requiremen
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .tools-panel {
-    min-width: 180px;
-  }
-  
   .tools-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
   
@@ -775,22 +778,30 @@ Please create a fully functional web application that addresses these requiremen
   .tool-description {
     font-size: 11px;
   }
+  
+  .tools-icons {
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  
+  .tool-icon-button {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 @media (max-width: 768px) {
-  .tools-panel {
-    min-width: 160px;
-  }
-  
   .tools-icons {
     flex-wrap: wrap;
     gap: 6px;
     padding: 10px 12px;
+    justify-content: center;
   }
   
   .tool-icon-button {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
+    flex: none;
   }
   
   .tools-content {
@@ -804,13 +815,13 @@ Please create a fully functional web application that addresses these requiremen
   .tools-header h3 {
     font-size: 14px;
   }
-}
-
-@media (max-width: 480px) {
+  
   .tools-grid {
     grid-template-columns: 1fr;
   }
-  
+}
+
+@media (max-width: 480px) {
   .tool-button {
     flex-direction: column;
     text-align: center;
@@ -823,7 +834,12 @@ Please create a fully functional web application that addresses these requiremen
   }
   
   .tools-icons {
-    justify-content: center;
+    justify-content: space-around;
+  }
+  
+  .tool-icon-button {
+    width: 36px;
+    height: 36px;
   }
 }
 </style>
