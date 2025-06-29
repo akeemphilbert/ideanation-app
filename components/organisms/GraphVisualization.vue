@@ -8,8 +8,8 @@
       v-if="hoveredNode" 
       class="node-hover-menu"
       :style="{ 
-        left: hoveredNode.cursorX + 'px', 
-        top: hoveredNode.cursorY + 'px'
+        left: 100 + 'px', 
+        top: 100 + 'px'
       }"
     >
       <div class="menu-content">

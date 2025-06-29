@@ -1,76 +1,9 @@
 <template>
   <div class="tools-panel">
-    <div class="tools-header" @click="toggleCollapsed">
-      <div class="header-content">
-        <h3 v-if="!isCollapsed">Tools</h3>
-        <div class="tools-status" v-if="!isCollapsed">
-          <span class="status-dot status-dot--ready"></span>
-          Ready
-        </div>
-      </div>
-      <div class="collapse-toggle">
-        <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="currentColor"
-          :class="{ 'rotated': !isCollapsed }"
-        >
-          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-        </svg>
-      </div>
-    </div>
-    
-    <!-- Collapsed State - Icons Only -->
-    <div class="tools-icons" v-if="isCollapsed">
-      <button 
-        class="tool-icon-button"
-        @click.stop="exportBusinessModelCanvas"
-        :disabled="!hasWorkspace || isExporting"
-        title="Export Business Model Canvas"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-        </svg>
-      </button>
-
-      <button 
-        class="tool-icon-button"
-        @click.stop="generatePitchDeck"
-        :disabled="!hasWorkspace || isExporting"
-        title="Generate Pitch Deck"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-          <path d="M21 8V6c0-.55-.45-1-1-1s-1 .45-1 1v2h-2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1h-2z"/>
-        </svg>
-      </button>
-
-      <button 
-        class="tool-icon-button"
-        @click.stop="exportAllResources"
-        :disabled="!hasWorkspace || isExporting"
-        title="Export All Resources"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-        </svg>
-      </button>
-
-      <button 
-        class="tool-icon-button"
-        @click.stop="generateBoltPrompt"
-        :disabled="!hasWorkspace || isExporting"
-        title="Generate Bolt Prompt"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7,2V13H10V22L17,10H13L17,2H7Z"/>
-        </svg>
-      </button>
-    </div>
+  
     
     <!-- Expanded State - Full Content -->
-    <div class="tools-content" v-if="!isCollapsed">
+    <div class="tools-content">
       <div class="tools-grid">
         <button 
           class="tool-button"
@@ -508,11 +441,7 @@ Please create a fully functional web application that addresses these requiremen
 <style scoped>
 /* Professional black theme matching chat interface - FULL WIDTH */
 .tools-panel {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   width: 100%;
 }

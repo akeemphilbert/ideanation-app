@@ -20,12 +20,11 @@
               <h2 class="workspace-title">
                 {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
               </h2>
-              
-              <!-- Tools Panel - Expanded to fill remaining width -->
-              <div class="tools-section" v-if="resourcesStore.currentWorkspace">
+            </div>
+             <!-- Tools Panel - Expanded to fill remaining width -->
+             <div class="tools-section" v-if="resourcesStore.currentWorkspace">
                 <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
               </div>
-            </div>
           </div>
           
           <div class="graph-controls" v-if="resourcesStore.currentWorkspace">
