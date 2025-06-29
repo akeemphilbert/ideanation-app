@@ -186,11 +186,6 @@
         </div>
         <div class="progress-text">{{ exportStatusText }}</div>
       </div>
-      
-      <!-- Manage Tools Link -->
-      <div class="manage-tools-link">
-        <a href="#" @click.prevent="showToolsManager">Manage tools</a>
-      </div>
     </div>
     
     <!-- Tools Manager Modal -->
@@ -1188,28 +1183,6 @@ watch(() => carouselRef.value?.scrollLeft, (newScrollLeft) => {
   color: #ccc;
   text-align: center;
   font-weight: 500;
-}
-
-/* Manage Tools Link */
-.manage-tools-link {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.manage-tools-link a {
-  color: #4f46e5;
-  font-size: 14px;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
-.manage-tools-link a:hover {
-  color: #6366f1;
-  text-decoration: underline;
-  background: rgba(79, 70, 229, 0.1);
 }
 
 /* Tools Manager Modal */
