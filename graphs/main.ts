@@ -1,12 +1,13 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
-import { StateGraph, END, START , interrupt} from "@langchain/langgraph";
+import { StateGraph, END, START , interrupt, Command, MemorySaver} from "@langchain/langgraph";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
 import type { WorkspaceResource, IdeaResource, ProblemResource } from "~/types/resources";
 import { RELATIONSHIP_TYPES } from "~/types/relationships";
 import { z } from "zod";
 
 import { AzureChatOpenAI } from "@langchain/openai";
+import { JsonOutputParser } from "@langchain/core/output_parsers";
 
 const config = useRuntimeConfig()
 
@@ -29,22 +30,66 @@ const llm = new AzureChatOpenAI({
     azureOpenAIBasePath: config.azureOpenAI.basePath,
     azureOpenAIApiDeploymentName: config.azureOpenAI.deployment,
 })
-// Define workflow nodes
-const checkWorkspaceNode = async (state: typeof WorkspaceState.State) => {
-    console.log("🔍 Checking workspace state...")
-    
-    // Check if workspace exists
-    if (!state.workspace) {
-        return { lastAction: "need_workspace" }
-    }
-    
-    // Check if workspace has at least one idea
-    if (state.ideas.length === 0) {
-        return { lastAction: "need_idea" }
-    }
-    
-    return { lastAction: "workspace_ready" }
+
+const ROUTES = {
+    WORKSPACE: "create_workspace",
+    IDEA: "create_idea",
+    PROBLEM: "create_problem",
 }
+
+const routeNode = async (state: typeof WorkspaceState.State) => {
+
+    //if there is no workspace, prompt the user to say what the are working on and then create a workspace
+    if (!state.workspace) {
+        return {
+            currentRoute: ROUTES.WORKSPACE
+        }
+    }
+
+    if (state.currentRoute) {
+        return {
+            currentRoute: state.currentRoute
+        }
+    }
+
+    const prompt = ChatPromptTemplate.fromMessages([
+        ["system", `You are helping a user create a startup idea.
+        You are part of a team of agents that are helping the user create a startup idea.
+        You are the router agent.
+        You goal is to interpert what the user is doing and route them to the right agent.
+        
+        Here the agents that you can route to 
+        - create_workspace
+        - create_idea
+        - create_problem
+
+        Here is the last message that was sent to them:
+        {lastMessage}
+        Here is the last route that was taken:
+        {lastRoute}
+
+        return only the route that you think is the best fit for the user's message.
+        `],
+        ["user", "{input}"],
+    ])
+
+
+    const chain = prompt.pipe(llm)
+    const result = await chain.invoke({
+        input: state.messages[state.messages.length - 1]?.content,
+        lastMessage: state.lastMessage,
+        lastRoute: state.currentRoute
+    })
+
+    return {
+        currentRoute: result.content
+    }
+}
+
+const nextRoute = (state: typeof WorkspaceState.State) => {
+    return state.currentRoute
+}
+
 
 const createWorkspaceNode = async (state: typeof WorkspaceState.State) => {
     console.log("🏢 Creating workspace...")
@@ -106,7 +151,10 @@ const createWorkspaceNode = async (state: typeof WorkspaceState.State) => {
         ],
         ideas: [idea],
         currentResource: idea,
-        lastAction: "workspace_created"
+        lastHumanMessage: state.messages[state.messages.length - 1],
+        lastMessage: "Great! I've created your workspace \"" + workspace.title + "\".",
+        lastAction: "workspace_created",
+        currentRoute: null
     }
 }
 
@@ -115,22 +163,30 @@ const createIdeaNode = async (state: typeof WorkspaceState.State) => {
     
     // If we have a user message, use it to create the idea
     const userMessage = state.messages[state.messages.length - 1]
-    let ideaTitle = "New Startup Idea"
+        let ideaTitle = "New Startup Idea"
+        let ideaDescription = "A new startup idea"
     
     if (userMessage && userMessage.content) {
         const prompt = ChatPromptTemplate.fromMessages([
             ["system", `You are helping create an idea within a workspace. 
-            The user has provided their startup idea. Extract a clear, concise idea title from their input.
-            Respond with just the idea title, nothing else.`],
+            The user has provided their startup idea. Extract a clear, concise idea title from their input as well as a description of the idea.`],
             ["user", "{input}"],
         ])
 
-        const chain = prompt.pipe(llm)
+        const zodSchema = z.object({
+            title: z.string(),
+            description: z.string()
+        })
+
+        const llmWithStructuredOutput = llm.withStructuredOutput(zodSchema)
+
+        const chain = prompt.pipe(llmWithStructuredOutput)
         const result = await chain.invoke({
             input: userMessage.content
         })
         
-        ideaTitle = String(result.content) || "New Startup Idea"
+        ideaTitle = result.title
+        ideaDescription = result.description
     }
 
     // Generate identifier from slugified title
@@ -143,7 +199,7 @@ const createIdeaNode = async (state: typeof WorkspaceState.State) => {
         '@type': 'ideanation:Idea' as const,
         id: uri,
         title: ideaTitle,
-        description: 'A new startup idea',
+        description: ideaDescription,
         identifier: identifier,
         created: new Date(),
         updated: new Date()
@@ -151,6 +207,13 @@ const createIdeaNode = async (state: typeof WorkspaceState.State) => {
 
     return {
         ideas: [idea],
+        relationships: [
+            {
+                sourceId: idea.id,
+                targetId: state.workspace?.id || "",
+                relationshipType: RELATIONSHIP_TYPES.BELONGS
+            }
+        ],
         currentIdea: idea,
         lastAction: "idea_created"
     }
@@ -158,16 +221,18 @@ const createIdeaNode = async (state: typeof WorkspaceState.State) => {
 
 const getInputNode = async (state: typeof WorkspaceState.State) => {
     let prompt = "What would you like to do next? (add a problem, a customer, a feature, a pain, a gain, a job, a product)"
-    if (state.lastAction === "workspace_created") {
-        prompt = "What's your startup idea? Please describe the main concept you want to work on."
-    } else if (state.lastAction === "idea_created") {
-        prompt = "What problems does your idea solve? Please describe the main problems or pain points your startup addresses."
+    if (state.lastAction === "workspace_created" || state.lastAction === "idea_created") {
+        prompt = "What problem does your idea solve?"
+        const message: string = interrupt(prompt)
+        return {
+            currentRoute: ROUTES.PROBLEM,
+            messages: [new HumanMessage(message)]
+        }
     } else if (state.lastAction === "should_create_problems") {
         prompt = "What problems does your idea solve?"
     }
-    const message: string = interrupt(prompt)
     return {
-        messages: [new HumanMessage(message)]
+        currentRoute: ROUTES.PROBLEM,
     }
 }
 
@@ -176,6 +241,7 @@ const createProblemNode = async (state: typeof WorkspaceState.State) => {
     
     const userMessage = state.messages[state.messages.length - 1]
     let problemTitle = "New Problem"
+    let problemDescription = "A problem that the startup idea solves"
     
     if (userMessage && userMessage.content) {
         const prompt = ChatPromptTemplate.fromMessages([
@@ -197,7 +263,8 @@ const createProblemNode = async (state: typeof WorkspaceState.State) => {
             input: userMessage.content
         })
         
-        problemTitle = String(result.content) || "New Problem"
+        problemTitle = result.title
+        problemDescription = result.description
     }
 
     // Generate a unique identifier
@@ -211,171 +278,82 @@ const createProblemNode = async (state: typeof WorkspaceState.State) => {
         '@type': 'ideanation:Problem' as const,
         id: uri,
         title: problemTitle,
-        description: 'A problem that the startup idea solves',
+        description: problemDescription,
         identifier: identifier,
         created: new Date(),
         updated: new Date()
     }
 
     return {
-        problems: [...state.problems, problem],
-        lastAction: "problem_created"
+        problems: [problem],
+        currentResource: problem,
+        relationships: [
+            {
+                sourceId: problem.id,
+                targetId: state.currentResource?.id || "",
+                relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
+            }
+        ],
+        lastMessage: "Great! I've created your problem \"" + problem.title + "\".",
+        lastAction: "problem_created",
+        currentRoute: null
     }
 }
-
-const processMessageNode = async (state: typeof WorkspaceState.State) => {
-    console.log("💬 Processing message...")
-    
-    const prompt = ChatPromptTemplate.fromMessages([
-        ["system", `You are an expert startup advisor helping users structure their ideas.
-        The workspace is ready with an idea. Now help the user with their request.
-        
-        Current workspace: ${state.workspace?.title}
-        Current idea: ${state.currentResource?.title}
-        
-        Provide helpful advice and suggestions for building out their startup idea.`],
-        ["user", "{input}"],
-    ])
-
-    const chain = prompt.pipe(llm)
-    
-    // Stream the response
-    const stream = await chain.stream({
-        input: state.messages[state.messages.length - 1].content
-    })
-
-    let responseContent = ""
-    for await (const chunk of stream) {
-        if (chunk.content) {
-            responseContent += chunk.content
-            writer.write(chunk.content)
-        }
-    }
-
-    // Add AI response to state
-    const aiMessage = new AIMessage(responseContent)
-    
-    return {
-        messages: [...state.messages, aiMessage],
-        lastAction: "message_processed"
-    }
-}
-
-const generateResponseNode = async (state: typeof WorkspaceState.State) => {
-    console.log("📝 Generating response...")
-    
-    let responseMessage = ""
-    
-    if (state.lastAction === "workspace_created") {
-        responseMessage = `Great! I've created your workspace "${state.workspace?.title}". Now, what's your startup idea? Please tell me about the main concept you want to work on.`
-    } else if (state.lastAction === "idea_created") {
-        responseMessage = `Perfect! I've created your idea "${state.currentResource?.title}" in the workspace "${state.workspace?.title}". 
-
-Now let's start building it out. First, what problems does your idea solve? Please describe the main problems or pain points your startup addresses.`
-    } else if (state.lastAction === "problem_created") {
-        responseMessage = `Excellent! I've added the problem "${state.problems[state.problems.length - 1]?.title}" to your idea.
-
-Now you can continue building out your startup by adding:
-• **customer:** describe your target customers  
-• **feature:** describe key features
-• **pain:** describe customer pain points
-• **gain:** describe customer gains
-
-What would you like to add next?`
-    }
-
-    if (responseMessage) {
-        writer.write(responseMessage)
-        
-        const aiMessage = new AIMessage(responseMessage)
-        
-        return {
-            messages: [...state.messages, aiMessage],
-            lastAction: "response_generated"
-        }
-    }
-    
-    return {}
-}
-
 // Define conditional logic
 const shouldCreateWorkspace = (state: typeof WorkspaceState.State): string => {
     if (!state.workspace) {
         return "create_workspace"
     }
-    return "check_ideas"
+    return "route"
 }
 
 const shouldCreateIdea = (state: typeof WorkspaceState.State): string => {
     if (state.ideas.length === 0) {
         return "get_idea_input"
     }
-    return "check_problems"
+    return "route"
 }
 
 const shouldCreateProblems = (state: typeof WorkspaceState.State): string => {
     if (state.problems.length === 0) {
         return "get_problem_input"
     }
-    return "process_message"
+    return "route"
 }
 
 // Create the workflow graph
 const workflow = new StateGraph(WorkspaceState)
 
 // Add nodes to the workflow
-workflow.addNode("check_workspace", checkWorkspaceNode)
 workflow.addNode("create_workspace", createWorkspaceNode)
-workflow.addNode("check_ideas", checkWorkspaceNode) // Reuse checkWorkspaceNode for idea checking
-workflow.addNode("check_problems", checkWorkspaceNode) // Reuse checkWorkspaceNode for problem checking
+workflow.addNode("route", routeNode)
 workflow.addNode("get_idea_input", getInputNode)
 workflow.addNode("get_problem_input", getInputNode)
 workflow.addNode("create_idea", createIdeaNode)
 workflow.addNode("create_problem", createProblemNode)
-workflow.addNode("process_message", processMessageNode)
-workflow.addNode("generate_response", generateResponseNode)
 
 // Set up the workflow edges
-workflow.addEdge(START, "check_workspace")
+workflow.addEdge(START, "route")
 
-// Conditional edges with explicit mappings
 workflow.addConditionalEdges(
-    "check_workspace",
-    shouldCreateWorkspace
+    "route",
+    nextRoute
 )
 
 workflow.addConditionalEdges(
     "create_workspace",
-    shouldCreateIdea
+    shouldCreateProblems
 )
 
 workflow.addConditionalEdges(
-    "check_ideas",
-    shouldCreateIdea,
-    {
-        "get_idea_input": "get_idea_input",
-        "check_problems": "check_problems"
-    }
-)
-
-workflow.addConditionalEdges(
-    "check_problems",
-    shouldCreateProblems,
-    {
-        "get_problem_input": "get_problem_input",
-        "process_message": "process_message"
-    }
+    "create_idea",
+    shouldCreateProblems
 )
 
 // Direct edges for sequential flow
 workflow.addEdge("get_idea_input", "create_idea")
-workflow.addEdge("get_problem_input", "create_problem")
-workflow.addEdge("create_idea", "generate_response")
-workflow.addEdge("create_problem", "generate_response")
-
-// End edges
-workflow.addEdge("generate_response", END)
-workflow.addEdge("process_message", END)
+workflow.addEdge("get_problem_input", "route")
+workflow.addEdge("create_problem", END)
 
 // Export the workflow
 export default workflow;
