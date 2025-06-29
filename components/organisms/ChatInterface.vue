@@ -352,7 +352,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Professional black theme for chat interface */
+/* Professional black theme for chat interface with white messages area */
 .chat-interface {
   height: 100%;
   display: flex;
@@ -404,12 +404,13 @@ onMounted(() => {
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
+/* WHITE MESSAGES AREA */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
   min-height: 0;
-  background: #1a1a1a;
+  background: #ffffff; /* Changed to white */
 }
 
 .chat-welcome {
@@ -418,11 +419,11 @@ onMounted(() => {
 }
 
 .welcome-message {
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: #f8f9fa; /* Light gray background for welcome message */
+  border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 20px;
-  color: #e5e5e5;
+  color: #495057; /* Dark gray text */
   line-height: 1.5;
 }
 
@@ -435,7 +436,7 @@ onMounted(() => {
   text-align: left;
   margin: 12px 0;
   padding-left: 20px;
-  color: #ccc;
+  color: #6c757d;
 }
 
 .welcome-message li {
@@ -444,13 +445,13 @@ onMounted(() => {
 }
 
 .welcome-message strong {
-  color: #fff;
+  color: #212529;
   font-weight: 600;
 }
 
 .help-note {
   font-style: italic;
-  color: #888;
+  color: #6c757d;
   font-size: 13px;
   margin-top: 8px;
 }
@@ -460,7 +461,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-  color: #888;
+  color: #6c757d; /* Changed to gray for white background */
 }
 
 .typing-dots {
@@ -472,7 +473,7 @@ onMounted(() => {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #666;
+  background: #adb5bd; /* Changed to gray for white background */
   animation: typing-bounce 1.4s infinite ease-in-out;
 }
 
@@ -625,22 +626,22 @@ onMounted(() => {
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Custom scrollbar for white background */
 .chat-messages::-webkit-scrollbar {
   width: 6px;
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #f8f9fa;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: #444;
+  background: #dee2e6;
   border-radius: 3px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #adb5bd;
 }
 
 /* Responsive adjustments */

@@ -108,6 +108,7 @@ const formatEntityType = (entityType: string): string => {
 </script>
 
 <style scoped>
+/* Updated styles for white background */
 .chat-message {
   display: flex;
   gap: 12px;
@@ -126,8 +127,8 @@ const formatEntityType = (entityType: string): string => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #333;
-  border: 1px solid #444;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
   font-size: 14px;
   flex-shrink: 0;
 }
@@ -142,13 +143,13 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message__text {
-  background: #2a2a2a;
-  border: 1px solid #333;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 14px;
   line-height: 1.5;
-  color: #e5e5e5;
+  color: #495057;
   position: relative;
   word-wrap: break-word;
 }
@@ -160,8 +161,9 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message--ai .chat-message__text {
-  background: #2a2a2a;
-  border-color: #333;
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #495057;
 }
 
 .entity-created {
@@ -202,7 +204,7 @@ const formatEntityType = (entityType: string): string => {
 .chat-message__suggestions h5 {
   margin: 0 0 8px 0;
   font-size: 12px;
-  color: #888;
+  color: #6c757d;
   font-weight: 600;
 }
 
@@ -216,24 +218,24 @@ const formatEntityType = (entityType: string): string => {
   padding: 8px 12px;
   font-size: 13px;
   text-align: left;
-  background: #333;
-  border: 1px solid #444;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
   border-radius: 6px;
-  color: #ccc;
+  color: #495057;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
 }
 
 .suggestion-item:hover {
-  background: #404040;
+  background: #f8f9fa;
   border-color: #4f46e5;
-  color: #fff;
+  color: #4f46e5;
 }
 
 .chat-message__timestamp {
   font-size: 11px;
-  color: #666;
+  color: #adb5bd;
   margin-top: 6px;
   font-weight: 500;
 }
