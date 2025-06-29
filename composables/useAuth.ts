@@ -33,30 +33,109 @@ export const useAuth = () => {
     }
   }
 
-  // Fetch user profile
+  // Fetch user profile with better error handling
   const fetchProfile = async () => {
     if (!user.value) return
 
     try {
+      console.log('Fetching profile for user:', user.value.id)
+      
+      // First, let's check if the table exists by trying a simple query
+      const { data: tableCheck, error: tableError } = await supabase
+        .from('profiles')
+        .select('count')
+        .limit(1)
+
+      if (tableError) {
+        console.error('Profiles table check failed:', tableError)
+        
+        // If table doesn't exist, we'll create a minimal profile in memory
+        profile.value = {
+          id: user.value.id,
+          email: user.value.email || '',
+          full_name: user.value.user_metadata?.full_name || null,
+          avatar_url: user.value.user_metadata?.avatar_url || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        return
+      }
+
+      // If table exists, try to fetch the profile
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.value.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        throw error
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          console.log('Profile not found, creating new profile')
+          await createProfile()
+        } else {
+          console.error('Error fetching profile:', error)
+          throw error
+        }
+      } else {
+        profile.value = data
+      }
+    } catch (error) {
+      console.error('Error in fetchProfile:', error)
+      
+      // Fallback: create profile from user metadata
+      if (user.value) {
+        profile.value = {
+          id: user.value.id,
+          email: user.value.email || '',
+          full_name: user.value.user_metadata?.full_name || null,
+          avatar_url: user.value.user_metadata?.avatar_url || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      }
+    }
+  }
+
+  // Create profile if it doesn't exist
+  const createProfile = async () => {
+    if (!user.value) return
+
+    try {
+      const profileData = {
+        id: user.value.id,
+        email: user.value.email || '',
+        full_name: user.value.user_metadata?.full_name || null,
+        avatar_url: user.value.user_metadata?.avatar_url || null
       }
 
-      profile.value = data
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(profileData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating profile:', error)
+        // Use fallback profile
+        profile.value = {
+          ...profileData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      } else {
+        profile.value = data
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error('Error in createProfile:', error)
     }
   }
 
   // Listen for auth changes
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, currentSession) => {
+      console.log('Auth state changed:', event, currentSession?.user?.id)
+      
       session.value = currentSession
       user.value = currentSession?.user ?? null
       
@@ -72,25 +151,39 @@ export const useAuth = () => {
 
   // Sign up with email and password
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
         }
-      }
-    })
-    return { data, error }
+      })
+      
+      console.log('Sign up result:', { data, error })
+      return { data, error }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      return { data: null, error }
+    }
   }
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-    return { data, error }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      
+      console.log('Sign in result:', { data, error })
+      return { data, error }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      return { data: null, error }
+    }
   }
 
   // Sign in with Google
@@ -146,26 +239,77 @@ export const useAuth = () => {
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user.value) return { error: new Error('No user logged in') }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.value.id)
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.value.id)
+        .select()
+        .single()
 
-    if (!error && data) {
-      profile.value = data
+      if (!error && data) {
+        profile.value = data
+      }
+
+      return { data, error }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      return { data: null, error }
     }
+  }
 
-    return { data, error }
+  // Debug function to check database connection
+  const debugDatabase = async () => {
+    try {
+      console.log('=== Database Debug Info ===')
+      
+      // Check if we can connect to Supabase
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      console.log('Current user:', currentUser?.id)
+      
+      // Try to query a system table to check connection
+      const { data: tables, error: tablesError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_schema', 'public')
+        .limit(5)
+      
+      if (tablesError) {
+        console.error('Cannot query information_schema:', tablesError)
+      } else {
+        console.log('Available tables:', tables)
+      }
+      
+      // Check if profiles table exists specifically
+      const { data: profilesTable, error: profilesError } = await supabase
+        .from('information_schema.tables')
+        .select('*')
+        .eq('table_schema', 'public')
+        .eq('table_name', 'profiles')
+        .single()
+      
+      if (profilesError) {
+        console.error('Profiles table check error:', profilesError)
+      } else {
+        console.log('Profiles table exists:', profilesTable)
+      }
+      
+    } catch (error) {
+      console.error('Database debug error:', error)
+    }
   }
 
   // Initialize on composable creation
   onMounted(() => {
     initAuth()
+    
+    // Run debug in development
+    if (process.dev) {
+      debugDatabase()
+    }
   })
 
   // Cleanup subscription on unmount
@@ -186,6 +330,8 @@ export const useAuth = () => {
     resetPassword,
     updatePassword,
     updateProfile,
-    fetchProfile
+    fetchProfile,
+    createProfile,
+    debugDatabase
   }
 }
