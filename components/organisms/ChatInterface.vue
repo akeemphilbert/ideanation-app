@@ -273,8 +273,8 @@ onMounted(() => {
 
 .message-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .message-input:disabled {
@@ -289,7 +289,7 @@ onMounted(() => {
 
 .send-button {
   padding: 12px;
-  background: #3b82f6;
+  background: #000000;
   color: white;
   border: none;
   border-radius: 8px;
@@ -303,7 +303,7 @@ onMounted(() => {
 }
 
 .send-button:hover:not(:disabled) {
-  background: #2563eb;
+  background: #1f2937;
   transform: translateY(-1px);
 }
 

@@ -139,9 +139,9 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message--user .avatar-icon {
-  background: #3b82f6;
+  background: #000000;
   color: white;
-  border-color: #3b82f6;
+  border-color: #000000;
 }
 
 .chat-message--ai .avatar-icon {
@@ -172,9 +172,9 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message--user .chat-message__text {
-  background: #3b82f6;
+  background: #000000;
   color: white;
-  border-color: #3b82f6;
+  border-color: #000000;
 }
 
 .chat-message--ai .chat-message__text {
@@ -262,8 +262,8 @@ const formatEntityType = (entityType: string): string => {
 
 .suggestion-item:hover {
   background: #f3f4f6;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: #000000;
+  color: #000000;
 }
 
 .chat-message__timestamp {
