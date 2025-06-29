@@ -14,7 +14,8 @@ export default defineNuxtConfig({
   
   // Modules
   modules: [
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@vueuse/nuxt'
   ],
   
   // Build configuration

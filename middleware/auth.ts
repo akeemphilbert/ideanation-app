@@ -8,6 +8,6 @@ export default defineNuxtRouteMiddleware((to) => {
   
   // Redirect to login if not authenticated
   if (!user.value) {
-    return navigateTo('/login')
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
 })

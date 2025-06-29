@@ -234,6 +234,11 @@ import { MarkdownFormatter, JSONFormatter } from '~/services/export/ExportFormat
 import { ExportType } from '~/types/export'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
 
+// Protect this route with authentication
+definePageMeta({
+  middleware: 'auth'
+})
+
 const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
 const resourcesStore = useResourcesStore()
@@ -722,7 +727,7 @@ const handleChatMessage = async () => {
     let aiMessageId: string | null = null
 
     while (true) {
-      const { done, value } = await reader.read()
+      const { done,value } = await reader.read()
       if (done) break
       
       const chunk = decoder.decode(value, { stream: true })
