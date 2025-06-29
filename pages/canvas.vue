@@ -16,13 +16,15 @@
       <div class="graph-section">
         <div class="graph-header">
           <div class="header-top">
-            <h2 class="workspace-title">
-              {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
-            </h2>
-            
-            <!-- Tools Panel - Under title -->
-            <div class="tools-section" v-if="resourcesStore.currentWorkspace">
-              <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
+            <div class="title-and-tools">
+              <h2 class="workspace-title">
+                {{ resourcesStore.currentWorkspace?.title || 'Your Idea Canvas' }}
+              </h2>
+              
+              <!-- Tools Panel - To the right of title -->
+              <div class="tools-section" v-if="resourcesStore.currentWorkspace">
+                <ToolsPanel :has-workspace="!!resourcesStore.currentWorkspace" />
+              </div>
             </div>
           </div>
           
@@ -436,10 +438,15 @@ useHead({
 }
 
 .header-top {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   margin-bottom: 20px;
+}
+
+/* Title and Tools Layout */
+.title-and-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  justify-content: space-between;
 }
 
 /* Professional workspace title - NOT handwritten */
@@ -450,11 +457,13 @@ useHead({
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 600;
   letter-spacing: -0.025em;
+  flex-shrink: 0;
 }
 
-/* Tools Section */
+/* Tools Section - positioned to the right */
 .tools-section {
-  width: 100%;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .graph-controls {
@@ -627,8 +636,14 @@ useHead({
     grid-template-columns: 300px 1fr;
   }
   
-  .header-top {
+  .title-and-tools {
+    flex-direction: column;
     gap: 12px;
+    align-items: stretch;
+  }
+  
+  .workspace-title {
+    font-size: 1.6rem;
   }
 }
 
@@ -644,6 +659,15 @@ useHead({
   
   .graph-container {
     transform: rotate(0deg);
+  }
+  
+  .title-and-tools {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .workspace-title {
+    font-size: 1.4rem;
   }
   
   .graph-controls {

@@ -2,8 +2,8 @@
   <div class="tools-panel">
     <div class="tools-header" @click="toggleCollapsed">
       <div class="header-content">
-        <h3>Tools</h3>
-        <div class="tools-status">
+        <h3 v-if="!isCollapsed">Tools</h3>
+        <div class="tools-status" v-if="!isCollapsed">
           <span class="status-dot status-dot--ready"></span>
           Ready
         </div>
@@ -21,7 +21,56 @@
       </div>
     </div>
     
-    <div class="tools-content" v-show="!isCollapsed">
+    <!-- Collapsed State - Icons Only -->
+    <div class="tools-icons" v-if="isCollapsed">
+      <button 
+        class="tool-icon-button"
+        @click.stop="exportBusinessModelCanvas"
+        :disabled="!hasWorkspace || isExporting"
+        title="Export Business Model Canvas"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+      </button>
+
+      <button 
+        class="tool-icon-button"
+        @click.stop="generatePitchDeck"
+        :disabled="!hasWorkspace || isExporting"
+        title="Generate Pitch Deck"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          <path d="M21 8V6c0-.55-.45-1-1-1s-1 .45-1 1v2h-2c-.55 0-1 .45-1 1s.45 1 1 1h2v2c0 .55.45 1 1 1s1-.45 1-1v-2h2c.55 0 1-.45 1-1s-.45-1-1-1h-2z"/>
+        </svg>
+      </button>
+
+      <button 
+        class="tool-icon-button"
+        @click.stop="exportAllResources"
+        :disabled="!hasWorkspace || isExporting"
+        title="Export All Resources"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+        </svg>
+      </button>
+
+      <button 
+        class="tool-icon-button"
+        @click.stop="generateBoltPrompt"
+        :disabled="!hasWorkspace || isExporting"
+        title="Generate Bolt Prompt"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7,2V13H10V22L17,10H13L17,2H7Z"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Expanded State - Full Content -->
+    <div class="tools-content" v-if="!isCollapsed">
       <div class="tools-grid">
         <button 
           class="tool-button"
@@ -121,7 +170,7 @@ const chatStore = useChatStore()
 const resourcesStore = useResourcesStore()
 const entitiesStore = useEntitiesStore()
 
-const isCollapsed = ref(false)
+const isCollapsed = ref(true) // Start collapsed by default
 const isExporting = ref(false)
 const exportProgress = ref(0)
 const exportStatusText = ref('')
@@ -465,6 +514,7 @@ Please create a fully functional web application that addresses these requiremen
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-width: 200px;
 }
 
 .tools-header {
@@ -537,6 +587,47 @@ Please create a fully functional web application that addresses these requiremen
   color: #fff;
 }
 
+/* Collapsed State - Icons Only */
+.tools-icons {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #111;
+  border-top: 1px solid #333;
+}
+
+.tool-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tool-icon-button:hover:not(:disabled) {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+}
+
+.tool-icon-button:disabled {
+  background: #1a1a1a;
+  border-color: #222;
+  color: #555;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Expanded State - Full Content */
 .tools-content {
   padding: 20px;
   transition: all 0.3s ease;
@@ -657,7 +748,11 @@ Please create a fully functional web application that addresses these requiremen
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  .tools-panel {
+    min-width: 180px;
+  }
+  
   .tools-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -680,6 +775,23 @@ Please create a fully functional web application that addresses these requiremen
   .tool-description {
     font-size: 11px;
   }
+}
+
+@media (max-width: 768px) {
+  .tools-panel {
+    min-width: 160px;
+  }
+  
+  .tools-icons {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  
+  .tool-icon-button {
+    width: 36px;
+    height: 36px;
+  }
   
   .tools-content {
     padding: 16px;
@@ -687,6 +799,10 @@ Please create a fully functional web application that addresses these requiremen
   
   .tools-header {
     padding: 12px 16px;
+  }
+  
+  .tools-header h3 {
+    font-size: 14px;
   }
 }
 
@@ -704,6 +820,10 @@ Please create a fully functional web application that addresses these requiremen
   
   .tool-content {
     text-align: center;
+  }
+  
+  .tools-icons {
+    justify-content: center;
   }
 }
 </style>
