@@ -139,14 +139,14 @@ onMounted(() => {
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: #000000;
 }
 
 .chat-title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: white;
 }
 
 .chat-status {
@@ -154,7 +154,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
 }
 
@@ -162,7 +162,7 @@ onMounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #d1d5db;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .status-dot--online {
