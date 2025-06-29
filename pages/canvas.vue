@@ -205,14 +205,7 @@
         </div>
       </div>
     </div>
-    
-    <!-- Component Modal -->
-    <ComponentModal
-      v-if="showComponentModal"
-      :component="selectedComponent"
-      @save="handleComponentSave"
-      @close="showComponentModal = false"
-    />
+  
     
     <!-- Link Creation Modal -->
     <LinkModal
@@ -271,17 +264,27 @@ const graphNodes = computed(() => {
   // DO NOT add workspace as a node - it's just the container
   
   // Add problems
-  entitiesStore.problems.forEach(problem => {
+  resourcesStore.ideas.forEach(idea => {
+    nodes.push({
+      id: idea.id,
+      title: idea.title,
+      type: idea['@type'],
+      description: idea.description
+    })
+  })
+
+  // Add problems
+  resourcesStore.problems.forEach(problem => {
     nodes.push({
       id: problem.id,
       title: problem.title,
-      type: 'problem',
+      type: problem['@type'],
       description: problem.description
     })
   })
   
   // Add customers
-  entitiesStore.customers.forEach(customer => {
+  resourcesStore.customers.forEach(customer => {
     nodes.push({
       id: customer.id,
       title: customer.title || customer.fullName,
@@ -291,7 +294,7 @@ const graphNodes = computed(() => {
   })
   
   // Add features
-  entitiesStore.features.forEach(feature => {
+  resourcesStore.features.forEach(feature => {
     nodes.push({
       id: feature.id,
       title: feature.title,
@@ -301,7 +304,7 @@ const graphNodes = computed(() => {
   })
   
   // Add products
-  entitiesStore.products.forEach(product => {
+  resourcesStore.products.forEach(product => {
     nodes.push({
       id: product.id,
       title: product.title,
@@ -311,7 +314,7 @@ const graphNodes = computed(() => {
   })
   
   // Add jobs
-  entitiesStore.jobs.forEach(job => {
+  resourcesStore.jobs.forEach(job => {
     nodes.push({
       id: job.id,
       title: job.title,
@@ -321,21 +324,21 @@ const graphNodes = computed(() => {
   })
   
   // Add pains
-  entitiesStore.pains.forEach(pain => {
+  resourcesStore.pains.forEach(pain => {
     nodes.push({
       id: pain.id,
       title: pain.title,
-      type: 'pain',
+      type: pain['@type'],
       description: pain.description
     })
   })
   
   // Add gains
-  entitiesStore.gains.forEach(gain => {
+  resourcesStore.gains.forEach(gain => {
     nodes.push({
       id: gain.id,
       title: gain.title,
-      type: 'gain',
+      type: gain['@type'],
       description: gain.description
     })
   })
@@ -345,7 +348,7 @@ const graphNodes = computed(() => {
 
 const graphEdges = computed(() => {
   // Filter out relationships that involve the workspace
-  return entitiesStore.relationships
+  return resourcesStore.relationships
     .filter(rel => {
       // Exclude relationships where source or target is the workspace
       const sourceIsWorkspace = resourcesStore.currentWorkspace && rel.sourceId === resourcesStore.currentWorkspace['@id']
@@ -730,8 +733,49 @@ const handleChatMessage = async () => {
       const { done,value } = await reader.read()
       if (done) break
       
-      const chunk = decoder.decode(value, { stream: true })
-      aiMessageContent += chunk
+      const rawChunk = decoder.decode(value, { stream: true })
+      //split chunks by update: and loop through the chunks
+      const chunks = rawChunk.split('update: ')
+      for (const chunk of chunks) {
+          const updateDetails = chunk.trim()
+          if (updateDetails) {
+            const agentUpdate = JSON.parse(updateDetails)
+            if (agentUpdate.data?.lastMessage ) {
+              aiMessageContent += agentUpdate.data.lastMessage
+            }
+            switch (agentUpdate.type) {
+              case 'create_workspace':
+                resourcesStore.createWorkspace(agentUpdate.data.workspace)
+                resourcesStore.setCurrentWorkspace(agentUpdate.data.workspace)
+                for (const idea of agentUpdate.data.ideas) {
+                  resourcesStore.createIdea(idea)
+                }
+                for (const relationship of agentUpdate.data.relationships) {
+                  resourcesStore.createRelationship(relationship)
+                }
+                break
+              case 'create_problem':
+                  for (const problem of agentUpdate.data.problems) {
+                    resourcesStore.createProblem(problem)
+                  }
+                  for (const relationship of agentUpdate.data.relationships) {
+                    resourcesStore.createRelationship(relationship)
+                  }
+                  break
+              case 'create_idea':
+                  for (const idea of agentUpdate.data.ideas) {
+                    resourcesStore.createIdea(idea)
+                  }
+                  for (const relationship of agentUpdate.data.relationships) {
+                    resourcesStore.createRelationship(relationship)
+                  }
+                  break
+                break
+            }
+          }
+          
+      }
+
 
       // Update or create AI message
       if (!aiMessageId) {

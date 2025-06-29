@@ -35,6 +35,26 @@ export const WorkspaceState = Annotation.Root({
     reducer: (x: BaseResource | null, y: BaseResource | null) => y, // Latest value wins
     default: () => null,
   }),
+
+  lastHumanMessage: Annotation<BaseMessage | null>({
+    reducer: (x: BaseMessage | null, y: BaseMessage | null) => y, // Latest value wins
+    default: () => null,
+  }),
+
+  lastAIMessage: Annotation<BaseMessage | null>({
+    reducer: (x: BaseMessage | null, y: BaseMessage | null) => y, // Latest value wins
+    default: () => null,
+  }),
+
+  lastMessage: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y, // Latest value wins
+    default: () => null,
+  }),
+
+  currentRoute: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y, // Latest value wins
+    default: () => null,
+  }),
   
   // All entities in the workspace
   ideas: Annotation<IdeaResource[]>({
