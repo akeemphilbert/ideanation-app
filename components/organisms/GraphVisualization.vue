@@ -13,7 +13,7 @@
     <!-- Selection Instructions -->
     <div class="selection-instructions" v-if="selectedNodeIds.length === 0">
       <div class="instruction-text">
-        💡 <strong>Click</strong> to select • <strong>Ctrl+Click</strong> for multi-select • <strong>Double-click</strong> to edit
+        💡 <strong>Click</strong> to select • <strong>Ctrl+Click</strong> for multi-select
       </div>
     </div>
     
@@ -55,7 +55,7 @@ const props = withDefaults(defineProps<Props>(), {
   selectedNodeIds: () => []
 })
 
-const emit = defineEmits(['node-click', 'node-hover', 'node-select'])
+const emit = defineEmits(['node-click', 'node-hover', 'node-select', 'node-edit', 'node-duplicate', 'node-link', 'node-delete'])
 
 const container = ref<HTMLElement>()
 const svgRef = ref<SVGElement>()
@@ -167,7 +167,7 @@ const updateGraph = () => {
       
       // Handle double-click for editing
       if (event.detail === 2) {
-        emit('node-click', d)
+        emit('node-edit', d)
         return
       }
       
