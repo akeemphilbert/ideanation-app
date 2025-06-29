@@ -10,8 +10,7 @@
       </div>
       
       <!-- Workspace Dropdown Row - Only show if workspaces exist -->
-      <div v-if="availableWorkspaces.length > 0" class="workspace-selector">
-        <label for="workspace-select" class="workspace-label">Workspace:</label>
+      <div class="workspace-selector">
         <select 
           id="workspace-select"
           v-model="selectedWorkspaceId" 
@@ -27,6 +26,17 @@
             {{ workspace.title }}
           </option>
         </select>
+        <div class="workspace-selector-actions">
+          <button 
+            class="workspace-selector-action"
+            @click="handleAddWorkspace"
+            title="Add new workspace"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -399,6 +409,34 @@ watch(chatMessage, (newValue) => {
   }
 })
 
+const handleAddWorkspace = () => {
+  const workspaceName = prompt('Enter workspace name:')
+  if (workspaceName && workspaceName.trim()) {
+    const newWorkspace = {
+      '@id': `/workspaces/${Date.now()}`,
+      '@type': 'ideanation:Workspace' as const,
+      id: `workspace-${Date.now()}`,
+      title: workspaceName.trim(),
+      description: `Workspace for ${workspaceName.trim()}`,
+      identifier: workspaceName.trim().toLowerCase().replace(/\s+/g, '-'),
+      created: new Date(),
+      updated: new Date()
+    }
+    
+    resourcesStore.createWorkspace(newWorkspace)
+    resourcesStore.setCurrentWorkspace(newWorkspace)
+    selectedWorkspaceId.value = newWorkspace.id
+    
+    // Add a message to chat about the new workspace
+    chatStore.addMessage({
+      type: 'ai',
+      content: `Created new workspace "${newWorkspace.title}". You can now start building your idea!`
+    })
+    
+    nextTick(() => scrollToBottom())
+  }
+}
+
 onMounted(() => {
   scrollToBottom()
 })
@@ -500,6 +538,38 @@ onMounted(() => {
   background: #2a2a2a;
   color: #fff;
   padding: 8px;
+}
+
+.workspace-selector-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.workspace-selector-action {
+  padding: 8px;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.workspace-selector-action:hover {
+  background: #1a1a1a;
+  border-color: #444;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.workspace-selector-action svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* WHITE MESSAGES AREA */

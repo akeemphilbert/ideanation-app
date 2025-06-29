@@ -154,7 +154,7 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message--user .chat-message__text {
-  background: #4f46e5;
+  background: #000000;
   color: white;
 }
 
