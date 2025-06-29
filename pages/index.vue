@@ -20,6 +20,7 @@
         <div class="nav-links">
           <a href="#features" class="nav-link">Features</a>
           <a href="#how-it-works" class="nav-link">How it works</a>
+          <a href="#about" class="nav-link">About</a>
           <a href="#pricing" class="nav-link">Pricing</a>
         </div>
 
@@ -92,6 +93,7 @@
         <div class="mobile-nav-links">
           <a href="#features" class="mobile-nav-link" @click="closeMobileMenu">Features</a>
           <a href="#how-it-works" class="mobile-nav-link" @click="closeMobileMenu">How it works</a>
+          <a href="#about" class="mobile-nav-link" @click="closeMobileMenu">About</a>
           <a href="#pricing" class="mobile-nav-link" @click="closeMobileMenu">Pricing</a>
         </div>
         <div class="mobile-nav-actions">
@@ -401,6 +403,100 @@
       </div>
     </section>
 
+    <!-- About Section -->
+    <section id="about" class="about-section">
+      <div class="section-container">
+        <div class="section-header">
+          <h2 class="section-title">About the Creator</h2>
+          <p class="section-description">
+            Meet the developer behind Ideanation and learn about the passion that drives this project.
+          </p>
+        </div>
+
+        <div class="about-content">
+          <div class="about-story">
+            <div class="story-points">
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">20 Years of Development</h3>
+                  <p class="point-description">
+                    I've been a developer for 20 years, working across different technologies, 
+                    platforms, and industries. From startups to enterprise, I've seen what works 
+                    and what doesn't when it comes to building great products.
+                  </p>
+                </div>
+              </div>
+
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">Passionate About Entrepreneurs</h3>
+                  <p class="point-description">
+                    I really enjoy working with entrepreneurs because they have this incredible 
+                    energy and vision. There's something magical about helping turn a crazy idea 
+                    into something real that can change the world.
+                  </p>
+                </div>
+              </div>
+
+              <div class="story-point">
+                <div class="point-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="point-content">
+                  <h3 class="point-title">Technology as a Vehicle</h3>
+                  <p class="point-description">
+                    Technology is the vehicle, not the destination. It's not about the latest 
+                    framework or the coolest tech stack—it's about solving real problems for 
+                    real people. That's what drives me every day.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-video">
+            <div class="video-container">
+              <div class="video-placeholder">
+                <div class="video-embed">
+                  <!-- YouTube video will be embedded here -->
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                    title="My Story - Why I Built Ideanation" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen
+                  ></iframe>
+                </div>
+                <div class="video-caption">
+                  <p>Watch my story and learn why I created Ideanation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Pricing Section -->
     <section id="pricing" class="pricing-section">
       <div class="section-container">
@@ -584,7 +680,7 @@
             
             <div class="footer-section">
               <h4 class="footer-title">Company</h4>
-              <a href="#" class="footer-link">About</a>
+              <a href="#about" class="footer-link">About</a>
               <!-- <a href="#" class="footer-link">Blog</a>
               <a href="#" class="footer-link">Careers</a> -->
             </div>
@@ -1438,10 +1534,116 @@ useHead({
   color: #374151;
 }
 
+/* About Section */
+.about-section {
+  padding: 80px 24px;
+  background: white;
+}
+
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.about-story {
+  max-width: 500px;
+}
+
+.story-points {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.story-point {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.point-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.point-content {
+  flex: 1;
+}
+
+.point-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.point-description {
+  color: #64748b;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.about-video {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.video-placeholder {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.video-embed {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-caption {
+  padding: 16px 20px;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.video-caption p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Pricing Section */
 .pricing-section {
   padding: 80px 24px;
-  background: white;
+  background: #f8fafc;
 }
 
 .pricing-grid {
@@ -1695,6 +1897,12 @@ useHead({
   
   .hero-title {
     font-size: 36px;
+  }
+  
+  .about-content {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    text-align: center;
   }
   
   .step-content {
