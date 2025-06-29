@@ -520,7 +520,7 @@ useHead({
   border-color: #45a049;
 }
 
-/* Entity Stats */
+/* Professional Entity Stats - matching header design */
 .entity-stats {
   display: flex;
   gap: 8px;
@@ -528,13 +528,24 @@ useHead({
 }
 
 .stat-item {
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  font-family: var(--font-handwritten);
-  background: #f0f0f0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: #333;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.stat-item:hover {
+  background: #444;
+  border-color: #555;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .graph-container {
@@ -642,6 +653,10 @@ useHead({
   .entity-stats {
     flex-direction: column;
     gap: 4px;
+  }
+  
+  .stat-item {
+    text-align: center;
   }
 }
 </style>
