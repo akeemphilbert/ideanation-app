@@ -7,6 +7,23 @@
       <div class="tools-grid">
         <button 
           class="tool-button"
+          @click="showBusinessModelCanvas"
+          :disabled="!hasWorkspace"
+          title="View your idea as a structured business model canvas"
+        >
+          <div class="tool-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+          </div>
+          <div class="tool-content">
+            <div class="tool-title">Business Model Canvas</div>
+            <div class="tool-description">View structured business model</div>
+          </div>
+        </button>
+
+        <button 
+          class="tool-button"
           @click="exportBusinessModelCanvas"
           :disabled="!hasWorkspace || isExporting"
           title="Export your idea as a structured business model canvas"
@@ -17,8 +34,8 @@
             </svg>
           </div>
           <div class="tool-content">
-            <div class="tool-title">Business Model Canvas</div>
-            <div class="tool-description">Export structured business model</div>
+            <div class="tool-title">Export BMC</div>
+            <div class="tool-description">Export business model</div>
           </div>
         </button>
 
@@ -95,9 +112,15 @@ interface Props {
   hasWorkspace?: boolean
 }
 
+interface Emits {
+  (e: 'show-business-model-canvas'): void
+}
+
 const props = withDefaults(defineProps<Props>(), {
   hasWorkspace: false
 })
+
+const emit = defineEmits<Emits>()
 
 const chatStore = useChatStore()
 const resourcesStore = useResourcesStore()
@@ -110,6 +133,10 @@ const exportStatusText = ref('')
 
 const toggleCollapsed = () => {
   isCollapsed.value = !isCollapsed.value
+}
+
+const showBusinessModelCanvas = () => {
+  emit('show-business-model-canvas')
 }
 
 const exportBusinessModelCanvas = async () => {
