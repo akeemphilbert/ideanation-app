@@ -1,11 +1,13 @@
 <template>
   <div class="chat-message" :class="`chat-message--${message.type}`">
     <div class="chat-message__avatar">
-      {{ message.type === 'user' ? '👤' : '🤖' }}
+      <div class="avatar-icon">
+        {{ message.type === 'user' ? '👤' : '🤖' }}
+      </div>
     </div>
     
     <div class="chat-message__content">
-      <div class="chat-message__text handwritten">
+      <div class="chat-message__text">
         {{ message.content }}
       </div>
       
@@ -19,12 +21,12 @@
       </div>
       
       <div v-if="message.suggestions && message.suggestions.length" class="chat-message__suggestions">
-        <h5>Suggestions:</h5>
+        <h5 class="suggestions-title">Suggestions:</h5>
         <div class="suggestions-list">
           <button
             v-for="suggestion in message.suggestions"
             :key="suggestion.id"
-            class="suggestion-item btn-sketch"
+            class="suggestion-item"
             @click="$emit('apply-suggestion', suggestion)"
           >
             {{ suggestion.title }}
@@ -111,8 +113,9 @@ const formatEntityType = (entityType: string): string => {
 .chat-message {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   align-items: flex-start;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .chat-message--user {
@@ -120,21 +123,36 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message__avatar {
+  flex-shrink: 0;
+}
+
+.avatar-icon {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 2px solid var(--color-primary);
-  font-size: 0.9rem;
-  flex-shrink: 0;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.chat-message--user .avatar-icon {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.chat-message--ai .avatar-icon {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
 }
 
 .chat-message__content {
   flex: 1;
-  max-width: 70%;
+  max-width: 75%;
 }
 
 .chat-message--user .chat-message__content {
@@ -142,39 +160,26 @@ const formatEntityType = (entityType: string): string => {
 }
 
 .chat-message__text {
-  background: white;
-  border: 2px solid var(--color-primary);
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
   position: relative;
-  transform: rotate(0.2deg);
+  word-wrap: break-word;
 }
 
 .chat-message--user .chat-message__text {
-  transform: rotate(-0.2deg);
-  background: #f8f8f8;
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
 }
 
-.chat-message__text::before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 8px solid transparent;
-}
-
-.chat-message--ai .chat-message__text::before {
-  left: -16px;
-  top: 12px;
-  border-right-color: var(--color-primary);
-}
-
-.chat-message--user .chat-message__text::before {
-  right: -16px;
-  top: 12px;
-  border-left-color: var(--color-primary);
+.chat-message--ai .chat-message__text {
+  background: white;
+  border-color: #d1d5db;
 }
 
 .entity-created {
@@ -185,69 +190,87 @@ const formatEntityType = (entityType: string): string => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #e8f5e8;
-  border: 1px solid #4caf50;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  transform: rotate(-0.1deg);
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .chat-message--user .entity-badge {
-  transform: rotate(0.1deg);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 .entity-icon {
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 .entity-title {
   font-weight: 600;
-  color: var(--color-primary);
+  color: #065f46;
+}
+
+.chat-message--user .entity-title {
+  color: white;
 }
 
 .entity-type {
-  color: var(--color-secondary);
-  font-size: 0.7rem;
+  color: #6b7280;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.chat-message--user .entity-type {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .chat-message__suggestions {
   margin-top: 12px;
 }
 
-.chat-message__suggestions h5 {
+.suggestions-title {
   margin: 0 0 8px 0;
-  font-size: 0.8rem;
-  color: var(--color-secondary);
-  font-family: var(--font-handwritten);
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .suggestions-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .suggestion-item {
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 8px 12px;
+  font-size: 13px;
   text-align: left;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-weight: 500;
 }
 
 .suggestion-item:hover {
-  background: white;
-  border-color: var(--color-primary);
+  background: #f3f4f6;
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .chat-message__timestamp {
-  font-size: 0.7rem;
-  color: var(--color-secondary);
-  margin-top: 4px;
-  font-family: var(--font-handwritten);
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 .chat-message--user .chat-message__timestamp {
