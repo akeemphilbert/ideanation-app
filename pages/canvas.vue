@@ -28,23 +28,82 @@
           </div>
           
           <div class="graph-controls" v-if="resourcesStore.currentWorkspace">
-            <!-- Entity Stats -->
+            <!-- Entity Stats with Create Buttons -->
             <div class="entity-stats">
-              <span class="stat-item">
-                {{ entitiesStore.problems.length }} Problems
-              </span>
-              <span class="stat-item">
-                {{ entitiesStore.customers.length }} Customers
-              </span>
-              <span class="stat-item">
-                {{ entitiesStore.features.length }} Features
-              </span>
-              <span class="stat-item">
-                {{ entitiesStore.products.length }} Products
-              </span>
-              <span class="stat-item">
-                {{ entitiesStore.relationships.length }} Links
-              </span>
+              <div class="stat-item" @click="openCreateModal('problem')">
+                <span class="stat-count">{{ entitiesStore.problems.length }}</span>
+                <span class="stat-label">Problems</span>
+                <button class="stat-add-button" title="Add new problem">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('customer')">
+                <span class="stat-count">{{ entitiesStore.customers.length }}</span>
+                <span class="stat-label">Customers</span>
+                <button class="stat-add-button" title="Add new customer">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('feature')">
+                <span class="stat-count">{{ entitiesStore.features.length }}</span>
+                <span class="stat-label">Features</span>
+                <button class="stat-add-button" title="Add new feature">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('product')">
+                <span class="stat-count">{{ entitiesStore.products.length }}</span>
+                <span class="stat-label">Products</span>
+                <button class="stat-add-button" title="Add new product">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('job')">
+                <span class="stat-count">{{ entitiesStore.jobs.length }}</span>
+                <span class="stat-label">Jobs</span>
+                <button class="stat-add-button" title="Add new job">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('pain')">
+                <span class="stat-count">{{ entitiesStore.pains.length }}</span>
+                <span class="stat-label">Pains</span>
+                <button class="stat-add-button" title="Add new pain">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item" @click="openCreateModal('gain')">
+                <span class="stat-count">{{ entitiesStore.gains.length }}</span>
+                <span class="stat-label">Gains</span>
+                <button class="stat-add-button" title="Add new gain">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="stat-item">
+                <span class="stat-count">{{ entitiesStore.relationships.length }}</span>
+                <span class="stat-label">Links</span>
+              </div>
             </div>
           </div>
         </div>
@@ -184,6 +243,14 @@
       @save="handleComponentSave"
       @close="showComponentModal = false"
     />
+
+    <!-- Entity Creation Modal -->
+    <EntityCreateModal
+      v-if="showCreateModal"
+      :entity-type="createEntityType"
+      @save="handleEntityCreate"
+      @close="showCreateModal = false"
+    />
   </div>
 </template>
 
@@ -191,6 +258,7 @@
 import GraphVisualization from '~/components/organisms/GraphVisualization.vue'
 import LinkModal from '~/components/molecules/LinkModal.vue'
 import ComponentModal from '~/components/molecules/ComponentModal.vue'
+import EntityCreateModal from '~/components/molecules/EntityCreateModal.vue'
 import ChatInterface from '~/components/organisms/ChatInterface.vue'
 import ToolsPanel from '~/components/organisms/ToolsPanel.vue'
 
@@ -206,8 +274,10 @@ const graphContainer = ref<HTMLElement>()
 
 const showLinkModal = ref(false)
 const showComponentModal = ref(false)
+const showCreateModal = ref(false)
 const selectedComponent = ref<any>(null)
 const selectedNodeIds = ref<string[]>([])
+const createEntityType = ref('')
 
 // Convert entities to graph format - EXCLUDE workspace from nodes
 const graphNodes = computed(() => {
@@ -324,6 +394,58 @@ onMounted(() => {
     }
   }
 })
+
+const openCreateModal = (entityType: string) => {
+  createEntityType.value = entityType
+  showCreateModal.value = true
+}
+
+const handleEntityCreate = (entityData: any) => {
+  let newEntity = null
+  
+  // Create the entity in the appropriate store
+  switch (createEntityType.value) {
+    case 'problem':
+      newEntity = entitiesStore.createProblem(entityData)
+      break
+    case 'customer':
+      newEntity = entitiesStore.createCustomer(entityData)
+      break
+    case 'feature':
+      newEntity = entitiesStore.createFeature(entityData)
+      break
+    case 'product':
+      newEntity = entitiesStore.createProduct(entityData)
+      break
+    case 'job':
+      newEntity = entitiesStore.createJob(entityData)
+      break
+    case 'pain':
+      newEntity = entitiesStore.createPain(entityData)
+      break
+    case 'gain':
+      newEntity = entitiesStore.createGain(entityData)
+      break
+  }
+  
+  if (newEntity) {
+    // Create relationship to workspace
+    entitiesStore.createRelationship({
+      sourceId: newEntity.id,
+      targetId: resourcesStore.currentWorkspace?.id || '',
+      relationshipType: 'belongs'
+    })
+    
+    // Add success message to chat
+    chatStore.addMessage({
+      type: 'ai',
+      content: `✅ Created new ${createEntityType.value} "${entityData.title}" successfully! It has been added to your canvas.`
+    })
+  }
+  
+  showCreateModal.value = false
+  createEntityType.value = ''
+}
 
 const getNodeTitle = (nodeId: string) => {
   const node = graphNodes.value.find(n => n.id === nodeId)
@@ -778,7 +900,7 @@ useHead({
   gap: 16px;
 }
 
-/* Professional Entity Stats - matching header design */
+/* Enhanced Entity Stats with Create Buttons */
 .entity-stats {
   display: flex;
   gap: 8px;
@@ -786,17 +908,22 @@ useHead({
 }
 
 .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 600;
   color: #fff;
   background: #333;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 1px solid #444;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   letter-spacing: 0.025em;
   transition: all 0.2s ease;
   white-space: nowrap;
+  cursor: pointer;
+  position: relative;
 }
 
 .stat-item:hover {
@@ -804,6 +931,55 @@ useHead({
   border-color: #555;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-count {
+  font-weight: 700;
+  font-size: 14px;
+  color: #4f46e5;
+}
+
+.stat-label {
+  font-weight: 500;
+}
+
+.stat-add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #4f46e5;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.stat-add-button:hover {
+  background: #4338ca;
+  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.stat-add-button svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Special styling for Links stat (no add button) */
+.stat-item:last-child {
+  cursor: default;
+}
+
+.stat-item:last-child:hover {
+  transform: none;
+  background: #333;
+  border-color: #444;
+  box-shadow: none;
 }
 
 .graph-container {
