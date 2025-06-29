@@ -270,9 +270,10 @@ export const useAuth = () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       console.log('Current user:', currentUser?.id)
       
-      // Try to query a system table to check connection
+      // Try to query a system table to check connection - using correct schema specification
       const { data: tables, error: tablesError } = await supabase
-        .from('information_schema.tables')
+        .schema('information_schema')
+        .from('tables')
         .select('table_name')
         .eq('table_schema', 'public')
         .limit(5)
@@ -285,7 +286,8 @@ export const useAuth = () => {
       
       // Check if profiles table exists specifically
       const { data: profilesTable, error: profilesError } = await supabase
-        .from('information_schema.tables')
+        .schema('information_schema')
+        .from('tables')
         .select('*')
         .eq('table_schema', 'public')
         .eq('table_name', 'profiles')

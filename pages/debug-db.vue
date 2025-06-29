@@ -103,10 +103,11 @@ const runDebug = async () => {
       }
     }
 
-    // Test 2: Check if we can query any table
+    // Test 2: Check if we can query any table - using correct schema specification
     try {
       const { data, error } = await supabase
-        .from('information_schema.tables')
+        .schema('information_schema')
+        .from('tables')
         .select('table_name')
         .eq('table_schema', 'public')
         .limit(1)
@@ -142,10 +143,11 @@ const runDebug = async () => {
       }
     }
 
-    // Test 4: Try to list all tables
+    // Test 4: Try to list all tables - using correct schema specification
     try {
       const { data, error } = await supabase
-        .from('information_schema.tables')
+        .schema('information_schema')
+        .from('tables')
         .select('table_name')
         .eq('table_schema', 'public')
       
