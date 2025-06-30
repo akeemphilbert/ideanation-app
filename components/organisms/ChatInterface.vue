@@ -3,10 +3,6 @@
     <div class="chat-header">
       <div class="header-main">
         <h3>AI Assistant</h3>
-        <div class="chat-status">
-          <span class="status-dot" :class="{ 'status-dot--online': isOnline }"></span>
-          {{ isOnline ? 'Online' : 'Offline' }}
-        </div>
       </div>
       
       <!-- Workspace Dropdown Row - Only show if workspaces exist -->
@@ -29,7 +25,7 @@
         <div class="workspace-selector-actions">
           <button 
             class="workspace-selector-action"
-            @click="handleAddWorkspace"
+            @click="showWorkspaceModal = true"
             title="Add new workspace"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -47,11 +43,11 @@
           <p v-if="!hasWorkspace"><strong>First, what's your idea called?</strong></p>
           <p v-else>Great! Now you can create entities by typing:</p>
           <ul v-if="hasWorkspace">
-            <li><strong>problem:</strong> your problem description</li>
-            <li><strong>customer:</strong> your customer description</li>
-            <li><strong>feature:</strong> your feature description</li>
-            <li><strong>pain:</strong> customer pain point</li>
-            <li><strong>gain:</strong> customer gain</li>
+            <li>your problem description</li>
+            <li>your customer description</li>
+            <li>your feature description</li>
+            <li>customer pain point</li>
+            <li>customer gain</li>
           </ul>
           <p v-if="hasWorkspace" class="help-note">Or ask me questions about your idea!</p>
         </div>
@@ -82,8 +78,6 @@
           :placeholder="getInputPlaceholder()"
           class="message-input"
           :disabled="isTyping"
-          @focus="showQuickSuggestions = true"
-          @blur="hideQuickSuggestions"
         />
         <button
           type="submit"
@@ -95,35 +89,25 @@
           </svg>
         </button>
       </form>
-      
-      <div class="quick-suggestions" v-if="showQuickSuggestions && !chatMessage.trim() && hasWorkspace">
-        <button
-          v-for="suggestion in quickSuggestions"
-          :key="suggestion"
-          class="suggestion-chip"
-          @click="selectSuggestion(suggestion)"
-        >
-          {{ suggestion }}
-        </button>
-      </div>
-      
-      <div class="entity-help" v-if="showEntityHelp">
-        <div class="help-content">
-          <h4>Quick Entity Creation:</h4>
-          <div class="entity-examples">
-            <span v-for="prefix in entityPrefixes" :key="prefix" class="prefix-example">
-              {{ prefix }}:
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
+
+    <!-- Workspace Create Modal -->
+    <WorkspaceCreateModal
+      v-if="showWorkspaceModal"
+      :visible="showWorkspaceModal"
+      @save="handleWorkspaceCreate"
+      @close="showWorkspaceModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useEntityParser } from '~/composables/useEntityParser'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
+import WorkspaceCreateModal from '~/components/molecules/WorkspaceCreateModal.vue'
+import { useAuth } from '~/composables/useAuth'
+
+const { getAccessToken } = useAuth()
 
 interface Props {
   selectedNodeIds?: string[]
@@ -149,21 +133,12 @@ const resourcesStore = useResourcesStore()
 const messagesContainer = ref<HTMLElement>()
 
 const chatMessage = ref('')
-const showQuickSuggestions = ref(false)
-const showEntityHelp = ref(false)
 const isOnline = ref(true)
 const selectedWorkspaceId = ref('')
+const showWorkspaceModal = ref(false)
 
 const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
 const entityPrefixes = getAvailablePrefixes()
-
-const quickSuggestions = [
-  "problem: not having a place for pets to stay when I'm on vacation",
-  "customer: busy pet owners who travel frequently",
-  "feature: real-time pet monitoring",
-  "What problems does this solve?",
-  "How do these components connect?"
-]
 
 // Computed properties
 const messages = computed(() => chatStore.messages)
@@ -199,6 +174,36 @@ const handleWorkspaceChange = () => {
   }
 }
 
+const handleWorkspaceCreate = (workspaceData: { title: string; description: string }) => {
+  const newWorkspace = {
+    '@id': `/workspaces/${Date.now()}`,
+    '@type': 'ideanation:Workspace' as const,
+    id: `workspace-${Date.now()}`,
+    title: workspaceData.title,
+    description: workspaceData.description,
+    identifier: workspaceData.title.toLowerCase().replace(/\s+/g, '-'),
+    created: new Date(),
+    updated: new Date()
+  }
+
+  resourcesStore.createWorkspace(newWorkspace)
+  resourcesStore.setCurrentWorkspace(newWorkspace)
+  selectedWorkspaceId.value = newWorkspace.id
+
+  // Close modal
+  showWorkspaceModal.value = false
+
+  // Add a message to chat about the new workspace
+  chatStore.addMessage({
+    type: 'ai',
+    content: `Created new workspace "${newWorkspace.title}". You can now start building your idea!`
+  })
+
+  emit('workspace-created', newWorkspace)
+
+  nextTick(() => scrollToBottom())
+}
+
 const getInputPlaceholder = () => {
   if (!props.hasWorkspace) {
     return "What's your startup idea called?"
@@ -227,8 +232,6 @@ const handleChatMessage = async () => {
   
   const message = chatMessage.value.trim()
   chatMessage.value = ''
-  showQuickSuggestions.value = false
-  showEntityHelp.value = false
 
   // Add user message first
   chatStore.addMessage({
@@ -239,11 +242,13 @@ const handleChatMessage = async () => {
   // Set typing indicator
   chatStore.setTyping(true)
 
+  const accessToken = await getAccessToken()
+
   try {
     // Stream response from AI
     const response = await fetch('/api/message/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({
         message: message
       }),
@@ -380,17 +385,6 @@ const handleSuggestionApply = (suggestion: any) => {
   nextTick(() => scrollToBottom())
 }
 
-const selectSuggestion = (suggestion: string) => {
-  chatMessage.value = suggestion
-  showQuickSuggestions.value = false
-}
-
-const hideQuickSuggestions = () => {
-  setTimeout(() => {
-    showQuickSuggestions.value = false
-  }, 200)
-}
-
 const scrollToBottom = () => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -400,13 +394,6 @@ const scrollToBottom = () => {
 // Watch for new messages and scroll to bottom
 watch(() => chatStore.messages.length, () => {
   nextTick(() => scrollToBottom())
-})
-
-// Watch chat input for entity commands
-watch(chatMessage, (newValue) => {
-  if (props.hasWorkspace) {
-    showEntityHelp.value = looksLikeEntityCommand(newValue)
-  }
 })
 
 const handleAddWorkspace = () => {
@@ -721,65 +708,6 @@ onMounted(() => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
-}
-
-.quick-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.suggestion-chip {
-  background: #2a2a2a;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #ccc;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-  font-family: inherit;
-}
-
-.suggestion-chip:hover {
-  border-color: #4f46e5;
-  background: #333;
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.entity-help {
-  margin-top: 12px;
-  background: #2a2a2a;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.help-content h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  color: #fff;
-  font-weight: 600;
-}
-
-.entity-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.prefix-example {
-  background: #333;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-  color: #4f46e5;
-  font-weight: 500;
 }
 
 @keyframes typing-bounce {

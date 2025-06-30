@@ -33,23 +33,6 @@
 
             <button 
               class="tool-button"
-              @click="exportBusinessModelCanvas"
-              :disabled="!hasWorkspace || isExporting"
-              title="Export your idea as a structured business model canvas"
-            >
-              <div class="tool-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                </svg>
-              </div>
-              <div class="tool-content">
-                <div class="tool-title">Export BMC</div>
-                <div class="tool-description">Export business model</div>
-              </div>
-            </button>
-
-            <button 
-              class="tool-button"
               @click="generatePitchDeck"
               :disabled="!hasWorkspace || isExporting"
               title="Generate a professional pitch deck presentation"
@@ -65,24 +48,6 @@
                 <div class="tool-description">Generate presentation slides</div>
               </div>
             </button>
-
-            <button 
-              class="tool-button"
-              @click="exportAllResources"
-              :disabled="!hasWorkspace || isExporting"
-              title="Export all resources and entities as structured data"
-            >
-              <div class="tool-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                </svg>
-              </div>
-              <div class="tool-content">
-                <div class="tool-title">Export Resources</div>
-                <div class="tool-description">Download all data</div>
-              </div>
-            </button>
-
             <button 
               class="tool-button"
               @click="generateBoltPrompt"
@@ -117,26 +82,26 @@
               </div>
               <div class="premium-badge">PRO</div>
             </button>
-            
+
             <button 
-              class="tool-button premium-tool"
-              @click="showPremiumFeature('competitor')"
-              :disabled="!hasWorkspace"
-              title="Analyze competitors for your idea (Premium feature)"
+              class="tool-button"
+              @click="showPremiumFeature('export')"
+              :disabled="!hasWorkspace || isExporting"
+              title="Export all resources and entities as structured data"
             >
               <div class="tool-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M2,3H22V13H18V21H2V3M4,5V19H16V15H20V5H4M6,7H18V9H6V7M6,11H18V13H6V11M8,15H14V17H8V15Z"/>
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                 </svg>
               </div>
               <div class="tool-content">
-                <div class="tool-title">Competitor Analysis</div>
-                <div class="tool-description">Premium feature</div>
+                <div class="tool-title">Export Resources</div>
+                <div class="tool-description">Download all data</div>
               </div>
               <div class="premium-badge">PRO</div>
             </button>
-            
-            <button 
+          
+            <!-- <button 
               class="tool-button premium-tool"
               @click="showPremiumFeature('roadmap')"
               :disabled="!hasWorkspace"
@@ -152,7 +117,7 @@
                 <div class="tool-description">Premium feature</div>
               </div>
               <div class="premium-badge">PRO</div>
-            </button>
+            </button> -->
           </div>
           
           <button 

@@ -4,8 +4,8 @@ export const useSupabaseServer = () => {
   const config = useRuntimeConfig()
   
   return createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey,
+    config.supabaseUrl,
+    config.supabaseAnonKey,
     {
       auth: {
         autoRefreshToken: false,
