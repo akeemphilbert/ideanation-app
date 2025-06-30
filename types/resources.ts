@@ -33,6 +33,7 @@ export interface ProblemResource extends BaseResource {
 export interface CustomerResource extends BaseResource {
   '@type': 'ideanation:Customer'
   title: string
+  description: string
   givenName: string
   familyName: string
   role: string

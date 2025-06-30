@@ -86,11 +86,11 @@ export default defineEventHandler(async (event) => {
         },config)
 
         //save the graph as a png
-        // const tgraph = app.getGraph()
-        // const image = await tgraph.drawMermaidPng();
-        // const graphStateArrayBuffer = await image.arrayBuffer();
-        // const filePath = "./graphState.png";
-        // writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
+        const tgraph = app.getGraph()
+        const image = await tgraph.drawMermaidPng();
+        const graphStateArrayBuffer = await image.arrayBuffer();
+        const filePath = "./graphState.png";
+        writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
 
         for await (const chunk of stream) {
             //the chunk is an object with a property for the node (which could be different from the previous chunk) and the WorkflowState as the value let's check the last action 

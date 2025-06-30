@@ -394,6 +394,10 @@ import ComponentModal from '~/components/molecules/ComponentModal.vue'
 import EntityCreateModal from '~/components/molecules/EntityCreateModal.vue'
 import ChatInterface from '~/components/organisms/ChatInterface.vue'
 import ToolsPanel from '~/components/organisms/ToolsPanel.vue'
+import { useCanvasInit } from '~/composables/useCanvasInit'
+import { useResourcesStore } from '~/stores/resources'
+import { useWorkspaces } from '~/composables/useWorkspaces'
+import { ApiService } from '~/services/api'
 
 // Protect this route with authentication
 definePageMeta({
@@ -404,6 +408,9 @@ const chatStore = useChatStore()
 const entitiesStore = useEntitiesStore()
 const resourcesStore = useResourcesStore()
 const graphContainer = ref<HTMLElement>()
+const { initializeCanvas } = useCanvasInit()
+const { workspaces, isLoading, error, fetchWorkspaces } = useWorkspaces()
+const apiService = new ApiService()
 
 const showLinkModal = ref(false)
 const showComponentModal = ref(false)
@@ -417,7 +424,7 @@ const createEntityType = ref('')
 
 const userMenuRef = ref<HTMLElement>()
   const router = useRouter()
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, getAccessToken } = useAuth()
 
 // Share modal state
 const shareLink = ref('')
@@ -461,7 +468,7 @@ const graphNodes = computed(() => {
   resourcesStore.customers.forEach(customer => {
     nodes.push({
       id: customer.id,
-      title: customer.title || customer.fullName,
+      title: customer.title || `${customer.givenName} ${customer.familyName}`,
       type: 'customer',
       description: customer.title || `${customer.role} at ${customer.organization}`.trim()
     })
@@ -542,13 +549,68 @@ const isValidEmail = computed(() => {
   return emailRegex.test(inviteEmail.value)
 })
 
-onMounted(() => {
+onMounted(async () => {
+  
   // Check if we have a workspace from route params
   const route = useRoute()
   if (route.params.workspaceId) {
     const workspace = resourcesStore.workspaces.find(w => w.id === route.params.workspaceId)
     if (workspace) {
       resourcesStore.setCurrentWorkspace(workspace)
+      try {
+        await initializeCanvas(workspace)
+      } catch (err) {
+        console.error('Failed to initialize canvas on mount:', err)
+      }
+    }
+  } else { //get the list of workspaces and user on 
+    try {
+      const token = await getAccessToken()
+      await fetchWorkspaces(token)
+      if (workspaces.value.length > 0) {
+        //since the workspaces are not in the store yet and wthe workspaces we retreived are not Worksspace resources let's use the first one to get it using the api 
+        const workspace = workspaces.value[0]
+        
+        const workspaceState = await apiService.getWorkspaceState(workspace.identifier, token)
+        resourcesStore.setCurrentWorkspace(workspaceState.workspace)
+        try {
+          await initializeCanvas(workspaceState)
+          //add all the resources to the store
+          for (const resource of workspaceState.ideas) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.problems) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.customers) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.features) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.products) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.jobs) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.pains) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.gains) {
+            resourcesStore.addResource(resource)
+          }
+          for (const resource of workspaceState.relationships) {
+            resourcesStore.addResource(resource)
+          }
+
+        
+        } catch (err) {
+          console.error('Failed to initialize canvas on mount:', err)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to get workspaces:', err)
     }
   }
 })
@@ -769,7 +831,7 @@ const handleNodeEdit = (node: any) => {
       const customer = entity as any
       description = `${customer.role} at ${customer.organization}`
     } else {
-      description = entity.description || ''
+      description = (entity as any).description || ''
     }
     
     selectedComponent.value = {
@@ -788,7 +850,7 @@ const handleNodeDuplicate = (node: any) => {
   if (entity) {
     const duplicateData = {
       title: `${entity.title} (Copy)`,
-      description: entity.description || '',
+      description: (entity as any).description || '',
     }
     
     let newEntity = null

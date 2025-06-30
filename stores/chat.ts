@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ApiService } from '~/services/api'
 import { useEntityParser } from '~/composables/useEntityParser'
+import { useResourceSync } from '~/composables/useResourceSync'
+import type { ResourceStateUpdate } from '~/services/resourceSync'
 
 export interface ChatMessage {
   id: string
@@ -24,6 +26,7 @@ export const useChatStore = defineStore('chat', () => {
   const messages = ref<ChatMessage[]>([])
   const isTyping = ref(false)
   const apiService = new ApiService()
+  const { syncFromLangGraph } = useResourceSync()
 
   const addMessage = (message: Omit<ChatMessage, 'id' | 'timestamp'>) => {
     const newMessage: ChatMessage = {
@@ -106,9 +109,15 @@ What would you like to add first?`,
       // Generate relationship message based on selected node
       let relationshipMessage = getRelationshipMessage(entityResult.parsed.type)
       if (selectedNodeId) {
-        const targetEntity = entitiesStore.findEntityById?.(selectedNodeId)
+        // Find the target entity in the appropriate collection
+        const targetEntity = entitiesStore.ideas.find(e => e.id === selectedNodeId) ||
+                           entitiesStore.problems.find(e => e.id === selectedNodeId) ||
+                           entitiesStore.customers.find(e => e.id === selectedNodeId) ||
+                           entitiesStore.products.find(e => e.id === selectedNodeId) ||
+                           entitiesStore.features.find(e => e.id === selectedNodeId)
+        
         if (targetEntity) {
-          relationshipMessage = `I've linked it to "${targetEntity.entity.title}".`
+          relationshipMessage = `I've linked it to "${targetEntity.title}".`
         }
       }
 
@@ -136,7 +145,7 @@ What would you like to add first?`,
       return
     }
 
-    // Regular chat message processing
+    // Regular chat message processing with LangGraph
     addMessage({
       type: 'user',
       content
@@ -145,14 +154,24 @@ What would you like to add first?`,
     isTyping.value = true
 
     try {
-      // Generate AI response (mock implementation)
-      const aiResponse = await generateAIResponse(content)
+      // Send message to LangGraph workflow
+      const response = await apiService.sendMessageStream(content)
       
-      addMessage({
-        type: 'ai',
-        content: aiResponse.content,
-        suggestions: aiResponse.suggestions
-      })
+      // Process streaming response
+      for await (const update of response) {
+        if (update.node && update.state) {
+          // Sync resources from LangGraph state
+          syncFromLangGraph(update as ResourceStateUpdate)
+          
+          // Add AI message if there's a lastMessage
+          if (update.state.lastMessage) {
+            addMessage({
+              type: 'ai',
+              content: update.state.lastMessage
+            })
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to get AI response:', error)
       addMessage({

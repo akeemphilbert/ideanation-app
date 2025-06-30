@@ -2,7 +2,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { StateGraph, END, START , interrupt, Command, MemorySaver} from "@langchain/langgraph";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
-import type { WorkspaceResource, IdeaResource, ProblemResource } from "~/types/resources";
+import type { WorkspaceResource, IdeaResource, ProblemResource, CustomerResource } from "~/types/resources";
 import { RELATIONSHIP_TYPES } from "~/types/relationships";
 import { z } from "zod";
 
@@ -35,6 +35,8 @@ const ROUTES = {
     WORKSPACE: "create_workspace",
     IDEA: "create_idea",
     PROBLEM: "create_problem",
+    CUSTOMER: "create_customer",
+    JOBS: "find_jobs"
 }
 
 const routeNode = async (state: typeof WorkspaceState.State) => {
@@ -62,6 +64,8 @@ const routeNode = async (state: typeof WorkspaceState.State) => {
         - create_workspace
         - create_idea
         - create_problem
+        - create_customer
+        - find_jobs
 
         Here is the last message that was sent to them:
         {lastMessage}
@@ -236,6 +240,7 @@ const getInputNode = async (state: typeof WorkspaceState.State) => {
         prompt = "What problems does your idea solve?"
     }
     return {
+        messages: [new AIMessage(prompt)],
         currentRoute: ROUTES.PROBLEM,
     }
 }
@@ -298,32 +303,163 @@ const createProblemNode = async (state: typeof WorkspaceState.State) => {
                 relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
             }
         ],
+        messages: [new AIMessage("Great! I've created your problem \"" + problem.title + "\".")],
         lastMessage: "Great! I've created your problem \"" + problem.title + "\".",
         lastAction: "problem_created",
         currentRoute: null
     }
 }
-// Define conditional logic
-const shouldCreateWorkspace = (state: typeof WorkspaceState.State): string => {
-    if (!state.workspace) {
-        return "create_workspace"
+
+const createCustomerNode = async (state: typeof WorkspaceState.State) => {
+    console.log("👤 Creating customer...")
+    
+    const userMessage = state.messages[state.messages.length - 1]
+    let customerTitle = "New Customer"
+    let customerDescription = "A customer that the startup idea solves"
+    let customerGivenName = "John"
+    let customerFamilyName = "Doe"
+    let customerRole = "Customer"
+    let customerOrganization = "Acme Inc."
+    
+    if (userMessage && userMessage.content) {
+        const prompt = ChatPromptTemplate.fromMessages([
+            ["system", `You are helping create a customer description for a startup idea. 
+            The user has described a customer their idea solves. Extract a clear, concise customer title from their input along with a detailed description of the customer's persona.
+        `],
+            ["user", "{input}"],
+        ])
+
+        const zodSchema = z.object({
+            title: z.string(),
+            description: z.string(),
+            givenName: z.string(),
+            familyName: z.string(),
+            role: z.string(),
+            organization: z.string()
+        })
+
+        const llmWithStructuredOutput = llm.withStructuredOutput(zodSchema)
+
+        const chain = prompt.pipe(llmWithStructuredOutput)
+        const result = await chain.invoke({
+            input: userMessage.content
+        })
+
+        customerTitle = result.title
+        customerDescription = result.description
+        customerGivenName = result.givenName
+        customerFamilyName = result.familyName
+        customerRole = result.role
+        customerOrganization = result.organization
+
+        // Generate a unique identifier
+        const identifier = slugify(customerTitle)
+        const idFromIdentifier = identifier.toLowerCase()
+        const uri = `/customers/${idFromIdentifier}`
+        
+        // Create customer (mock - in real app this would use the store)
+        const customer: CustomerResource = {
+            '@id': uri,
+            '@type': 'ideanation:Customer' as const,
+            id: uri,
+            title: customerTitle,
+            description: customerDescription,
+            givenName: customerGivenName,
+            familyName: customerFamilyName,
+            role: customerRole,
+            organization: customerOrganization,
+            identifier: identifier,
+            created: new Date(),
+            updated: new Date()
+        }
+
+        return {
+            customers: [customer],
+            relationships: [
+                {
+                    sourceId: customer.id,
+                    targetId: state.currentResource?.id || "",
+                    relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
+                }
+            ],
+            messages: [new AIMessage("Great! I've created your customer \"" + customer.title + "\".")],
+            currentResource: customer, 
+            lastMessage: "Great! I've created your customer \"" + customer.title + "\".",
+            lastAction: "customer_created",
+            currentRoute: null
+        }
     }
-    return "route"
 }
 
-const shouldCreateIdea = (state: typeof WorkspaceState.State): string => {
-    if (state.ideas.length === 0) {
-        return "get_idea_input"
-    }
-    return "route"
-}
+/** Agent Nodes */
+const findJobs = async (state: typeof WorkspaceState.State) => {
+    console.log("🔍 Finding jobs...")
 
+    const prompt = ChatPromptTemplate.fromMessages([
+        ["system", `You are helping the user workshop their startup idea. Check to see if the user specified a customer they are targeting. If they have
+            then identify the jobs to be done relative to the idea using the customer's persona and the jobs to be done framework.
+            1. The jobs returned should be in the categories of:
+                - Functional
+                - Emotional
+                - Social
+            2. Each job should have a title, description, and a categogory
+            3. If no customer is specified, then return an empty array
+
+            Idea {idea}
+    `],
+        ["user", "{input}"],
+    ])
+
+    const zodSchema = z.object({
+        jobs: z.array(z.object({
+            title: z.string(),
+            description: z.string(),
+            category: z.enum(["functional", "emotional", "social"])
+        }))
+    })
+
+    const llmWithStructuredOutput = llm.withStructuredOutput(zodSchema)
+
+    const chain = prompt.pipe(llmWithStructuredOutput)
+    const result = await chain.invoke({
+        input: state.messages[state.messages.length - 1]?.content,
+        idea: state.ideas.length > 0 ? state.ideas[0] : null
+    })
+
+    if (result.jobs.length > 0) {
+        //set the functional jobs as jobs and the emotional and social jobs as gains
+        const jobs = result.jobs.filter(job => job.category === "functional")
+        const gains = result.jobs.filter(job => job.category === "emotional" || job.category === "social")
+        return {
+            jobs: jobs,
+            gains: gains,
+            lastAction: "jobs_found",
+            currentRoute: null
+        }
+    } else {
+        const message: string = interrupt("Please specify a customer to identify the jobs to be done.")
+        return {
+            currentRoute: ROUTES.JOBS,
+            messages: [new HumanMessage(message)]
+        }
+    }
+
+}
+/* Conditional Edges */
 const shouldCreateProblems = (state: typeof WorkspaceState.State): string => {
     if (state.problems.length === 0) {
         return "get_problem_input"
     }
     return "route"
 }
+
+const shouldCreateCustomers = (state: typeof WorkspaceState.State): string => {
+    if (state.customers.length === 0) {
+        return "get_customer_input"
+    }
+    return "route"
+}
+
 
 // Create the workflow graph
 const workflow = new StateGraph(WorkspaceState)
@@ -333,8 +469,11 @@ workflow.addNode("create_workspace", createWorkspaceNode)
 workflow.addNode("route", routeNode)
 workflow.addNode("get_idea_input", getInputNode)
 workflow.addNode("get_problem_input", getInputNode)
+workflow.addNode("get_customer_input", getInputNode)
 workflow.addNode("create_idea", createIdeaNode)
 workflow.addNode("create_problem", createProblemNode)
+workflow.addNode("create_customer", createCustomerNode)
+workflow.addNode("find_jobs", findJobs)
 
 // Set up the workflow edges
 workflow.addEdge(START, "route")
@@ -354,11 +493,19 @@ workflow.addConditionalEdges(
     shouldCreateProblems
 )
 
+workflow.addConditionalEdges(
+    "create_problem",
+    shouldCreateCustomers
+)
+
 // Direct edges for sequential flow
 workflow.addEdge("get_idea_input", "create_idea")
 workflow.addEdge("get_problem_input", "create_problem")
+workflow.addEdge("get_customer_input", "create_customer")
+workflow.addEdge("create_customer", "find_jobs")
 workflow.addEdge("create_problem", END)
 workflow.addEdge("create_workspace", END)
+workflow.addEdge("find_jobs", END)
 
 // Export the workflow
 export default workflow;
