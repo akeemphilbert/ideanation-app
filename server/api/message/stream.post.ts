@@ -6,6 +6,7 @@ import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } fr
 import workflow from "~/graphs/main";
 import { AgentUpdate } from "~/types/dtos";
 import { MemorySaver } from "@langchain/langgraph";
+import { writeFileSync } from "node:fs";
 
 const memorySaver = new MemorySaver();
 
@@ -37,6 +38,13 @@ export default defineEventHandler(async (event) => {
         const stream = await app.stream({
             messages: [new HumanMessage(body.message)]
         },config)
+
+        //save the graph as a png
+        const tgraph = app.getGraph()
+        const image = await tgraph.drawMermaidPng();
+        const graphStateArrayBuffer = await image.arrayBuffer();
+        const filePath = "./graphState.png";
+        writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
 
         for await (const chunk of stream) {
             //the chunk is an object with a property for the node (which could be different from the previous chunk) and the WorkflowState as the value let's check the last action 

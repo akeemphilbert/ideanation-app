@@ -4,10 +4,6 @@
       <div class="modal-header">
         <div class="header-content">
           <h3>Create New Workspace</h3>
-          <div class="workspace-status">
-            <span class="status-dot status-dot--active"></span>
-            Ready to create
-          </div>
         </div>
         <button class="close-button" @click="closeModal">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

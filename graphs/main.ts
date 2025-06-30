@@ -87,7 +87,11 @@ const routeNode = async (state: typeof WorkspaceState.State) => {
 }
 
 const nextRoute = (state: typeof WorkspaceState.State) => {
-    return state.currentRoute
+    if (state.currentRoute) {
+        return state.currentRoute
+    } else {
+        return END
+    }
 }
 
 
@@ -352,8 +356,9 @@ workflow.addConditionalEdges(
 
 // Direct edges for sequential flow
 workflow.addEdge("get_idea_input", "create_idea")
-workflow.addEdge("get_problem_input", "route")
+workflow.addEdge("get_problem_input", "create_problem")
 workflow.addEdge("create_problem", END)
+workflow.addEdge("create_workspace", END)
 
 // Export the workflow
 export default workflow;
