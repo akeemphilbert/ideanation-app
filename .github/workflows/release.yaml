@@ -156,7 +156,7 @@ jobs:
             echo "AZURE_OPENAI_API_DEPLOYMENT_NAME=gpt-4o-mini" >> .env
             echo "AZURE_OPENAI_API_VERSION=2024-12-01-preview" >> .env
             echo "AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}" >> .env
-            echo "DEBUG=true" >> .env
+            echo "DEBUG=false" >> .env
             echo "LOG_LEVEL=debug" >> .env
             echo "POSTGRES_CONNECTION_STRING=${{ secrets.POSTGRES_CONNECTION_STRING }}" >> .env
             chmod 666 .env
