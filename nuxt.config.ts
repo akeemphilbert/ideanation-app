@@ -27,7 +27,8 @@ export default defineNuxtConfig({
   // Nitro configuration for server-side debugging
   nitro: {
     debug: process.env.NODE_ENV === 'production' && process.env.DEBUG === 'true',
-    logLevel: process.env.NODE_ENV === 'production' && process.env.DEBUG === 'true' ? 'debug' : 'info'
+    logLevel: process.env.NODE_ENV === 'production' && process.env.DEBUG === 'true' ? 'debug' : 'info',
+    errorHandler: '~/server/error-handler.ts'
   },
   
   // Environment variables

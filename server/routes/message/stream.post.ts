@@ -32,6 +32,7 @@ const checkpointer = PostgresSaver.fromConnString(config.postgresConnectionStrin
 
 export default defineEventHandler(async (event) => {
 
+    console.log('Starting workflow execution')
     const debug = createServerDebug('API:MessageStream')
     debug.debug('Starting workflow execution', {
         user: event.context.user,
