@@ -29,7 +29,7 @@
         <div class="workspace-selector-actions">
           <button 
             class="workspace-selector-action"
-            @click="handleAddWorkspace"
+            @click="showWorkspaceModal = true"
             title="Add new workspace"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -118,12 +118,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Workspace Create Modal -->
+    <WorkspaceCreateModal
+      v-if="showWorkspaceModal"
+      :visible="showWorkspaceModal"
+      @save="handleWorkspaceCreate"
+      @close="showWorkspaceModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useEntityParser } from '~/composables/useEntityParser'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
+import WorkspaceCreateModal from '~/components/molecules/WorkspaceCreateModal.vue'
 
 interface Props {
   selectedNodeIds?: string[]
@@ -153,6 +162,7 @@ const showQuickSuggestions = ref(false)
 const showEntityHelp = ref(false)
 const isOnline = ref(true)
 const selectedWorkspaceId = ref('')
+const showWorkspaceModal = ref(false)
 
 const { getAvailablePrefixes, looksLikeEntityCommand } = useEntityParser()
 const entityPrefixes = getAvailablePrefixes()
@@ -197,6 +207,36 @@ const handleWorkspaceChange = () => {
   } else {
     resourcesStore.setCurrentWorkspace(null)
   }
+}
+
+const handleWorkspaceCreate = (workspaceData: { title: string; description: string }) => {
+  const newWorkspace = {
+    '@id': `/workspaces/${Date.now()}`,
+    '@type': 'ideanation:Workspace' as const,
+    id: `workspace-${Date.now()}`,
+    title: workspaceData.title,
+    description: workspaceData.description,
+    identifier: workspaceData.title.toLowerCase().replace(/\s+/g, '-'),
+    created: new Date(),
+    updated: new Date()
+  }
+  
+  resourcesStore.createWorkspace(newWorkspace)
+  resourcesStore.setCurrentWorkspace(newWorkspace)
+  selectedWorkspaceId.value = newWorkspace.id
+  
+  // Close modal
+  showWorkspaceModal.value = false
+  
+  // Add a message to chat about the new workspace
+  chatStore.addMessage({
+    type: 'ai',
+    content: `Created new workspace "${newWorkspace.title}". You can now start building your idea!`
+  })
+  
+  emit('workspace-created', newWorkspace)
+  
+  nextTick(() => scrollToBottom())
 }
 
 const getInputPlaceholder = () => {
@@ -408,34 +448,6 @@ watch(chatMessage, (newValue) => {
     showEntityHelp.value = looksLikeEntityCommand(newValue)
   }
 })
-
-const handleAddWorkspace = () => {
-  const workspaceName = prompt('Enter workspace name:')
-  if (workspaceName && workspaceName.trim()) {
-    const newWorkspace = {
-      '@id': `/workspaces/${Date.now()}`,
-      '@type': 'ideanation:Workspace' as const,
-      id: `workspace-${Date.now()}`,
-      title: workspaceName.trim(),
-      description: `Workspace for ${workspaceName.trim()}`,
-      identifier: workspaceName.trim().toLowerCase().replace(/\s+/g, '-'),
-      created: new Date(),
-      updated: new Date()
-    }
-    
-    resourcesStore.createWorkspace(newWorkspace)
-    resourcesStore.setCurrentWorkspace(newWorkspace)
-    selectedWorkspaceId.value = newWorkspace.id
-    
-    // Add a message to chat about the new workspace
-    chatStore.addMessage({
-      type: 'ai',
-      content: `Created new workspace "${newWorkspace.title}". You can now start building your idea!`
-    })
-    
-    nextTick(() => scrollToBottom())
-  }
-}
 
 onMounted(() => {
   scrollToBottom()
