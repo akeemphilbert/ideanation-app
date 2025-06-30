@@ -70,7 +70,7 @@ jobs:
           echo "NUXT_PUBLIC_IAM_SERVICE_ENDPOINT=https://api.ideanation.cloud/iam/${{ steps.setup.outputs.ticket }}" >> .env
           echo "NUXT_PUBLIC_API_URL=https://api.ideanation.cloud/app/${{ steps.setup.outputs.ticket }}" >> .env
           echo "NUXT_PUBLIC_APP_BASE=https://${{ env.AWS_S3_BUCKET }}" >> .env
-          echo "NUXT_APP_BASE_URL=/" >> .env
+          echo "NUXT_APP_BASE_URL=/app/prod" >> .env
           echo "NUXT_PUBLIC_VERSION=${{  github.ref_name }}" >> .env
           echo "NUXT_PUBLIC_ENVIRONMENT=prod" >> .env
           echo "NUXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
