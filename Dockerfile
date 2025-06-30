@@ -39,6 +39,9 @@ RUN adduser --system --uid 1001 nuxtjs
 COPY --from=builder --chown=nuxtjs:nodejs /app/.output ./.output
 COPY --from=builder --chown=nuxtjs:nodejs /app/package.json ./package.json
 
+# Copy .env file from build context into the image
+COPY .env .env
+
 # Switch to non-root user
 USER nuxtjs
 
