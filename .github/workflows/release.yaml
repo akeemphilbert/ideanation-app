@@ -159,7 +159,9 @@ jobs:
             echo "DEBUG=true" >> .env
             echo "LOG_LEVEL=debug" >> .env
             echo "POSTGRES_CONNECTION_STRING=${{ secrets.POSTGRES_CONNECTION_STRING }}" >> .env
-          ls -al .env
+            chmod 666 .env
+             ls -al .env
+             cat .env
           docker build \
             -t ${AWS_REGISTRY_URL}:${{ github.sha }} \
             -t ${AWS_REGISTRY_URL}:${{ steps.setup.outputs.ticket }} \
