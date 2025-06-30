@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: false },
+  ssr: process.env.NUXT_NO_SSR !== 'true',
   
   // Enable pages directory
   pages: true,
