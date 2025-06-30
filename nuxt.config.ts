@@ -53,6 +53,7 @@ export default defineNuxtConfig({
   
   // App head configuration
   app: {
+    baseURL: process.env.APP_BASE_PATH,
     head: {
       title: 'Ideanation - Structure Your Startup Ideas',
       meta: [
