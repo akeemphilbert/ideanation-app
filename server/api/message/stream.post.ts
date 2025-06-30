@@ -1,3 +1,4 @@
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { defineEventHandler } from "h3";
 
 
@@ -7,10 +8,40 @@ import workflow from "~/graphs/main";
 import { AgentUpdate } from "~/types/dtos";
 import { MemorySaver } from "@langchain/langgraph";
 import { writeFileSync } from "node:fs";
+import { useSupabaseServer } from "~/server/utils/supabase";
 
-const memorySaver = new MemorySaver();
+const config = useRuntimeConfig()
+
+// Server-side function to get user from token
+const getUserFromToken = async (token: string) => {
+  const client = useSupabaseServer()
+  token = token.split(' ')[1]
+  const { data, error } = await client.auth.getUser(token)
+  if (error) {
+    throw createError({ statusCode: 401, message: 'Invalid token' })
+  }
+  return data.user
+}
+
+const checkpointer = PostgresSaver.fromConnString(config.postgresConnectionString, {
+    schema: "public"
+  });
+
+  
 
 export default defineEventHandler(async (event) => {
+
+    const authHeader = getHeader(event, 'authorization')
+    if (!authHeader) throw createError({ statusCode: 401, message: 'No token provided' })
+
+    const user = await getUserFromToken(authHeader)
+
+      event.context.user = user
+
+      if (!user) throw createError({ statusCode: 401, message: 'Invalid token' })
+
+
+
     setResponseHeaders(event, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -27,12 +58,16 @@ export default defineEventHandler(async (event) => {
         // Add user message to state
         const userMessage = new HumanMessage(body.message)
 
+        // You must call .setup() the first time you use the checkpointer:
+        await checkpointer.setup();
+
         // Compile and run the workflow
         const app = workflow.compile({
-            checkpointer: memorySaver
+            checkpointer: checkpointer
         })
-
-        const config = { configurable: { thread_id: "2"}, streamMode: "updates" as const }
+        //use the workspace identifier (lowercased) as the thread_id. If one doesn't exist use ws-001 as it's the default first workspace identifier
+        const thread_id = workspaceState.workspace?.identifier.toLowerCase() || "ws-001"
+        const config = { configurable: { thread_id: event.context.user?.id+':'+thread_id, user_id: event.context.user?.id}, streamMode: "updates" as const }
         
         console.log("🚀 Starting workflow execution...")
         const stream = await app.stream({

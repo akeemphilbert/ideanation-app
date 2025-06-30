@@ -261,57 +261,21 @@ export const useAuth = () => {
     }
   }
 
-  // Debug function to check database connection
-  const debugDatabase = async () => {
-    try {
-      console.log('=== Database Debug Info ===')
-      
-      // Check if we can connect to Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      console.log('Current user:', currentUser?.id)
-      
-      // Try to query a system table to check connection - using correct schema specification
-      const { data: tables, error: tablesError } = await supabase
-        .schema('information_schema')
-        .from('tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .limit(5)
-      
-      if (tablesError) {
-        console.error('Cannot query information_schema:', tablesError)
-      } else {
-        console.log('Available tables:', tables)
-      }
-      
-      // Check if profiles table exists specifically
-      const { data: profilesTable, error: profilesError } = await supabase
-        .schema('information_schema')
-        .from('tables')
-        .select('*')
-        .eq('table_schema', 'public')
-        .eq('table_name', 'profiles')
-        .single()
-      
-      if (profilesError) {
-        console.error('Profiles table check error:', profilesError)
-      } else {
-        console.log('Profiles table exists:', profilesTable)
-      }
-      
-    } catch (error) {
-      console.error('Database debug error:', error)
-    }
+  //function for getting the access token
+  const getAccessToken = async () => {
+    const { data, error } = await supabase.auth.getSession()
+    return data.session?.access_token
+  }
+
+  //function for getting the user from the access token
+  const getUserFromToken = async (token: string) => {
+    const { data, error } = await supabase.auth.getUser(token)
+    return data.user
   }
 
   // Initialize on composable creation
   onMounted(() => {
     initAuth()
-    
-    // Run debug in development
-    if (process.dev) {
-      debugDatabase()
-    }
   })
 
   // Cleanup subscription on unmount
@@ -334,6 +298,7 @@ export const useAuth = () => {
     updateProfile,
     fetchProfile,
     createProfile,
-    debugDatabase
+    getAccessToken,
+    getUserFromToken
   }
 }

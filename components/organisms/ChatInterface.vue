@@ -105,6 +105,9 @@
 import { useEntityParser } from '~/composables/useEntityParser'
 import ChatMessage from '~/components/molecules/ChatMessage.vue'
 import WorkspaceCreateModal from '~/components/molecules/WorkspaceCreateModal.vue'
+import { useAuth } from '~/composables/useAuth'
+
+const { getAccessToken } = useAuth()
 
 interface Props {
   selectedNodeIds?: string[]
@@ -239,11 +242,13 @@ const handleChatMessage = async () => {
   // Set typing indicator
   chatStore.setTyping(true)
 
+  const accessToken = await getAccessToken()
+
   try {
     // Stream response from AI
     const response = await fetch('/api/message/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
       body: JSON.stringify({
         message: message
       }),

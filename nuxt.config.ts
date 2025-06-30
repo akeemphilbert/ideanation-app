@@ -27,6 +27,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server-only Supabase configuration
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    postgresConnectionString: process.env.POSTGRES_CONNECTION_STRING,
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     
     // Fallback environment variables (optional)
     azureOpenAI: {
