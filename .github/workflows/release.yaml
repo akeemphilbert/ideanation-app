@@ -154,7 +154,7 @@ jobs:
           docker push ${AWS_REGISTRY_URL}:${{ steps.setup.outputs.ticket }}
       - name: Update ECS service
         run: |
-          aws ecs update-service --service ideanation-${{ steps.setup.outputs.ticket }}-service --cluster ${AWS_CLUSTER_NAME} --force-new-deployment
+          aws ecs update-service --service ideanation-app-${{ steps.setup.outputs.ticket }}-service --cluster ${AWS_CLUSTER_NAME} --force-new-deployment
           dig prod1.weos.sh
       - name: Send release notification
         uses: rtCamp/action-slack-notify@v2
