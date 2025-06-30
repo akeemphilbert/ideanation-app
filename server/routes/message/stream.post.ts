@@ -31,6 +31,12 @@ const checkpointer = PostgresSaver.fromConnString(config.postgresConnectionStrin
 
 export default defineEventHandler(async (event) => {
 
+    //add log line that will be json formatted for grafana
+    console.log(JSON.stringify({
+        message: 'Starting workflow execution',
+        user: event.context.user
+    }))
+
     const authHeader = getHeader(event, 'authorization')
     if (!authHeader) throw createError({ statusCode: 401, message: 'No token provided' })
 
