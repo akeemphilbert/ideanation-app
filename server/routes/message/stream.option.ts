@@ -8,5 +8,4 @@ export default defineEventHandler(async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       })
       return ''
-   
 })
