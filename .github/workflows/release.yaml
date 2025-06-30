@@ -18,7 +18,7 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_S3_BUCKET: app.ideanation.cloud
-  AWS_REGISTRY_URL: 582726374450.dkr.ecr.us-east-1.amazonaws.com/ideanation/
+  AWS_REGISTRY_URL: 582726374450.dkr.ecr.us-east-1.amazonaws.com/ideanation/idea-app
   AWS_CLOUDFRONT_DISTRIBUTION_ID: E3ND99DQD315CK
   AWS_CLUSTER_NAME: arn:aws:ecs:us-east-1:582726374450:cluster/prod-prod1
 
@@ -32,6 +32,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+              ${{ runner.os }}-node-
+              ${{ runner.os }}-node-${{ github.ref_name }}-
+
       - name: Setup node env 🏗
         uses: actions/setup-node@v2.5.0
         with:
