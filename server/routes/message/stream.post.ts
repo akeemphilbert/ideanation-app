@@ -9,6 +9,7 @@ import { AgentUpdate } from "~/types/dtos";
 import { MemorySaver } from "@langchain/langgraph";
 import { writeFileSync } from "node:fs";
 import { useSupabaseServer } from "~/server/utils/supabase";
+import { createServerDebug } from "~/utils/debug";
 
 const config = useRuntimeConfig()
 
@@ -31,11 +32,14 @@ const checkpointer = PostgresSaver.fromConnString(config.postgresConnectionStrin
 
 export default defineEventHandler(async (event) => {
 
-    //add log line that will be json formatted for grafana
-    console.log(JSON.stringify({
-        message: 'Starting workflow execution',
-        user: event.context.user
-    }))
+    const debug = createServerDebug('API:MessageStream')
+    debug.debug('Starting workflow execution', {
+        user: event.context.user,
+        url: config.supabaseUrl
+    })
+
+
+
 
     const authHeader = getHeader(event, 'authorization')
     if (!authHeader) throw createError({ statusCode: 401, message: 'No token provided' })

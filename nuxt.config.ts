@@ -23,6 +23,12 @@ export default defineNuxtConfig({
     transpile: ['ant-design-vue']
   },
   
+  // Nitro configuration for server-side debugging
+  nitro: {
+    debug: process.env.NODE_ENV === 'production' && process.env.DEBUG === 'true',
+    logLevel: process.env.NODE_ENV === 'production' && process.env.DEBUG === 'true' ? 'debug' : 'info'
+  },
+  
   // Environment variables
   runtimeConfig: {
     // Server-only Supabase configuration
@@ -30,6 +36,10 @@ export default defineNuxtConfig({
     postgresConnectionString: process.env.POSTGRES_CONNECTION_STRING,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    
+    // Debug configuration
+    debug: process.env.DEBUG === 'true',
+    logLevel: process.env.LOG_LEVEL || 'info',
     
     // Fallback environment variables (optional)
     azureOpenAI: {
@@ -47,7 +57,10 @@ export default defineNuxtConfig({
       // Client-side accessible Supabase configuration
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
-      apiUrl: process.env.API_URL
+      apiUrl: process.env.API_URL,
+      appBase: process.env.NUXT_PUBLIC_APP_BASE_URL,
+      // Client-side debug configuration
+      debug: process.env.DEBUG === 'true'
     }
   },
   

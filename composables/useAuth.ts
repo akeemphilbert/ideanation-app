@@ -188,10 +188,11 @@ export const useAuth = () => {
 
   // Sign in with Google
   const signInWithGoogle = async () => {
+    const config = useRuntimeConfig()
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${config.public.appBase}/auth/callback`
       }
     })
     return { data, error }
