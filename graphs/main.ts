@@ -21,7 +21,7 @@ const slugify = (text: string): string => {
 }
 
 // Initialize LLM
-const llm = new AzureChatOpenAI({
+export const llm = new AzureChatOpenAI({
     model: "gpt-4o-mini",
     temperature: 0.7,
     maxTokens: 1000,
