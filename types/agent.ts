@@ -1,8 +1,9 @@
 
-import { AgentCard } from './a2a';
+import type { AgentCard } from './a2a';
 // @ts-ignore
 import { AgentCapabilities, AgentSkill, SecurityScheme } from '@a2a-js/sdk';
-import { AnnotationRoot } from "@langchain/langgraph";
+import type { AnnotationRoot } from "@langchain/langgraph";
+import { StateGraph } from "@langchain/langgraph";
 
 
 export interface AgentConfig {
@@ -23,7 +24,7 @@ export interface AgentConfig {
 
 export class Agent {
   private config: AgentConfig;
-  private graphFactory: (agent: Agent, authToken?: string) => any;
+  private graphFactory: (agent: Agent, authToken?: string) => StateGraph<any>;
   private authToken?: string;
   private subAgents: Agent[] = [];
   private shortname: string;
@@ -31,7 +32,7 @@ export class Agent {
 
   constructor(
     config: AgentConfig,
-    graphFactory: (agent: Agent, authToken?: string) => any,
+    graphFactory: (agent: Agent, authToken?: string) => StateGraph<any>,
     authToken?: string,
     shortname?: string,
     defaultPrompt?: string
@@ -39,11 +40,11 @@ export class Agent {
     this.config = config;
     this.graphFactory = graphFactory;
     this.authToken = authToken;
-    this.shortname = shortname || config.shortname;
+    this.shortname = shortname || config.shortname || config.name;
     this.defaultPrompt = defaultPrompt || config.defaultPrompt;
   }
 
-  public getStateGraph(): AnnotationRoot<any> {
+  public getStateGraph(): StateGraph<any> {
     return this.graphFactory(this, this.authToken);
   }
 
@@ -51,7 +52,7 @@ export class Agent {
     return this.graphFactory(this, this.authToken).compile();
   }
 
-  public async getGraph(): Promise<any> {
+  public async getGraph(): Promise<StateGraph<any>> {
     return this.graphFactory(this, this.authToken);
   }
 
@@ -81,7 +82,7 @@ export class Agent {
   }
 
   private getAgentCard(): AgentCard {
-    const baseUrl = process.env.BASE_URL || `http://${request.headers.host}`;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     
     return {
       name: this.config.name,

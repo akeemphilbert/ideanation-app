@@ -21,6 +21,10 @@ import { AgentGraphError } from '../types/error';
  * for the LangGraph JS agent to operate on using annotation-based state management
  */
 export const WorkspaceState = Annotation.Root({
+  isGlobalState: Annotation<boolean>({
+    reducer: (x: boolean, y: boolean) => y, // Latest value wins
+    default: () => true,
+  }),
   // Chat conversation history using LangChain's BaseMessage
   messages: Annotation<BaseMessage[]>({
     reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
@@ -33,7 +37,7 @@ export const WorkspaceState = Annotation.Root({
   }),
 
   error: Annotation<AgentGraphError | null>({
-      reducer: (x: AgentGraphError | null, y: AgentGraphError | null) => x = y,
+      reducer: (x: AgentGraphError | null, y: AgentGraphError | null) => y,
       default: () => null,
   }),
 
@@ -142,17 +146,6 @@ export const WorkspaceState = Annotation.Root({
       relationshipDensity: 0
     }),
   }),
-  
-  // Export state
-  exportHistory: Annotation<Array<{
-    timestamp: Date
-    type: string
-    format: string
-    success: boolean
-  }>>({
-    reducer: (x: any[], y: any[]) => x.concat(y),
-    default: () => [],
-  }),
 })
 
 // Type alias for the state type
@@ -184,8 +177,7 @@ export function createInitialWorkspaceState() {
       customerProblemFit: 0,
       featureCompleteness: 0,
       relationshipDensity: 0
-    },
-    exportHistory: []
+    }
   }
 }
 

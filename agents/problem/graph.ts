@@ -13,6 +13,10 @@ import { slugify } from "../utils";
 
 // Define a specific state for the problem agent
 export const ProblemAgentState = Annotation.Root({
+    isGlobalState: Annotation<boolean>({
+        reducer: (x: boolean, y: boolean) => y, // Latest value wins
+        default: () => true,
+      }),
   messages: Annotation<BaseMessage[]>({
     reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
     default: () => [],
@@ -21,10 +25,6 @@ export const ProblemAgentState = Annotation.Root({
     reducer: (x: ProblemResource[], y: ProblemResource[]) => x.concat(y),
     default: () => [],
   }),
-  currentResource: Annotation<BaseResource | null>({
-    reducer: (x: BaseResource | null, y: BaseResource | null) => y,
-    default: () => null,
-  }),
   relationships: Annotation<RelationshipResource[]>({
     reducer: (x: RelationshipResource[], y: RelationshipResource[]) => x.concat(y),
     default: () => [],
@@ -32,18 +32,6 @@ export const ProblemAgentState = Annotation.Root({
   routes: Annotation<RoutingStateType[]>({
     reducer: (x: RoutingStateType[], y: RoutingStateType[]) => x.concat(y),
     default: () => [],
-  }),
-  lastMessage: Annotation<string | null>({
-    reducer: (x: string | null, y: string | null) => y,
-    default: () => null,
-  }),
-  lastAction: Annotation<string | null>({
-    reducer: (x: string | null, y: string | null) => y,
-    default: () => null,
-  }),
-  currentRoute: Annotation<string | null>({
-    reducer: (x: string | null, y: string | null) => y,
-    default: () => null,
   }),
 });
 
@@ -79,12 +67,17 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
         ]
       ]);
   
-      // Extract user input from the latest message in state.messages
+      // Extract user input from the latest human message in state.messages
       let input = "";
       if (state.messages && state.messages.length > 0) {
-        const lastMsg = state.messages[state.messages.length - 1];
-        // Try to get the content property (for HumanMessage)
-        input = lastMsg.content as string;
+        // Find the last human message
+        for (let i = state.messages.length - 1; i >= 0; i--) {
+          const msg = state.messages[i];
+          if (msg instanceof HumanMessage) {
+            input = msg.content as string;
+            break;
+          }
+        }
       }
   
       // Chain the prompt and the LLM with structured output
@@ -112,7 +105,7 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
       };
   }
 
-  const createProblemNode = async (state: ProblemAgentStateType) => {
+  async function createProblemNode(state: ProblemAgentStateType): Promise<Partial<ProblemAgentStateType>> {
     console.log("🔧 Creating problem...")
     
     const userMessage = state.messages[state.messages.length - 1]
@@ -163,14 +156,8 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
 
     return {
         problems: [problem],
-        currentResource: problem,
-        relationships: [
-            {
-                sourceId: problem.id,
-                targetId: state.currentResource?.id || "",
-                relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
-            }
-        ],
+        routes: [],
+        relationships: [],
         messages: [new AIMessage("Great! I've created your problem \"" + problem.title + "\".")],
     }
 }
@@ -196,22 +183,25 @@ const updateProblemNode = async (state: ProblemAgentStateType) => {
     updatedProblem = {
       ...existing,
       ...(updateInput.title ? { title: updateInput.title } : {}),
-      ...(updateInput.description ? { description: updateInput.description } : {}),
+      ...(updateInput.description ? { ...state,escription: updateInput.description } : {}),
       updated: new Date(),
     };
     // Replace in problems array
-    const newProblems = (state.problems || []).map((p: any) => (p.id === updatedProblem.id || p['@id'] === updatedProblem.id) ? updatedProblem : p);
     if (updatedProblem) {
-      lastMessage = `Problem '${updatedProblem.title}' updated.`;
+      const updatedProblemId = updatedProblem.id || updatedProblem['@id'];
+      const newProblems = (state.problems || []).map((p: any) => {
+        const problemId = p.id || p['@id'];
+        return (problemId === updatedProblemId) ? updatedProblem : p;
+      });
       return {
-        problems: newProblems,
-        currentResource: updatedProblem,
-        lastMessage,
-        lastAction: "problem_updated",
-        currentRoute: null
-      };
-    } else {
-      return { lastMessage: "Problem could not be updated." };
+          ...state,
+          problems: newProblems,
+          messages: [new AIMessage("Problem updated.")],
+      }
+    }
+    return {
+        ...state,
+        messages: [new AIMessage("Failed to update problem.")],
     }
   }
   return { lastMessage: "No input provided for updating problem." };
@@ -236,10 +226,8 @@ const deleteProblemNode = async (state: ProblemAgentStateType) => {
     const newProblems = (state.problems || []).filter((p: any) => (p.id !== deleteInput.id && p['@id'] !== deleteInput.id));
     lastMessage = `Problem '${existing.title}' deleted.`;
     return {
-      problems: newProblems,
-      lastMessage,
-      lastAction: "problem_deleted",
-      currentRoute: null
+        ...state,
+        problems: newProblems
     };
   }
   return { lastMessage: "No input provided for deleting problem." };
@@ -255,9 +243,8 @@ const listProblemsNode = async (state: ProblemAgentStateType) => {
       problems.map((p: any, idx: number) => `${idx + 1}. ${p.title}: ${p.description}`).join("\n");
   }
   return {
-    lastMessage,
-    lastAction: "problems_listed",
-    currentRoute: null
+    ...state,
+    problems: problems
   };
 };
 

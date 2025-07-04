@@ -5,7 +5,7 @@ import { defineEventHandler } from "h3";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
 import { AgentUpdate } from "~/types/dtos";
-import { MemorySaver } from "@langchain/langgraph";
+import { MemorySaver, StateGraph } from "@langchain/langgraph";
 import { writeFileSync } from "node:fs";
 import { useSupabaseServer } from "~/server/utils/supabase";
 import { createServerDebug } from "~/utils/debug";
@@ -64,9 +64,6 @@ export default defineEventHandler(async (event) => {
     
     try {
         const body = await readBody(event)
-        // Create initial workspace state
-        let workspaceState = createInitialWorkspaceState()
-        
         // Add user message to state
         const userMessage = new HumanMessage(body.message)
 
@@ -101,32 +98,33 @@ export default defineEventHandler(async (event) => {
         // writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
 
         //use the workspace identifier (lowercased) as the thread_id. If one doesn't exist use ws-001 as it's the default first workspace identifier
-        const thread_id = workspaceState.workspace?.identifier.toLowerCase() || "ws-001"
-        const config = { configurable: { thread_id: event.context.user?.id+':'+thread_id}, streamMode: "updates" as const }
-        
+        const thread_id = "ws-001"
         console.log("🚀 Starting workflow execution...")
         const stream = await app.stream({
             messages: [new HumanMessage(body.message)]
-        },config)
+        },{subgraphs:true,configurable: { thread_id: event.context.user?.id+':'+thread_id}, streamMode: ["updates" as const]})
 
-        
+        let i = 0 
 
         for await (const chunk of stream) {
-            //the chunk is an object with a property for the node (which could be different from the previous chunk) and the WorkflowState as the value let's check the last action 
-            for (const key in chunk) {
-                let agentUpdate = new AgentUpdate(key, chunk[key])
-                switch (key) {
-                    case "__interrupt__":
-                        agentUpdate = new AgentUpdate(key, {
-                            lastMessage: chunk[key][0].value
-                        })
+            //we find the position of the updates in the chunk because that is dependent on how deeply nested the agents are
+            let valuePosition = chunk.findIndex(item => item === "updates")+1
+            if (valuePosition > 0 && chunk[valuePosition]) {
+                for (const nodeName in chunk[valuePosition]) {
+                    const nodeUpdate = chunk[valuePosition][nodeName]
+                    const messages = nodeUpdate['messages']
+                    if (messages && !('isGlobalState' in nodeUpdate)) {
+                        let agentUpdate = new AgentUpdate(nodeName, nodeUpdate)
+                        if (i == 0) {
+                            agentUpdate.data.lastMessage = messages[messages.length-1].content
+                        } else {
+                            agentUpdate.data.lastMessage = "\n\n"+messages[messages.length-1].content
+                        }
                         writer.write(`update: ${JSON.stringify(agentUpdate)}`)
-                        break;
-                    default:
-                        agentUpdate.data.lastMessage = chunk[key].messages[chunk[key].messages.length-1].content
-                        writer.write(`update: ${JSON.stringify(agentUpdate)}`)
+                        i++
+                    }
                 }
-            } 
+            }
         }
 
     } catch (error) {
