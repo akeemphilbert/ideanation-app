@@ -5,7 +5,7 @@ import type { Agent } from "../../types/agent";
 import { llm } from "../../graphs/main"
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
-import { HumanMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
 
 // Export a function to create the routing graph
@@ -77,7 +77,7 @@ export function createSimpleRoutingGraph(agent: Agent, authToken?: string) {
     };
 
     return {
-      messages: [new HumanMessage(result.explanation)],
+      messages: [new AIMessage(result.explanation)],
       routes: [newRoute]
     };
   }

@@ -4,12 +4,13 @@ import { defineEventHandler } from "h3";
 
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { WorkspaceState, WorkspaceStateManager, createInitialWorkspaceState } from "~/states/WorkspaceState";
-import workflow from "~/graphs/main";
 import { AgentUpdate } from "~/types/dtos";
 import { MemorySaver } from "@langchain/langgraph";
 import { writeFileSync } from "node:fs";
 import { useSupabaseServer } from "~/server/utils/supabase";
 import { createServerDebug } from "~/utils/debug";
+import { setupAgent as setupRoutingAgent } from "~/agents/routing/main";
+import { setupAgent as setupProblemAgent } from "~/agents/problem/main";
 
 const config = useRuntimeConfig()
 
@@ -72,25 +73,43 @@ export default defineEventHandler(async (event) => {
         // You must call .setup() the first time you use the checkpointer:
         await checkpointer.setup();
 
-        // Compile and run the workflow
-        const app = workflow.compile({
+        const agent = setupRoutingAgent("","")
+        const problemAgent = setupProblemAgent("problem","")
+        agent.addSubAgent(problemAgent)
+
+
+        const workspace = await agent.getGraph()
+        const app = await workspace.compile({
             checkpointer: checkpointer
         })
+
+        //save the graph as a png
+        // let tgraph = app.getGraph()
+        // let image = await tgraph.drawMermaidPng();
+        // let graphStateArrayBuffer = await image.arrayBuffer();
+        // let filePath = "./graphState.png";
+        // writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
+
+        // const problemGraph = await problemAgent.getGraph()
+        // const problemApp = await problemGraph.compile()
+
+
+        // tgraph = problemApp.getGraph()
+        // image = await tgraph.drawMermaidPng();
+        // graphStateArrayBuffer = await image.arrayBuffer();
+        // filePath = "./problemGraphState.png";
+        // writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
+
         //use the workspace identifier (lowercased) as the thread_id. If one doesn't exist use ws-001 as it's the default first workspace identifier
         const thread_id = workspaceState.workspace?.identifier.toLowerCase() || "ws-001"
-        const config = { configurable: { thread_id: event.context.user?.id+':'+thread_id, user_id: event.context.user?.id}, streamMode: "updates" as const }
+        const config = { configurable: { thread_id: event.context.user?.id+':'+thread_id}, streamMode: "updates" as const }
         
         console.log("🚀 Starting workflow execution...")
         const stream = await app.stream({
             messages: [new HumanMessage(body.message)]
         },config)
 
-        //save the graph as a png
-        // const tgraph = app.getGraph()
-        // const image = await tgraph.drawMermaidPng();
-        // const graphStateArrayBuffer = await image.arrayBuffer();
-        // const filePath = "./graphState.png";
-        // writeFileSync(filePath, new Uint8Array(graphStateArrayBuffer));
+        
 
         for await (const chunk of stream) {
             //the chunk is an object with a property for the node (which could be different from the previous chunk) and the WorkflowState as the value let's check the last action 
@@ -104,6 +123,7 @@ export default defineEventHandler(async (event) => {
                         writer.write(`update: ${JSON.stringify(agentUpdate)}`)
                         break;
                     default:
+                        agentUpdate.data.lastMessage = chunk[key].messages[chunk[key].messages.length-1].content
                         writer.write(`update: ${JSON.stringify(agentUpdate)}`)
                 }
             } 

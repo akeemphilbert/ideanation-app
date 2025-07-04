@@ -1,19 +1,58 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
-import { WorkspaceState } from "../../states/WorkspaceState";
-import type { RoutingStateType, WorkspaceStateType } from "../../states/WorkspaceState";
+import { Annotation } from "@langchain/langgraph";
+import type { BaseMessage } from "@langchain/core/messages";
+import type { ProblemResource, RelationshipResource, BaseResource } from "../../types/resources";
+import type { RoutingStateType } from "../../states/WorkspaceState";
 import type { Agent } from "../../types/agent";
-import { HumanMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 import { llm } from "../../graphs/main";
-import type { ProblemResource } from "../../types/resources";
 import { RELATIONSHIP_TYPES } from "../../types/relationships"
 import { slugify } from "../utils";
+
+// Define a specific state for the problem agent
+export const ProblemAgentState = Annotation.Root({
+  messages: Annotation<BaseMessage[]>({
+    reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
+    default: () => [],
+  }),
+  problems: Annotation<ProblemResource[]>({
+    reducer: (x: ProblemResource[], y: ProblemResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  currentResource: Annotation<BaseResource | null>({
+    reducer: (x: BaseResource | null, y: BaseResource | null) => y,
+    default: () => null,
+  }),
+  relationships: Annotation<RelationshipResource[]>({
+    reducer: (x: RelationshipResource[], y: RelationshipResource[]) => x.concat(y),
+    default: () => [],
+  }),
+  routes: Annotation<RoutingStateType[]>({
+    reducer: (x: RoutingStateType[], y: RoutingStateType[]) => x.concat(y),
+    default: () => [],
+  }),
+  lastMessage: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y,
+    default: () => null,
+  }),
+  lastAction: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y,
+    default: () => null,
+  }),
+  currentRoute: Annotation<string | null>({
+    reducer: (x: string | null, y: string | null) => y,
+    default: () => null,
+  }),
+});
+
+export type ProblemAgentStateType = typeof ProblemAgentState.State;
 
 // Export a function to create the problem agent graph
 export function createProblemAgentGraph(agent: Agent, authToken?: string) {
   // Node: Manage problem (placeholder)
-  async function manageProblemNode(state: WorkspaceStateType): Promise<Partial<WorkspaceStateType>> {
+  async function manageProblemNode(state: ProblemAgentStateType): Promise<Partial<ProblemAgentStateType>> {
     // Define the output schema
     const outputSchema = z.object({
         route: z.string(),
@@ -68,12 +107,12 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
       };
   
       return {
-        messages: [new HumanMessage(result.explanation)],
+        messages: [new AIMessage(result.explanation)],
         routes: [newRoute]
       };
   }
 
-  const createProblemNode = async (state: typeof WorkspaceState.State) => {
+  const createProblemNode = async (state: ProblemAgentStateType) => {
     console.log("🔧 Creating problem...")
     
     const userMessage = state.messages[state.messages.length - 1]
@@ -83,7 +122,8 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
     if (userMessage && userMessage.content) {
         const prompt = ChatPromptTemplate.fromMessages([
             ["system", `You are helping create a problem description for a startup idea. 
-            The user has described a problem their idea solves. Extract a clear, concise problem title from their input along with a detailed description of the problem.
+            The user has described a problem their idea solves. 
+            Extract a clear, concise problem title from their input along with a detailed description of the problem.
         `],
             ["user", "{input}"],
         ])
@@ -131,13 +171,11 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
                 relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
             }
         ],
-        lastMessage: "Great! I've created your problem \"" + problem.title + "\".",
-        lastAction: "problem_created",
-        currentRoute: null
+        messages: [new AIMessage("Great! I've created your problem \"" + problem.title + "\".")],
     }
 }
 
-const updateProblemNode = async (state: typeof WorkspaceState.State) => {
+const updateProblemNode = async (state: ProblemAgentStateType) => {
   console.log("\uD83D\uDD27 Updating problem...");
   const userMessage = state.messages[state.messages.length - 1];
   let updatedProblem: ProblemResource | null = null;
@@ -179,7 +217,7 @@ const updateProblemNode = async (state: typeof WorkspaceState.State) => {
   return { lastMessage: "No input provided for updating problem." };
 };
 
-const deleteProblemNode = async (state: typeof WorkspaceState.State) => {
+const deleteProblemNode = async (state: ProblemAgentStateType) => {
   console.log("\uD83D\uDD27 Deleting problem...");
   const userMessage = state.messages[state.messages.length - 1];
   let lastMessage = "";
@@ -207,7 +245,7 @@ const deleteProblemNode = async (state: typeof WorkspaceState.State) => {
   return { lastMessage: "No input provided for deleting problem." };
 };
 
-const listProblemsNode = async (state: typeof WorkspaceState.State) => {
+const listProblemsNode = async (state: ProblemAgentStateType) => {
   console.log("\uD83D\uDD27 Listing problems...");
   const problems = state.problems || [];
   let lastMessage = "No problems found.";
@@ -223,14 +261,37 @@ const listProblemsNode = async (state: typeof WorkspaceState.State) => {
   };
 };
 
-  const graph = new StateGraph(WorkspaceState);
-  graph.addNode('manage_problem', manageProblemNode);
-  // @ts-expect-error
-  graph.addEdge(START, 'manage_problem');
-  // @ts-expect-error
-  graph.addEdge('manage_problem', END);
+  const graph = new StateGraph(ProblemAgentState);
+  graph.addNode('detect_intent', manageProblemNode);
+  graph.addNode('create_problem', createProblemNode);
   graph.addNode('update_problem', updateProblemNode);
   graph.addNode('delete_problem', deleteProblemNode);
   graph.addNode('list_problems', listProblemsNode);
+
+   // Conditional edge from detect_intent to the correct sub-agent node
+   function selectNextRoute(state: ProblemAgentStateType) {
+    // Get the last route from state.routes
+    const routes = state.routes || [];
+    const lastRoute = routes.length > 0 ? routes[routes.length - 1] : undefined;
+    const route = lastRoute && lastRoute.route;
+    // Find the agent with a matching shortname
+    return route;
+    return END;
+  }
+  // @ts-expect-error
+  graph.addConditionalEdges('detect_intent', selectNextRoute);
+  
+  // @ts-expect-error
+  graph.addEdge(START, 'detect_intent');
+  // @ts-expect-error
+  graph.addEdge('detect_intent', END);
+  // @ts-expect-error
+  graph.addEdge('create_problem', END);
+  // @ts-expect-error
+  graph.addEdge('update_problem', END);
+  // @ts-expect-error
+  graph.addEdge('delete_problem', END);
+  // @ts-expect-error
+  graph.addEdge('list_problems', END);
   return graph;
 } 
