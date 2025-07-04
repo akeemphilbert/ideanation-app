@@ -11,6 +11,7 @@ import { useSupabaseServer } from "~/server/utils/supabase";
 import { createServerDebug } from "~/utils/debug";
 import { setupAgent as setupRoutingAgent } from "~/agents/routing/main";
 import { setupAgent as setupProblemAgent } from "~/agents/problem/main";
+import { setupAgent as setupIdeaAgent } from "~/agents/idea/main";
 
 const config = useRuntimeConfig()
 
@@ -72,7 +73,9 @@ export default defineEventHandler(async (event) => {
 
         const agent = setupRoutingAgent("","")
         const problemAgent = setupProblemAgent("problem","")
+        const ideaAgent = setupIdeaAgent("idea","")
         agent.addSubAgent(problemAgent)
+        agent.addSubAgent(ideaAgent)
 
 
         const workspace = await agent.getGraph()

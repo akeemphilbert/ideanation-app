@@ -10,6 +10,7 @@ import { z } from "zod";
 import { llm } from "../../graphs/main";
 import { RELATIONSHIP_TYPES } from "../../types/relationships"
 import { slugify } from "../utils";
+import { generateResourceId } from "../../types/resources";
 
 // Define a specific state for the problem agent
 export const ProblemAgentState = Annotation.Root({
@@ -17,6 +18,10 @@ export const ProblemAgentState = Annotation.Root({
         reducer: (x: boolean, y: boolean) => y, // Latest value wins
         default: () => true,
       }),
+  currentResource: Annotation<BaseResource | null>({
+    reducer: (x: BaseResource | null, y: BaseResource | null) => y, // Latest value wins
+    default: () => null,
+  }),
   messages: Annotation<BaseMessage[]>({
     reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
     default: () => [],
@@ -154,10 +159,23 @@ export function createProblemAgentGraph(agent: Agent, authToken?: string) {
         updated: new Date()
     }
 
+    const relationshipId = generateResourceId('ideanation:Relationship')
     return {
+        currentResource: problem,
         problems: [problem],
         routes: [],
-        relationships: [],
+        relationships: [
+            {
+                '@type': 'ideanation:Relationship',
+                '@id': relationshipId,
+                id: relationshipId,
+                created: new Date(),
+                updated: new Date(),
+                sourceId: problem.id,
+                targetId: state.currentResource?.id || "",
+                relationshipType: RELATIONSHIP_TYPES.ASSOCIATED
+            }
+        ],
         messages: [new AIMessage("Great! I've created your problem \"" + problem.title + "\".")],
     }
 }
