@@ -23,97 +23,97 @@ env:
   AWS_CLUSTER_NAME: arn:aws:ecs:us-east-1:582726374450:cluster/prod-prod1
 
 jobs:
-  frontend:
-    runs-on: ubuntu-latest
-    environment: prod
-    outputs:
-      today: ${{ steps.date.outputs.today }}
-      ticket: ${{ steps.setup.outputs.ticket }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#   frontend:
+#     runs-on: ubuntu-latest
+#     environment: prod
+#     outputs:
+#       today: ${{ steps.date.outputs.today }}
+#       ticket: ${{ steps.setup.outputs.ticket }}
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Setup node env 🏗
-        uses: actions/setup-node@v2.5.0
-        with:
-          node-version: "20"
-          check-latest: true
-      - name: Get npm cache directory path 🛠
-        id: npm-cache-dir-path
-        run: echo "::set-output name=dir::$(npm cache dir)"
+#       - name: Setup node env 🏗
+#         uses: actions/setup-node@v2.5.0
+#         with:
+#           node-version: "20"
+#           check-latest: true
+#       - name: Get npm cache directory path 🛠
+#         id: npm-cache-dir-path
+#         run: echo "::set-output name=dir::$(npm cache dir)"
 
-      - name: Cache node_modules 📦
-        uses: actions/cache@v3
-        id: npm-cache # use this to check for `cache-hit` (`steps.npm-cache.outputs.cache-hit != 'true'`)
-        with:
-          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
+#       - name: Cache node_modules 📦
+#         uses: actions/cache@v3
+#         id: npm-cache # use this to check for `cache-hit` (`steps.npm-cache.outputs.cache-hit != 'true'`)
+#         with:
+#           path: ${{ steps.npm-cache-dir-path.outputs.dir }}
+#           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+#           restore-keys: |
+#             ${{ runner.os }}-npm-
 
 
-      - name: Install dependencies 👨🏻‍💻
-        run: npm ci
+#       - name: Install dependencies 👨🏻‍💻
+#         run: npm ci
 
-      - name: Setup build variables
-        id: setup
-        run: |
-          TICKET=v1
-          echo "today=$(date +'%Y%m%d%H')" >> $GITHUB_OUTPUT
-          echo "ticket=${TICKET}" >> $GITHUB_OUTPUT
+#       - name: Setup build variables
+#         id: setup
+#         run: |
+#           TICKET=v1
+#           echo "today=$(date +'%Y%m%d%H')" >> $GITHUB_OUTPUT
+#           echo "ticket=${TICKET}" >> $GITHUB_OUTPUT
 
-#      - name: Run tests
-#        run: yarn test
+# #      - name: Run tests
+# #        run: yarn test
 
-      - name: Build
-        run: |
-          echo "NUXT_PUBLIC_IAM_SERVICE_ENDPOINT=https://api.ideanation.cloud/iam/${{ steps.setup.outputs.ticket }}" >> .env
-          echo "NUXT_PUBLIC_API_URL=https://api.ideanation.cloud/app/prod" >> .env
-          echo "NUXT_PUBLIC_APP_BASE=https://${{ env.AWS_S3_BUCKET }}" >> .env
-          echo "NUXT_APP_BASE_URL=/" >> .env
-          echo "NUXT_PUBLIC_VERSION=${{  github.ref_name }}" >> .env
-          echo "NUXT_PUBLIC_ENVIRONMENT=prod" >> .env
-          echo "NUXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-          echo "NUXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-          echo "NUXT_NO_SSR=true" >> .env
-          echo "ticket: ${{ steps.setup.outputs.ticket }}"
-          npm install
-          npx nuxi generate
+#       - name: Build
+#         run: |
+#           echo "NUXT_PUBLIC_IAM_SERVICE_ENDPOINT=https://api.ideanation.cloud/iam/${{ steps.setup.outputs.ticket }}" >> .env
+#           echo "NUXT_PUBLIC_API_URL=https://api.ideanation.cloud/app/prod" >> .env
+#           echo "NUXT_PUBLIC_APP_BASE=https://${{ env.AWS_S3_BUCKET }}" >> .env
+#           echo "NUXT_APP_BASE_URL=/" >> .env
+#           echo "NUXT_PUBLIC_VERSION=${{  github.ref_name }}" >> .env
+#           echo "NUXT_PUBLIC_ENVIRONMENT=prod" >> .env
+#           echo "NUXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+#           echo "NUXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+#           echo "NUXT_NO_SSR=true" >> .env
+#           echo "ticket: ${{ steps.setup.outputs.ticket }}"
+#           npm install
+#           npx nuxi generate
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: "arn:aws:iam::582726374450:role/Administrator"
-          role-duration-seconds: 1200
-          role-session-name: apollo${{ github.sha }}
-          role-skip-session-tagging: true
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ env.AWS_REGION }}
+#           role-to-assume: "arn:aws:iam::582726374450:role/Administrator"
+#           role-duration-seconds: 1200
+#           role-session-name: apollo${{ github.sha }}
+#           role-skip-session-tagging: true
 
-      - name: Push to S3
-        run: |
-          aws s3 sync .output/public s3://${AWS_S3_BUCKET}/ --delete
+#       - name: Push to S3
+#         run: |
+#           aws s3 sync .output/public s3://${AWS_S3_BUCKET}/ --delete
 
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
+#       - name: Invalidate CloudFront cache
+#         run: |
+#           aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION_ID} --paths "/*"
 
-      - name: Send release notification
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ success() }}
-        env:
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: We were able to create a release build. 
-          SLACK_TITLE: Apollo Prod Deployed
+#       - name: Send release notification
+#         uses: rtCamp/action-slack-notify@v2
+#         if: ${{ success() }}
+#         env:
+#           SLACK_COLOR: ${{ job.status }}
+#           SLACK_MESSAGE: We were able to create a release build. 
+#           SLACK_TITLE: Apollo Prod Deployed
 
-      - name: Send fail notification
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ failure() }}
-        env:
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: We were unable to create a release build. 
-          SLACK_TITLE: Apollo Prod Deploy Failed
+#       - name: Send fail notification
+#         uses: rtCamp/action-slack-notify@v2
+#         if: ${{ failure() }}
+#         env:
+#           SLACK_COLOR: ${{ job.status }}
+#           SLACK_MESSAGE: We were unable to create a release build. 
+#           SLACK_TITLE: Apollo Prod Deploy Failed
   
   server:
     runs-on: ubuntu-latest

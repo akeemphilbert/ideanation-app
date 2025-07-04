@@ -13,6 +13,8 @@ import type {
   RelationshipResource,
   BaseResource
 } from '~/types/resources'
+import { Event } from '../types/event';
+import { AgentGraphError } from '../types/error';
 
 /**
  * WorkspaceState represents the complete state of a workspace
@@ -25,6 +27,22 @@ export const WorkspaceState = Annotation.Root({
     default: () => [],
   }),
   
+  events: Annotation<Event[]>({
+      reducer: (x: Event[], y: Event[]) => x.concat(y),
+      default: () => [],
+  }),
+
+  error: Annotation<AgentGraphError | null>({
+      reducer: (x: AgentGraphError | null, y: AgentGraphError | null) => x = y,
+      default: () => null,
+  }),
+
+  // Track the routes taken by the agent as RouteState objects
+  routes: Annotation<RoutingStateType[]>({
+      reducer: (x: RoutingStateType[], y: RoutingStateType[]) => x.concat(y),
+      default: () => [],
+  }),
+
   // Current workspace context
   workspace: Annotation<WorkspaceResource | null>({
     reducer: (x: WorkspaceResource | null, y: WorkspaceResource | null) => y, // Latest value wins
@@ -158,7 +176,7 @@ export const WorkspaceState = Annotation.Root({
 })
 
 // Type alias for the state type
-export type WorkspaceStateType = typeof WorkspaceState
+export type WorkspaceStateType = typeof WorkspaceState.State;
 
 /**
  * Initial state factory for WorkspaceState
@@ -486,3 +504,30 @@ export function isWorkspaceState(obj: any): boolean {
     Array.isArray(obj.exportHistory)
   )
 }
+
+
+// Shared RoutingState for routing agents
+export const RoutingState = Annotation.Root({
+  input: Annotation<string>({
+    reducer: (_: string, update: string) => update,
+    default: () => "",
+  }),
+  route: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  explanation: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  nextInput: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  nextInputData: Annotation<any>({
+    reducer: (_: any, update: any) => update,
+    default: () => undefined,
+  }),
+});
+
+export type RoutingStateType = typeof RoutingState.State; 
