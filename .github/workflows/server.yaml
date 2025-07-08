@@ -2,7 +2,7 @@ name: Release Workflow
 on:
   push:
     branches:
-      - main
+      - feature/agent-update
 
 env:
   SLACK_CHANNEL: team-4

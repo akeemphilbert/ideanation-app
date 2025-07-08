@@ -13,18 +13,40 @@ import type {
   RelationshipResource,
   BaseResource
 } from '~/types/resources'
+import { Event } from '../types/event';
+import { AgentGraphError } from '../types/error';
 
 /**
  * WorkspaceState represents the complete state of a workspace
  * for the LangGraph JS agent to operate on using annotation-based state management
  */
 export const WorkspaceState = Annotation.Root({
+  isGlobalState: Annotation<boolean>({
+    reducer: (x: boolean, y: boolean) => y, // Latest value wins
+    default: () => true,
+  }),
   // Chat conversation history using LangChain's BaseMessage
   messages: Annotation<BaseMessage[]>({
     reducer: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
     default: () => [],
   }),
   
+  events: Annotation<Event[]>({
+      reducer: (x: Event[], y: Event[]) => x.concat(y),
+      default: () => [],
+  }),
+
+  error: Annotation<AgentGraphError | null>({
+      reducer: (x: AgentGraphError | null, y: AgentGraphError | null) => y,
+      default: () => null,
+  }),
+
+  // Track the routes taken by the agent as RouteState objects
+  routes: Annotation<RoutingStateType[]>({
+      reducer: (x: RoutingStateType[], y: RoutingStateType[]) => x.concat(y),
+      default: () => [],
+  }),
+
   // Current workspace context
   workspace: Annotation<WorkspaceResource | null>({
     reducer: (x: WorkspaceResource | null, y: WorkspaceResource | null) => y, // Latest value wins
@@ -36,26 +58,6 @@ export const WorkspaceState = Annotation.Root({
     default: () => null,
   }),
 
-  lastHumanMessage: Annotation<BaseMessage | null>({
-    reducer: (x: BaseMessage | null, y: BaseMessage | null) => y, // Latest value wins
-    default: () => null,
-  }),
-
-  lastAIMessage: Annotation<BaseMessage | null>({
-    reducer: (x: BaseMessage | null, y: BaseMessage | null) => y, // Latest value wins
-    default: () => null,
-  }),
-
-  lastMessage: Annotation<string | null>({
-    reducer: (x: string | null, y: string | null) => y, // Latest value wins
-    default: () => null,
-  }),
-
-  currentRoute: Annotation<string | null>({
-    reducer: (x: string | null, y: string | null) => y, // Latest value wins
-    default: () => null,
-  }),
-  
   // All entities in the workspace
   ideas: Annotation<IdeaResource[]>({
     reducer: (x: IdeaResource[], y: IdeaResource[]) => x.concat(y),
@@ -144,21 +146,10 @@ export const WorkspaceState = Annotation.Root({
       relationshipDensity: 0
     }),
   }),
-  
-  // Export state
-  exportHistory: Annotation<Array<{
-    timestamp: Date
-    type: string
-    format: string
-    success: boolean
-  }>>({
-    reducer: (x: any[], y: any[]) => x.concat(y),
-    default: () => [],
-  }),
 })
 
 // Type alias for the state type
-export type WorkspaceStateType = typeof WorkspaceState
+export type WorkspaceStateType = typeof WorkspaceState.State;
 
 /**
  * Initial state factory for WorkspaceState
@@ -186,8 +177,7 @@ export function createInitialWorkspaceState() {
       customerProblemFit: 0,
       featureCompleteness: 0,
       relationshipDensity: 0
-    },
-    exportHistory: []
+    }
   }
 }
 
@@ -486,3 +476,30 @@ export function isWorkspaceState(obj: any): boolean {
     Array.isArray(obj.exportHistory)
   )
 }
+
+
+// Shared RoutingState for routing agents
+export const RoutingState = Annotation.Root({
+  input: Annotation<string>({
+    reducer: (_: string, update: string) => update,
+    default: () => "",
+  }),
+  route: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  explanation: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  nextInput: Annotation<string | undefined>({
+    reducer: (_: string | undefined, update: string | undefined) => update,
+    default: () => undefined,
+  }),
+  nextInputData: Annotation<any>({
+    reducer: (_: any, update: any) => update,
+    default: () => undefined,
+  }),
+});
+
+export type RoutingStateType = typeof RoutingState.State; 
