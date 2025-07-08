@@ -182,6 +182,24 @@ export function createSimpleRoutingGraph(agent: Agent, authToken?: string) {
     };
   }
 
+  async function getProblemInputNode(state: WorkspaceStateType): Promise<Partial<WorkspaceStateType>> {
+    // If the last message is from the user, proceed to create workspace and idea
+    const message = interrupt("What problem(s) are you trying to solve?")
+    // Otherwise, wait for user input (already prompted in detectIntentNode)
+    return {
+      messages: [new HumanMessage(message)]
+    };
+  }
+
+  async function getCustomerInputNode(state: WorkspaceStateType): Promise<Partial<WorkspaceStateType>> {
+    // If the last message is from the user, proceed to create workspace and idea
+    const message = interrupt("Who faces these problems?")
+    // Otherwise, wait for user input (already prompted in detectIntentNode)
+    return {
+      messages: [new HumanMessage(message)]
+    };
+  }
+
 
   const graph = new StateGraph(WorkspaceState);
   graph.addNode('detect_intent', detectIntentNode);
@@ -194,8 +212,7 @@ export function createSimpleRoutingGraph(agent: Agent, authToken?: string) {
     graph.addEdge(shortname, END);
   });
   graph.addNode('create_workspace', createWorkspaceAndIdeaNode);
-  // @ts-expect-error
-  graph.addEdge('create_workspace', END);
+  graph.addNode('get_problem_input', getProblemInputNode);
   // @ts-expect-error
   graph.addEdge(START, 'detect_intent');
   // Conditional edge from detect_intent to the correct sub-agent node
@@ -206,6 +223,18 @@ export function createSimpleRoutingGraph(agent: Agent, authToken?: string) {
     const route = lastRoute && lastRoute.route;
     return route;
   }
+  function guideNextAction(state: WorkspaceStateType) {
+    // Get the last route from state.routes
+    if (state.problems.length === 0) {
+      return 'get_problem_input';
+    } else {
+      return END;
+    }
+  }
+  // @ts-expect-error
+  graph.addEdge('get_problem_input','problem');
+  // @ts-expect-error
+  graph.addConditionalEdges('create_workspace', guideNextAction);
   // @ts-expect-error
   graph.addConditionalEdges('detect_intent', selectNextRoute);
   return graph;

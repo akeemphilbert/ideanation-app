@@ -125,6 +125,10 @@ export default defineEventHandler(async (event) => {
                         }
                         writer.write(`update: ${JSON.stringify(agentUpdate)}`)
                         i++
+                    } else if (nodeName === '__interrupt__' && !('isGlobalState' in nodeUpdate)) {
+                        let agentUpdate = new AgentUpdate(nodeName, {})
+                        agentUpdate.data.lastMessage = "\n\n"+nodeUpdate[0].value
+                        writer.write(`update: ${JSON.stringify(agentUpdate)}`)
                     }
                 }
             }
